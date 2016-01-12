@@ -1,6 +1,6 @@
 {
   "name": "lightstep-tracer",
-  "version": "0.5.35",
+  "version": "0.5.36",
   "main": "dist/lightstep-node.js",
   "engines": {
     "node": ">=0.12.0"
