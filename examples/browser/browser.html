@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Example</title>
+    </head>
+    <body>
+        <h1>Example</h1>
+        <button id="button">Click here</button>
+
+        <script type="text/javascript" src="../../dist/lightstep.js"></script>
+        <script type="text/javascript">
+        <!--
+        var Tracer = LightStep;
+        Tracer.options({
+            access_token   : "{your_access_token}",
+            group_name     : "js-example/browser",
+            debug          : true,
+            log_to_console : true,
+            verbosity      : 2,
+        });
+
+        document.getElementById('button').onclick = function() {
+            var span = Tracer.span("button_press");
+            span.infof("The button was pressed.");
+            setTimeout(function() {
+                span.end();
+            }, 250 + Math.floor(Math.random() * 750));
+        };
+
+        setInterval(function() {
+            var span = Tracer.span("example/span");
+            span.infof("This is a test log.");
+            setTimeout(function() {
+                span.end();
+            }, 50 + Math.floor(Math.random() * 500));
+        }, 2000);
+        -->
+        </script>
+    </body>
+</html>

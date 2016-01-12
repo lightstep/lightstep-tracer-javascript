@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Unit tests</title>
+        <link rel="stylesheet" media="all" href="browser/mocha.css">
+    </head>
+    <body>
+        <div id="mocha"><p><a href=".">Index</a></p></div>
+        <div id="messages"></div>
+        <div id="fixtures"></div>
+        <script src="dist/lightstep-tracer.js"></script>
+        <script src="browser/underscore-min.js"></script>
+        <script src="browser/mocha.js"></script>
+        <script src="browser/chai.js"></script>
+        <script>
+            mocha.setup('bdd')
+            window.expect = chai.expect;
+            window.Tracer = LightStep;
+        </script>
+        <script src="dist/unittest_browser.bundle.js"></script>
+        <script>mocha.run();</script>
+    </body>
+</html>
