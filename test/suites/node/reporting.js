@@ -1,25 +1,30 @@
 var path = require("path");
 var fs   = require("fs");
 var child_process = require("child_process");
+var FileTransport = require("../../util/file_transport");
+var LightStep = require('../../../dist/lightstep-tracer-node-debug');
 
 describe("Reporting loop", function() {
     it("should flush at a regular interval", function(done) {
         this.timeout(5000);
-        var runtime = Tracer.createTracer();
-        util.runtimeReportToFile(runtime, "report_flush_loop.json");
-        runtime.options({
+
+        var transport = new FileTransport(path.join(__dirname, '../../results/report_flush_loop.json'));
+        var runtime = Tracer.initNewTracer(LightStep.tracer({
             access_token           : "{your_access_token}",
             group_name             : "api-javascript/unit-test/report_flush_loop",
             report_period_millis   : 10,
-        });
+            override_transport     : transport,
+            disable_reporting_loop : false,
+        }));
 
         var count = 0;
         var timer = setInterval(function() {
-            runtime.infof("Count = %d", count);
+            var span = Tracer.startSpan("test");
+            span.imp().info("Count = " + count);
             count++;
             if (count === 20) {
                 clearInterval(timer);
-                var reqs = util.requestsFromFile("report_flush_loop.json");
+                var reqs = transport.readReports();
 
                 // Conservatively check below the theoretical values since this
                 // test inherent has timing issues.
@@ -34,7 +39,7 @@ describe("Reporting loop", function() {
 describe("Final report", function () {
     it("flush on exit", function (done) {
         var script = path.join(__dirname, "on_exit/child.js");
-        var reportFile = "on_exit.child.json";
+        var reportFile = "on_exit_child.json";
 
         var child = child_process.fork(script, [ reportFile ]);
         child.on('close', function() {

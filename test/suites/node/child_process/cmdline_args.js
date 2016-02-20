@@ -1,14 +1,18 @@
-var Tracer = require("../../../../dist/lightstep-tracer-node-debug");
-var util = require("../../../util/util");
+var Tracer = require('opentracing');
+var LightStep = require("../../../../dist/lightstep-tracer-node-debug");
+var FileTransport = require("../../../util/file_transport");
+var path = require('path');
+var filename = path.join(__dirname, "../../../results/cmdline_args.json");
 
-util.runtimeReportToFile(Tracer, process.argv[2]);
-Tracer.options({
+var transport = new FileTransport(filename);
+Tracer.initGlobalTracer(LightStep.tracer({
     access_token           : "{your_access_token}",
     group_name             : "api-javascript/unit-test/cmdline_args",
-});
+    override_transport     : transport,
+}));
 
-var span = Tracer.span("test_span");
+var span = Tracer.startSpan("test_span");
 for (var i = 0; i < 10; i++) {
-    Tracer.infof("log%d", i);
+    span.imp().info("Log record " + i);
 }
-span.end();
+span.finish();

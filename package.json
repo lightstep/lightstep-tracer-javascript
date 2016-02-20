@@ -1,7 +1,7 @@
 {
   "name": "lightstep-tracer",
-  "version": "0.5.36",
-  "main": "dist/lightstep-node.js",
+  "version": "0.5.39",
+  "main": "dist/lightstep-tracer-node.js",
   "engines": {
     "node": ">=0.12.0"
   },
@@ -39,6 +39,7 @@
     "colors": "^1.1.2",
     "json-loader": "^0.5.4",
     "mocha": "^2.3.4",
+    "opentracing": "^0.9.5",
     "shelljs": "^0.5.3",
     "webpack": "^1.12.9"
   }

@@ -67,9 +67,23 @@ class InstrumentXHR {
         if (opts.service_host.length === 0) {
             return;
         }
-        let patterns = opts.xhr_url_exclusion_patterns.concat([
-            new RegExp('^https?://' + opts.service_host + ':' + opts.service_port),
-        ]);
+
+        // http://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
+        function escapeRegExp(str) {
+            return ('' + str).replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+        }
+
+        // Check against the hostname without the port as well as the canonicalized
+        // URL may drop the standard port.
+        let host = escapeRegExp(opts.service_host);
+        let port = escapeRegExp(opts.service_port);
+        let set = [ new RegExp('^https?://' + host + ':' + port) ];
+        if (port == "80") {
+            set.push(new RegExp('^http://' + host));
+        } else if (port == "443") {
+            set.push(new RegExp('^https://' + host));
+        }
+        let patterns = opts.xhr_url_exclusion_patterns.concat(set);
         this._runtime.options({ xhr_url_exclusion_patterns : patterns });
     }
 
@@ -205,7 +219,7 @@ class InstrumentXHR {
             let data = Array.prototype.slice.call(arguments);
             let len = undefined;
             if (data.length == 1) {
-                if (typeof data[0] === 'object' && data[0] && data[0].length) {
+                if (data[0] && data[0].length) {
                     len = data[0].length;
                 }
                 try {
@@ -214,7 +228,8 @@ class InstrumentXHR {
                     // Ignore the error
                 }
             }
-            span.info(`XMLHttpRequest send, data length=${len}`, { data : data });
+            let lenStr = (len === undefined) ? '' : `, data length=${len}`;
+            span.info(`XMLHttpRequest send${lenStr}`, { data : data });
             return proxied.send.apply(this, arguments);
         }
     }

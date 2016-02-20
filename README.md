@@ -13,7 +13,6 @@ npm install --save lightstep-tracer opentracing
 ## Getting Started
 
 ```javascript
-
 var Tracer = require('opentracing');
 var LightStep = require('lightstep-tracer');
 

@@ -1,22 +1,17 @@
-var fs           = require("fs");
-var deepClone    = require("clone");
-var _            = require("underscore");
-var TestRequests = require("./test_requests");
+var deepClone = require("clone");
+var _         = require("underscore");
 
-function FileTransport(filename) {
-    this._filename = filename;
+function LocalStorageTransport(keyname) {
+    this._keyname = keyname;
     this._requests = [];
 
-    if (fs.existsSync(this._filename)) {
-        fs.unlink(this._filename);
-    }
+    localStorage.removeItem(this._keyname);
 }
 
-FileTransport.prototype.ensureConnection = function() {
-    // No op
+LocalStorageTransport.prototype.ensureConnection = function() {
 };
 
-FileTransport.prototype.report = function(detached, auth, report, done) {
+LocalStorageTransport.prototype.report = function(detached, auth, report, done) {
 
     // For convenience of debugging strip null fields (they are not sent over
     // the wire by the JS thrift implementation anyway).
@@ -42,15 +37,10 @@ FileTransport.prototype.report = function(detached, auth, report, done) {
         report : report,
     });
 
-    fs.writeFileSync(this._filename, JSON.stringify({
+    localStorage.setItem(this._keyname, JSON.stringify({
         requests : this._requests,
     }, null, 4));
     done();
 };
 
-FileTransport.prototype.readReports = function() {
-    var content = JSON.parse(fs.readFileSync(this._filename, "utf8"));
-    return new TestRequests(content);
-};
-
-module.exports = FileTransport;
+module.exports = LocalStorageTransport;

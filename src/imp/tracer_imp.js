@@ -7,6 +7,10 @@ import EventEmitter from 'eventemitter3';
 import { Platform, Transport, thrift, crouton_thrift } from '../platform_abstraction_layer';
 import { UserException, InternalException } from './exceptions';
 import SpanImp from './span_imp';
+import TraceContextImp from './trace_context_imp';
+import * as Constants from '../constants';
+import globals from './globals';
+
 const _             = require('underscore');
 const constants     = require('../constants');
 const coerce        = require('./coerce');
@@ -15,14 +19,17 @@ const LogBuilder    = require('./log_builder');
 const ClockState    = require('./util/clock_state');
 const packageObject = require('../../package.json');
 
-export default class RuntimeImp extends EventEmitter {
+const DEFAULT_SERVICE_PORT_SECURE   = 443;
+const DEFAULT_SERVICE_PORT_INSECURE = 80;
 
-    constructor(api, config) {
+export default class TracerImp extends EventEmitter {
+
+    constructor(opts) {
         super();
 
         // Platform abstraction layer
         this._platform = new Platform(this);
-        this._runtimeGUID = null;  // Set once the group name is set
+        this._runtimeGUID = this.override_runtime_guid || null;  // Set once the group name is set
         this._pluginNames = {};
         this._options = {};
         this._optionDescs = [];
@@ -32,8 +39,8 @@ export default class RuntimeImp extends EventEmitter {
         this.addOption('access_token',                  { type: 'string',  defaultValue: '' });
         this.addOption('group_name',                    { type: 'string',  defaultValue: '' });
         this.addOption('disabled',                      { type: 'bool',    defaultValue: false });
-        this.addOption('service_host',                  { type: 'string',  defaultValue: 'api.traceguide.io' });
-        this.addOption('service_port',                  { type: 'int',     defaultValue: 9997 });
+        this.addOption('service_host',                  { type: 'string',  defaultValue: 'collector.lightstep.com' });
+        this.addOption('service_port',                  { type: 'int',     defaultValue: DEFAULT_SERVICE_PORT_SECURE });
         this.addOption('secure',                        { type: 'bool',    defaultValue: true });
         this.addOption('report_period_millis',          { type: 'int',     defaultValue: 2500 });
         this.addOption('max_log_records',               { type: 'int',     defaultValue: 4096 });
@@ -51,6 +58,9 @@ export default class RuntimeImp extends EventEmitter {
         // Log verbosity level
         this.addOption('verbosity',                     { type: 'int', min: 0, max: 2, defaultValue: 0 });
 
+        // Unit testing options
+        this.addOption('override_transport',            { type : 'any',    defaultValue: null });
+
         // Hard upper limits to protect against worst-case scenarios
         this.addOption('log_message_length_hard_limit', { type: 'int',     defaultValue: 512 * 1024 });
         this.addOption('log_payload_length_hard_limit', { type: 'int',     defaultValue: 512 * 1024 });
@@ -62,7 +72,7 @@ export default class RuntimeImp extends EventEmitter {
         this._startMicros = now;
         this._thriftAuth = null;
         this._thriftRuntime = null;
-        this._transport = new Transport();
+        this._transport = (opts ? opts.override_transport : null) || new Transport();
 
         this._reportingLoopActive = false;
         this._reportYoungestMicros = now;
@@ -97,8 +107,92 @@ export default class RuntimeImp extends EventEmitter {
 
         // Current runtime state / status
         this._flushIsActive = false;
+
+        // Built-in plugins
+        this.addPlugin(require('../plugins/log_to_console'));
+
+        // Initialize the platform options after the built-in plugins in
+        // case any of those options affect the built-ins.
+        this.addPlatformPlugins();
+        this.setPlatformOptions();
+
+        // Set constructor arguments
+        if (opts) {
+            this.options(opts);
+        }
     }
 
+    // ---------------------------------------------------------------------- //
+    // OpenTracing API
+    // ---------------------------------------------------------------------- //
+
+    newTracer(opts) {
+        // Inherit all options of the global tracer unless explicitly specified
+        // otherwise
+        opts = opts || {};
+        for (let key in globals.options) {
+            if (opts[key] === undefined) {
+                opts[key] = globals.options[key];
+            }
+        }
+        return new TracerImp(opts);
+    }
+
+    // TODO: Unclear what the OpenTracing specification wants here.  This
+    // implementation is a best-guess approximation that's likely not right.
+    // The spec refers to text and binary representations, but what does
+    // "binary" mean in JavaScript without making assumptions about protocols,
+    // transports, and platforms?
+    encodeTraceContext(traceContext) {
+        return traceContext.encode();
+    }
+
+    decodeTraceContext(obj) {
+        let traceContext = new TraceContextImp();
+        traceContext.decode(obj);
+        return traceContext;
+    }
+
+    newRootTraceContext() {
+        let traceGuid = this._platform.generateUUID();
+        let traceContext = new TraceContextImp(traceGuid);
+        return traceContext;
+    }
+
+    newChildTraceContext(parentContext) {
+        let guid = this._platform.generateUUID();
+        let childContext = parentContext.clone();
+        childContext.setSpanGuid(guid);
+        childContext.setParentSpanGuid(parentContext.spanGuid());
+
+        // TODO: given only a TraceContext, how would it be determined what tags
+        // should be assinged to the child (which is what the Go interface
+        // implies should be done here)?
+        return [ childContext, {} ];
+    }
+
+    startSpan(fields) {
+        let spanImp = new SpanImp(this);
+        spanImp.setOperation(fields.operationName);
+
+        this.emit('start_trace', spanImp);
+
+        return spanImp;
+    }
+
+    joinTrace(operationName, parentContext) {
+        let pair = this.newChildTraceContext(parentContext);
+        let childContext = pair[0];
+        let spanImp = new SpanImp(this, childContext);
+        spanImp.setOperation(operationName);
+        return spanImp;
+    }
+
+    startSpanWithContext(operationName, traceContext) {
+        let spanImp = new SpanImp(this, traceContext);
+        spanImp.setOperation(operationName);
+        return spanImp;
+    }
 
     //-----------------------------------------------------------------------//
     // Options
@@ -108,17 +202,18 @@ export default class RuntimeImp extends EventEmitter {
         return this._runtimeGUID;
     }
 
+    // TODO: deprecated
     initialize(opts) {
         this.options(opts || {});
     }
 
     setPlatformOptions() {
-        this.options(this._platform.options());
+        this.options(this._platform.options(this));
     }
 
     // Register a new option.  Used by plug-ins.
     addOption(name, desc) {
-        this._internalInfofV2(`Adding options ${desc.name} with value = ${desc.defaultValue}`);
+        this._internalInfofV2(`Adding options ${name} with value = ${desc.defaultValue}`);
 
         desc.name = name;
         this._optionDescs.push(desc);
@@ -134,14 +229,24 @@ export default class RuntimeImp extends EventEmitter {
             throw new UserException('options() must be called with an object: type was ' + typeof opts);
         }
 
+        // 'secure' is an alias for the common cases of 'service_port'
+        if (opts.secure !== undefined && opts.service_port === undefined) {
+            opts.service_port = opts.secure ?
+                DEFAULT_SERVICE_PORT_SECURE :
+                DEFAULT_SERVICE_PORT_INSECURE;
+        }
+
         // Track what options have been modified
         let modified = {};
+        let unchanged = {};
         for (let desc of this._optionDescs) {
-            this._setOptionInternal(modified, opts, desc);
+            this._setOptionInternal(modified, unchanged, opts, desc);
         }
-        // Check for any invalid options
+
+        // Check for any invalid options: is there a key in the specified operation
+        // that didn't result either in a change or a reset to the existing value?
         for (let key in opts) {
-            if (modified[key] === undefined) {
+            if (modified[key] === undefined && unchanged[key] === undefined) {
                 throw new UserException("Invalid option '%s'", key);
             }
         }
@@ -164,7 +269,7 @@ export default class RuntimeImp extends EventEmitter {
         this.emit('options', modified, this._options);
     }
 
-    _setOptionInternal(modified, opts, desc) {
+    _setOptionInternal(modified, unchanged, opts, desc) {
         let name = desc.name;
         let value = opts[name];
         let valueType = typeof value;
@@ -221,6 +326,13 @@ export default class RuntimeImp extends EventEmitter {
         if (oldValue === undefined) {
             throw this._internalException("Attempt to set unknown option '%s'", name);
         }
+
+        // Ignore no-op changes for types that can be checked quickly
+        if (valueType !== 'object' && oldValue === value) {
+            unchanged[name] = true;
+            return;
+        }
+
         modified[name] = {
             oldValue : oldValue,
             newValue : value,
@@ -299,28 +411,29 @@ export default class RuntimeImp extends EventEmitter {
     // Plugins
     //-----------------------------------------------------------------------//
 
-    addPlatformPlugins(api) {
+    addPlatformPlugins() {
         for (let plugin of this._platform.plugins()) {
-            this.addPlugin(api, plugin);
+            this.addPlugin(plugin);
         }
     }
 
-    addPlugin(api, plugin) {
+    addPlugin(plugin) {
         let name = plugin.name();
         if (this._pluginNames[name]) {
             return;
         }
         this._pluginNames[name] = true;
 
-        plugin.start(api);
+        plugin.start(this);
     }
 
     //-----------------------------------------------------------------------//
     // Spans
     //-----------------------------------------------------------------------//
 
-    span(name) {
-        let handle = new SpanImp(this);
+    // TODO: Deprecate
+    span(name, context) {
+        let handle = new SpanImp(this, context);
         handle.operation(name);
 
         this.emit('span_started', handle);
@@ -607,7 +720,7 @@ export default class RuntimeImp extends EventEmitter {
 
         // Ensure the runtime GUID is set as it is possible buffer logs and
         // spans before the GUID is necessarily set.
-        console.assert(this._runtimeGUID !== null);
+        console.assert(this._runtimeGUID !== null, "No runtime GUID for Tracer");
 
         for (let record of logRecords) {
             record.runtime_guid = this._runtimeGUID;

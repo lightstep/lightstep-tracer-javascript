@@ -65,6 +65,10 @@ export default class PlatformNode {
         return "node";
     }
 
+    static initLibrary(lib) {
+
+    }
+
     nowMicros() {
         let hrTime = process.hrtime();
         return Math.floor(startTimeMicros + hrTime[0] * 1000000.0 + hrTime[1] / 1000.0);

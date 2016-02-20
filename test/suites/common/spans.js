@@ -1,20 +1,15 @@
 it("should capture parent span guids", function () {
 
-    var parent = Tracer.span("A");
-    var child = parent.span("B");
-    child.end();
-    parent.end();
+    var parent = Tracer.startSpan("A");
+    var child = parent.startChildSpan("B");
+    child.finish();
+    parent.finish();
 
-    var parentTags = parent.tags();
-    var childTags = child.tags();
+    expect(parent.imp().guid()).not.to.be.undefined;
+    expect(parent.imp().parentGuid()).to.be.falsey;
 
-    expect(parent.guid()).not.to.be.undefined;
-    expect(parentTags['parent_span_guid']).to.be.undefined;
-
-    expect(child.guid()).not.to.be.undefined;
-    expect(childTags['parent_span_guid']).to.equal(parent.guid());
-
-    Tracer.flush();
+    expect(child.imp().guid()).not.to.be.undefined;
+    expect(child.imp().parentGuid()).to.equal(parent.imp().guid());
 });
 
 it("should emit a 'span_added' event when each span ends", function() {
@@ -23,19 +18,19 @@ it("should emit a 'span_added' event when each span ends", function() {
         count++;
     };
 
-    Tracer.on('span_added', onSpan);
-    var s = Tracer.span("test");
+    Tracer.imp().on('span_added', onSpan);
+    var s = Tracer.startSpan("test");
     expect(count).to.equal(0);
-    s.end();
+    s.finish();
     expect(count).to.equal(1);
-    s = Tracer.span("test");
+    s = Tracer.startSpan("test");
     expect(count).to.equal(1);
-    s.end();
+    s.finish();
     expect(count).to.equal(2);
 
-    Tracer.removeListener('span_added', onSpan);
-    s = Tracer.span("test");
+    Tracer.imp().removeListener('span_added', onSpan);
+    s = Tracer.startSpan("test");
     expect(count).to.equal(2);
-    s.end();
+    s.finish();
     expect(count).to.equal(2);
 });

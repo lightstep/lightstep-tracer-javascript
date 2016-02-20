@@ -8,9 +8,12 @@
 
 it("should behave sanely with excessively large log messages", function() {
     var msg = (new Array(8*1024*1024)).join("x");
-    Tracer.infof("%s", msg);
-    Tracer.warnf("%s", msg);
-    Tracer.errorf("%s", msg);
+
+    var span = Tracer.startSpan("test");
+    span.imp().info(msg);
+    span.imp().warn(msg);
+    span.imp().error(msg);
+    span.finish();
 });
 
 it("should behave sanely with excessively large log payloads", function() {
@@ -18,7 +21,9 @@ it("should behave sanely with excessively large log payloads", function() {
     for (var i = 0; i < 1024; i++) {
         arr.push((new Array(8*1024)).join("x"));
     }
-    Tracer.infof("%j", arr);
-    Tracer.warnf("%j", arr);
-    Tracer.errorf("%j", arr);
+    var span = Tracer.startSpan("test");
+    span.imp().info("message", arr);
+    span.imp().warn("message", arr);
+    span.imp().error("message", arr);
+    span.finish();
 });

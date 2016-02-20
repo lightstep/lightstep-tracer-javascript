@@ -9,14 +9,17 @@
         <div id="mocha"><p><a href=".">Index</a></p></div>
         <div id="messages"></div>
         <div id="fixtures"></div>
+
+        <script src="dist/opentracing-browser.js"></script>
         <script src="dist/lightstep-tracer.js"></script>
         <script src="browser/underscore-min.js"></script>
         <script src="browser/mocha.js"></script>
         <script src="browser/chai.js"></script>
         <script>
+        <!--
             mocha.setup('bdd')
             window.expect = chai.expect;
-            window.Tracer = LightStep;
+        -->
         </script>
         <script src="dist/unittest_browser.bundle.js"></script>
         <script>mocha.run();</script>

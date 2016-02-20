@@ -59,7 +59,7 @@ class PlatformBrowser {
     // A low-quality UUID: this is just a 53-bit random integer! (53 bits since the
     // backing store for the number is a 64-bit float).
     generateUUID() {
-        return Math.floor(Math.random() * 9007199254740992).toString(16);
+        return Math.floor(Math.random() * 9e15).toString(16);
     }
 
     _generateLongUUID() {
@@ -84,11 +84,31 @@ class PlatformBrowser {
         ];
     }
 
-    options() {
-        let opts = {};
-        optionsParser.parseScriptElementOptions(opts);
-        optionsParser.parseURLQueryOptions(opts);
-        return opts;
+    options(imp) {
+        let tracerOpts = {};
+        let browserOpts = {};
+        optionsParser.parseScriptElementOptions(tracerOpts, browserOpts);
+        optionsParser.parseURLQueryOptions(tracerOpts, browserOpts);
+        return tracerOpts;
+    }
+
+    static initLibrary(lib) {
+        let tracerOpts = {};
+        let browserOpts = {};
+        optionsParser.parseScriptElementOptions(tracerOpts, browserOpts);
+
+        if (browserOpts.init_global_tracer) {
+            PlatformBrowser.initGlobalTracer(lib, tracerOpts);
+        }
+    }
+    static initGlobalTracer(lib, opts) {
+        if (typeof window !== 'object') {
+            return;
+        }
+        if (typeof window.Tracer !== 'object') {
+            return;
+        }
+        Tracer.initGlobalTracer(lib.tracer(opts));
     }
 
     runtimeAttributes() {
@@ -123,8 +143,5 @@ class PlatformBrowser {
         } catch (_ignored) {}
     }
 }
-
-
-
 
 module.exports = PlatformBrowser;

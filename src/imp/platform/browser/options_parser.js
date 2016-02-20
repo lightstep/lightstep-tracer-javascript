@@ -39,7 +39,7 @@ function urlQueryParameters(defaults) {
 //
 // Note: relies on the global hostScriptElement variable defined above.
 //
-module.exports.parseScriptElementOptions = function (opts) {
+module.exports.parseScriptElementOptions = function (opts, browserOpts) {
     if (!hostScriptElement) {
         return;
     }
@@ -94,6 +94,15 @@ module.exports.parseScriptElementOptions = function (opts) {
     let verbosity = dataset.verbosity;
     if (typeof verbosity === "string") {
         opts.verbosity = parseInt(verbosity);
+    }
+
+    let init = dataset.init_global_tracer;
+    if (typeof init == "string") {
+        if (init == "true") {
+            browserOpts.init_global_tracer = true;
+        } else if (init == "false") {
+            browserOpts.init_global_tracer = false;
+        }
     }
 };
 

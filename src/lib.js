@@ -1,41 +1,33 @@
-
-import Runtime from './runtime';
-const constants = require('./constants');
+import globals from './imp/globals';
+import * as Constants from './constants';
+import TracerImp from './imp/tracer_imp';
+import { Platform } from './platform_abstraction_layer';
 require('babel-polyfill');
 
-import openTracingAdapter from './opentracing-adapter';
-
-/**
-    For convenience, the library can be used directly as a singleton or Runtime
-    objects can be explicitly created.
- */
-class Lib extends Runtime {
+class Library {
 
     constructor() {
-        super();
-        this.constants = constants;
-    }
+        this._singleton = null;
 
-    createRuntime() {
-        let runtime = new Runtime();
-        runtime.initialize(...arguments);
-        return runtime;
-    }
-    
-    createTracer() {
-        return this.createRuntime();
+        // Make the constants accessible off the LightStep object
+        for (let key in Constants) {
+            this[key] = this[key] || Constants[key];
+        }
     }
 
     /**
-     * Temporary adapter layer to add compatibility with OpenTracing. OpenTracing
-     * is intended to the be eventual, native interface, at which point there
-     * will be no adapter layer.
+     * Creates a new OpenTracing-compatible tracer implementation object.
      */
-    openTracingAdapter() {
-        return openTracingAdapter;
+    tracer(opts) {
+        let tracerImp = new TracerImp(opts);
+        if (!this._singleton) {
+            globals.setOptions(opts);
+            this._singleton = tracerImp;
+        }
+        return tracerImp;
     }
 }
 
-// For ES5 compatibility, use `module.exports` instead of `export default` on
-// the outermost package export.
-module.exports = new Lib();
+let library = new Library();
+Platform.initLibrary(library);
+module.exports = library;

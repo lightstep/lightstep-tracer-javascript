@@ -2,7 +2,6 @@ class InstrumentPageLoad {
 
     constructor() {
         this._inited = false;
-        this._runtime = null;
         this._span = null;
     }
 
@@ -10,7 +9,7 @@ class InstrumentPageLoad {
         return 'instrument_page_load';
     }
 
-    start(runtime) {
+    start() {
         if (this._inited) {
             return;
         }
@@ -19,16 +18,28 @@ class InstrumentPageLoad {
         if (typeof window !== 'object' || typeof document !== 'object') {
             return;
         }
+        if (typeof window.Tracer !== 'object') {
+            return;
+        }
 
-        this._runtime = runtime;
-        this._span = runtime.span('document/load');
         document.addEventListener('readystatechange', this._handleReadyStateChange.bind(this));
     }
 
-    stop(runtime) {
+    stop() {
     }
 
     _handleReadyStateChange() {
+        // TODO: LightStep plug-in initialization should be better defined. This
+        // "lazy" initialization of the span should be more well-defined.
+        if (!Tracer.imp()) {
+            // The Tracer implementation has not yet been set up. Can't record
+            // the span yet.
+            return;
+        }
+        if (!this._span) {
+            this._span = Tracer.startSpan('document/load');
+        }
+
         let span = this._span;
         let state = document.readyState;
         let payload = undefined;
@@ -41,10 +52,10 @@ class InstrumentPageLoad {
             }
         }
 
-        span.info(`document readystatechange ${state}`, payload);
+        span.imp().info(`document readystatechange ${state}`, payload);
 
         if (state === 'complete') {
-            span.end();
+            span.finish();
         }
     }
 
@@ -93,6 +104,14 @@ class InstrumentPageLoad {
 
     // Retroactively create the appropriate spans and logs
     _addTimingSpans(parent, timing) {
+        // NOTE: this currently relies on LightStep-specific APIs
+        let parentImp = parent.imp();
+        if (!parentImp) {
+            console.error("Could not get span implementation object", parent);
+            return;
+        }
+
+        parent.setTag('user_agent', navigator.userAgent);
 
         for (let key in timing) {
             let value = timing[key];
@@ -112,28 +131,39 @@ class InstrumentPageLoad {
                     navigator : this._copyNavigatorProperties(navigator),
                 };
             }
-            parent.log({
+            parentImp.log({
                 message          : `document ${key}`,
                 timestamp_micros : micros,
                 payload          : payload,
             });
         }
 
-        parent.modify({
+        if (window.chrome && window.chrome.loadTimes) {
+            let chromeTimes = window.chrome.loadTimes();
+            if (chromeTimes) {
+                parentImp.log({
+                    message          : `window.chrome.loadTimes()`,
+                    timestamp_micros : timing.domComplete * 1000.0,
+                    payload          : chromeTimes,
+                });
+            }
+        }
+
+        parentImp.modify({
             begin_micros : timing.navigationStart * 1000.0,
         });
-        parent.span('document/time_to_first_byte').modify({
+        parent.startChildSpan('document/time_to_first_byte').imp().modify({
             begin_micros : timing.requestStart * 1000.0,
             end_micros   : timing.responseStart * 1000.0,
-        }).end();
-        parent.span('document/response_transfer').modify({
+        }).finish();
+        parent.startChildSpan('document/response_transfer').imp().modify({
             begin_micros : timing.responseStart * 1000.0,
             end_micros   : timing.responseEnd * 1000.0,
-        }).end();
-        parent.span('document/dom_load').modify({
+        }).finish();
+        parent.startChildSpan('document/dom_load').imp().modify({
             begin_micros : timing.domLoading * 1000.0,
             end_micros   : timing.domInteractive * 1000.0,
-        }).end();
+        }).finish();
     }
 }
 
