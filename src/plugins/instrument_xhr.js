@@ -130,7 +130,7 @@ class InstrumentXHR {
             openPayload.cookies = getCookies();
 
             span.info(`XMLHttpRequest open ${method} ${url}`, openPayload);
-            span.tags(tags);
+            span.addTags(tags);
 
             // Note: async defaults to true
             let async = (asyncArg === undefined ? true : asyncArg);

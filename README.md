@@ -13,28 +13,8 @@ npm install --save lightstep-tracer opentracing
 ## Getting Started
 
 ```javascript
-var Tracer = require('opentracing');
-var LightStep = require('lightstep-tracer');
-
-Tracer.initialize({
-    backend      : LightStep.createOpenTracingAdapter(),
-    group_name   : "my_server",
-    access_token : "{your_access_token}"
-});
-
-// Send a regular global log along with a data payload
-Tracer.info('Hello Tracer', { "now" : Date.now() });
-
-// Send a span record for a given operation
-var span = Tracer.span('trivial/sample_span');
-span.tags({ 'end_user_id', 'john_smith' });
-span.info('User data', {
-    favorite_number : 42,
-});
-span.end();
+// TBD
 ```
-
-See `example/hello_world` for a longer example.
 
 ## Supported Platforms
 
@@ -44,4 +24,4 @@ See `example/hello_world` for a longer example.
 
 [The MIT License](LICENSE).
 
-Copyright (c) 2015, Resonance Labs.
+Copyright (c) 2016, LightStep

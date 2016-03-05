@@ -152,15 +152,15 @@ class InstrumentPageLoad {
         parentImp.modify({
             begin_micros : timing.navigationStart * 1000.0,
         });
-        parent.startChildSpan('document/time_to_first_byte').imp().modify({
+        parent.tracer().startSpan('document/time_to_first_byte', { parent : parent }).imp().modify({
             begin_micros : timing.requestStart * 1000.0,
             end_micros   : timing.responseStart * 1000.0,
         }).finish();
-        parent.startChildSpan('document/response_transfer').imp().modify({
+        parent.tracer().startSpan('document/response_transfer', { parent : parent }).imp().modify({
             begin_micros : timing.responseStart * 1000.0,
             end_micros   : timing.responseEnd * 1000.0,
         }).finish();
-        parent.startChildSpan('document/dom_load').imp().modify({
+        parent.tracer().startSpan('document/dom_load', { parent : parent }).imp().modify({
             begin_micros : timing.domLoading * 1000.0,
             end_micros   : timing.domInteractive * 1000.0,
         }).finish();

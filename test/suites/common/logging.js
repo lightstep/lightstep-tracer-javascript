@@ -1,7 +1,7 @@
 
 it("should not throw an exception on simple operations", function () {
     var span = Tracer.startSpan("test_operation");
-        var subspan = span.startChildSpan("test_subspan");
+        var subspan = Tracer.startSpan("test_subspan", { parent : span });
         subspan.imp().info("Hello World");
         subspan.imp().error("Hello World!!");
         subspan.finish();
@@ -28,7 +28,7 @@ it("should not throw an exception on lots of logs and spans", function () {
     this.timeout(5000);
     for (var i = 0; i < 10000; i++) {
         var span = Tracer.startSpan("test_operation");
-            var subspan = span.startChildSpan("test_subspan");
+            var subspan = Tracer.startSpan("test_subspan", { parent : span });
             subspan.finish();
         span.finish();
     }

@@ -1,7 +1,6 @@
 // For the convenience of unit testing, add these to the global namespace
 global._ = require('underscore');
 global.expect = require('chai').expect;
-console.log(process.cwd())
 global.Tracer = require('opentracing');
 global.util = require('./util/util');
 global.requireES6 = requireES6;

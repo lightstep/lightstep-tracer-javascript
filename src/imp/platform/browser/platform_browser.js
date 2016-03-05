@@ -124,22 +124,22 @@ class PlatformBrowser {
     }
 
     localStoreGet(key) {
-        if (!window.localStorage) {
+        if (!window.sessionStorage) {
             return null;
         }
         try {
-            return JSON.parse(localStorage.getItem(`lightstep/${key}`));
+            return JSON.parse(sessionStorage.getItem(`lightstep/${key}`));
         } catch (_ignored) {
             return null;
         }
     }
 
     localStoreSet(key, value) {
-        if (!window.localStorage) {
+        if (!window.sessionStorage) {
             return;
         }
         try {
-            localStorage.setItem(`lightstep/${key}`, JSON.stringify(value));
+            sessionStorage.setItem(`lightstep/${key}`, JSON.stringify(value));
         } catch (_ignored) {}
     }
 }

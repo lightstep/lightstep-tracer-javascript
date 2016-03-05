@@ -1,52 +1,34 @@
-import ActiveSpan from '../active_span';
 import * as coerce from './coerce.js';
 import * as constants from '../constants';
 import { crouton_thrift } from  '../platform_abstraction_layer';
-import TraceContextImp from './trace_context_imp';
 
-export default class SpanImp extends ActiveSpan {
+export default class SpanImp {
 
     // ---------------------------------------------------------------------- //
     // OpenTracing Implementation
     // ---------------------------------------------------------------------- //
 
+    tracer() {
+        return this._tracer;
+    }
+
+    setOperationName(name) {
+        return this._operation = name;
+    }
+
     addTags(keyValuePairs) {
-        this.tags(keyValuePairs);
-    }
-
-    setTraceAttribute(key, value) {
-        console.warn("NOT YET SUPPORTED");
-    }
-
-    getTraceAttribute(key) {
-        console.warn("NOT YET SUPPORTED")
-    }
-
-    startChildSpan(fields) {
-        let span = this.startChild(fields.operationName);
-        for (let key in fields) {
-            switch (key) {
-                case 'operationName':
-                    // Already handled. Ignore.
-                    break;
-                case 'startTime':
-                    // startTime is in milliseconds
-                    span._beginMicros = fields.startTime * 1000;
-                    break;
-                case 'tags':
-                    span.addTags(fields.tags);
-                    break;
-                case 'parent':
-                    setParentGUID(fields.parent.imp().guid());
-                    break;
-                default:
-                    this._runtime._internalWarnf('Ignoring unknown field %s', key);
-                    break;
-            }
+        for (let key in keyValuePairs) {
+            this._tags[key] = keyValuePairs[key];
         }
-        return span;
     }
 
+    setBaggageItem(key, value) {
+        this._baggage[key] = value;
+    }
+
+    getBaggageItem(key) {
+        return this._baggage[key];
+    }
 
     /**
      * The set of OpenTracing fields is:
@@ -56,7 +38,7 @@ export default class SpanImp extends ActiveSpan {
      */
     // Log record specified by fields
     log(fields) {
-        let rec = this._runtime.log()
+        let rec = this._tracer.log()
             .span(this._guid)
             .level(constants.LOG_STRING_TO_LEVEL[fields.level] || constants.LOG_INFO);
 
@@ -87,95 +69,100 @@ export default class SpanImp extends ActiveSpan {
         rec.end();
     }
 
-    finish() {
-        return this.end(...arguments);
+    finish(finishTime) {
+        return this.end(finishTime);
     }
 
+    // ---------------------------------------------------------------------- //
+    // Private methods
+    // ---------------------------------------------------------------------- //
+
+    constructor(tracer) {
+        console.assert(typeof tracer === 'object', "Invalid runtime");
+
+        this._tracer          = tracer;
+        this._ended           = false;
+
+        this._guid            = tracer._platform.generateUUID();
+        this._traceGUID       = null; // <-- TODO
+        this._operation       = '';
+        this._tags            = {};
+        this._baggage         = {};
+        this._joinIDs         = {};
+        this._beginMicros     = tracer._platform.nowMicros();
+        this._endMicros       = 0;
+        this._errorFlag       = false;
+    }
 
     // ---------------------------------------------------------------------- //
     // LightStep Extensions
     // ---------------------------------------------------------------------- //
 
-    // ---------------------------------------------------------------------- //
-    // Private methods, etc.
-    // ---------------------------------------------------------------------- //
-
-    constructor(runtime, context) {
-        super();
-
-        console.assert(typeof runtime === 'object', "Invalid runtime");
-
-        if (!context) {
-            let traceGuid = runtime._platform.generateUUID();
-            let spanGuid = runtime._platform.generateUUID();
-            context = new TraceContextImp(traceGuid, spanGuid);
-        }
-        console.assert(context instanceof TraceContextImp, 'Invalid context object');
-
-        this._runtime         = runtime;
-        this._ended           = false;
-
-        this._context         = context;
-        this._operation       = '';
-        this._tags            = {};
-        this._joinIDs         = {};
-        this._beginMicros     = this._runtime._platform.nowMicros();
-        this._endMicros       = 0;
-        this._errorFlag       = false;
-    }
-
-    operation(name) {
-        if (arguments.length === 0) {
-            return this._operation;
-        }
-        this._operation = coerce.toString(name);
-    }
-
-    getOperation() {
-        return this.operation();
-    }
-    setOperation(name) {
-        return this.operation(name);
+    getOperationName() {
+        return this._operation;
     }
 
     // Getter only. The GUID is immutable once set internally.
     guid() {
-        return this._context.spanGuid();
+        return this._guid;
     }
 
-    parentGuid() {
-        return this._context.parentSpanGuid();
+    traceGUID() {
+        return this._traceGUID;
+    }
+
+    parentGUID() {
+        return this._tags['parent_span_guid'];
     }
 
     setParentGUID(guid) {
-        this.tags({ 'parent_span_guid' : guid });
+        if (guid === undefined)
+         throw Error();
+        this._tags['parent_span_guid'] = coerce.toString(guid);
     }
 
-    setTag(key, value) {
-        let m = {};
-        m[key] = value;
-        this.tags(m)
-    }
-    setTags(keyValuePairs) {
-        return this.tags(keyValuePairs);
-    }
     getTags() {
-        return this.tags();
+        return this._tags;
     }
 
-    tags(tagMap) {
-        if (arguments.length === 0) {
-            return this._tags;
-        }
-        if (arguments.length !== 1 || typeof tagMap !== 'object') {
-            this._runtime._internalWarnf("Bad arguments to attributes()", arguments);
-            return;
-        }
-        for (let key in tagMap) {
-            this._tags[key] = tagMap[key];
+    getBaggage() {
+        return this._baggage;
+    }
+
+    setFields(fields) {
+        for (let key in fields) {
+            let value = fields[key];
+            switch (key) {
+                case 'operationName':
+                    this._operation = value;
+                    break;
+                case 'startTime':
+                    // startTime is in milliseconds
+                    this._beginMicros = value * 1000;
+                    break;
+                case 'tags':
+                    this.addTags(value);
+                    break;
+                case 'span_guid':
+                    this._guid = coerce.toString(value);
+                    break;
+                case 'trace_guid':
+                    this._traceGUID = coerce.toString(value);
+                    break;
+                case 'parent':
+                    this.setParentGUID(value.imp().guid());
+                    break;
+                case 'parent_guid':
+                    this.setParentGUID(value);
+                    break;
+                default:
+                    this._tracer._internalWarnf('Ignoring unknown field %s', key);
+                    break;
+            }
         }
     }
 
+    // TODO: deprecate this and combine with setFields
     modify(fields) {
         if (!fields) {
             return this;
@@ -189,14 +176,6 @@ export default class SpanImp extends ActiveSpan {
         return this;
     }
 
-    traceContext(traceContextImp) {
-        if (arguments.length === 0) {
-            return this._context;
-        } else {
-            this._context = traceContextImp;
-        }
-    }
-
     setJoinID(key, value) {
         this._tags[key] = value;
         this._joinIDs[key] = true;
@@ -206,20 +185,11 @@ export default class SpanImp extends ActiveSpan {
         if (!parentSpan) {
             return;
         }
-
-        this._context.setParentGuid(parentSpan.guid());
-    }
-
-    startChild(operation) {
-        return this.span(operation);
+        this.setParentGUID(parentSpan.guid());
     }
 
     span(operation) {
-        let context = this._context.clone();
-        context.setParentSpanGuid(context.spanGuid());
-        context.setSpanGuid(this._runtime._platform.generateUUID());
-
-        let child = new SpanImp(this._runtime, context);
+        let child = new SpanImp(this._tracer);
         child.operation(operation);
 
         // TODO: what is the expected behavior on OpenTracing tags on
@@ -236,7 +206,7 @@ export default class SpanImp extends ActiveSpan {
 
     // Used by the OpenTracing adapter layer ????
     newEmptySpan() {
-        return new SpanImp(this._runtime);
+        return new SpanImp(this._tracer);
     }
 
     /**
@@ -261,18 +231,17 @@ export default class SpanImp extends ActiveSpan {
         // the case of a span that has had it's times set manually (i.e. allows
         // for retroactively created spans that might not be possible to create
         // in real-time).
-        //
         if (this._endMicros === 0) {
-            this._endMicros = this._runtime._platform.nowMicros();
+            this._endMicros = this._tracer._platform.nowMicros();
         }
-        this._runtime._addSpanRecord(this._toThrift());
+        this._tracer._addSpanRecord(this._toThrift());
     }
 
 
 
     // Info log record with an optional payload
     info(msg, payload) {
-        this._runtime.log()
+        this._tracer.log()
             .span(this._guid)
             .level(constants.LOG_INFO)
             .message(msg)
@@ -280,7 +249,7 @@ export default class SpanImp extends ActiveSpan {
             .end();
     }
     warn(msg, payload) {
-        this._runtime.log()
+        this._tracer.log()
             .span(this._guid)
             .level(constants.LOG_WARN)
             .message(msg)
@@ -288,7 +257,7 @@ export default class SpanImp extends ActiveSpan {
             .end();
     }
     error(msg, payload) {
-        this._runtime.log()
+        this._tracer.log()
             .span(this._guid)
             .level(constants.LOG_ERROR)
             .message(msg)
@@ -296,7 +265,7 @@ export default class SpanImp extends ActiveSpan {
             .end();
     }
     fatal(msg, payload) {
-        this._runtime.log()
+        this._tracer.log()
             .span(this._guid)
             .level(constants.LOG_FATAL)
             .message(msg)
@@ -305,19 +274,19 @@ export default class SpanImp extends ActiveSpan {
     }
 
     infof(fmt, ...args) {
-        this._runtime.logFmt(constants.LOG_INFO, this._guid, fmt, ...args);
+        this._tracer.logFmt(constants.LOG_INFO, this._guid, fmt, ...args);
         return this;
     }
     warnf(fmt, ...args) {
-        this._runtime.logFmt(constants.LOG_WARN, this._guid, fmt, ...args);
+        this._tracer.logFmt(constants.LOG_WARN, this._guid, fmt, ...args);
         return this;
     }
     errorf(fmt, ...args) {
-        this._runtime.logFmt(constants.LOG_ERROR, this._guid, fmt, ...args);
+        this._tracer.logFmt(constants.LOG_ERROR, this._guid, fmt, ...args);
         return this;
     }
     fatalf(fmt, ...args) {
-        this._runtime.logFmt(constants.LOG_FATAL, this._guid, fmt, ...args);
+        this._tracer.logFmt(constants.LOG_FATAL, this._guid, fmt, ...args);
         return this;
     }
 
@@ -340,24 +309,17 @@ export default class SpanImp extends ActiveSpan {
         }
         this._addTagAsJoinID(joinIDs, 'end_user_id');
 
-        // The backend relies on the 'parent_span_guid' attribute to create
-        // parent-child relationships
-        if (this._context.parentSpanGuid()) {
-            attributes.push(new crouton_thrift.KeyValue({
-                Key   : 'parent_span_guid',
-                Value : coerce.toString(this._context.parentSpanGuid()),
+        // Explicitly set the trace GUID as a join ID
+        if (this._traceGUID) {
+            joinIDs.push(new crouton_thrift.TraceJoinId({
+                TraceKey : 'trace_guid',
+                Value    : coerce.toString(this._traceGUID),
             }));
         }
 
-        // Explicitly set the trace GUID as a join ID
-        joinIDs.push(new crouton_thrift.TraceJoinId({
-            TraceKey : 'trace_guid',
-            Value    : coerce.toString(this._context.traceGuid()),
-        }));
-
         // Add any runtime global join IDs (give preference to local tags,
         // though).
-        let globalJoinIDs = this._runtime._options.join_ids;
+        let globalJoinIDs = this._tracer._options.join_ids;
         for (let key in globalJoinIDs) {
             if (this._tags[key] !== undefined) {
                 continue;
@@ -370,8 +332,8 @@ export default class SpanImp extends ActiveSpan {
         }
 
         let record = new crouton_thrift.SpanRecord({
-            span_guid       : this._context.spanGuid(),
-            runtime_guid    : this._runtime.guid(),
+            span_guid       : this._guid,
+            runtime_guid    : this._tracer.guid(),
             span_name       : this._operation,
             join_ids        : joinIDs,
             oldest_micros   : this._beginMicros,

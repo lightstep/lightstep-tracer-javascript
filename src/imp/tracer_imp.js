@@ -2,12 +2,12 @@
 // Imports
 //============================================================================//
 
+import OpenTracing from 'opentracing';
 import { sprintf } from 'sprintf-js';
 import EventEmitter from 'eventemitter3';
 import { Platform, Transport, thrift, crouton_thrift } from '../platform_abstraction_layer';
 import { UserException, InternalException } from './exceptions';
 import SpanImp from './span_imp';
-import TraceContextImp from './trace_context_imp';
 import * as Constants from '../constants';
 import globals from './globals';
 
@@ -18,6 +18,8 @@ const util          = require('./util/util');
 const LogBuilder    = require('./log_builder');
 const ClockState    = require('./util/clock_state');
 const packageObject = require('../../package.json');
+
+const LIGHTSTEP_CARRIER_PREFIX = 'ot-lightstep-'
 
 const DEFAULT_SERVICE_PORT_SECURE   = 443;
 const DEFAULT_SERVICE_PORT_INSECURE = 80;
@@ -138,60 +140,131 @@ export default class TracerImp extends EventEmitter {
         return new TracerImp(opts);
     }
 
-    // TODO: Unclear what the OpenTracing specification wants here.  This
-    // implementation is a best-guess approximation that's likely not right.
-    // The spec refers to text and binary representations, but what does
-    // "binary" mean in JavaScript without making assumptions about protocols,
-    // transports, and platforms?
-    encodeTraceContext(traceContext) {
-        return traceContext.encode();
-    }
-
-    decodeTraceContext(obj) {
-        let traceContext = new TraceContextImp();
-        traceContext.decode(obj);
-        return traceContext;
-    }
-
-    newRootTraceContext() {
-        let traceGuid = this._platform.generateUUID();
-        let traceContext = new TraceContextImp(traceGuid);
-        return traceContext;
-    }
-
-    newChildTraceContext(parentContext) {
-        let guid = this._platform.generateUUID();
-        let childContext = parentContext.clone();
-        childContext.setSpanGuid(guid);
-        childContext.setParentSpanGuid(parentContext.spanGuid());
-
-        // TODO: given only a TraceContext, how would it be determined what tags
-        // should be assinged to the child (which is what the Go interface
-        // implies should be done here)?
-        return [ childContext, {} ];
-    }
-
     startSpan(fields) {
         let spanImp = new SpanImp(this);
-        spanImp.setOperation(fields.operationName);
+        spanImp.setFields(fields);
 
         this.emit('start_trace', spanImp);
-
         return spanImp;
     }
 
-    joinTrace(operationName, parentContext) {
-        let pair = this.newChildTraceContext(parentContext);
-        let childContext = pair[0];
-        let spanImp = new SpanImp(this, childContext);
-        spanImp.setOperation(operationName);
-        return spanImp;
+    inject(span, format, carrier) {
+        let baggage = span.getBaggage();
+        let traceGUID = span.traceGUID();
+        let parentGUID = span.parentGUID();
+
+        switch (format) {
+
+        case OpenTracing.FORMAT_SPLIT_TEXT:
+
+            carrier.tracerState[LIGHTSTEP_CARRIER_PREFIX+'span_guid'] = span.guid();
+            if (traceGUID) {
+                carrier.tracerState[LIGHTSTEP_CARRIER_PREFIX+'trace_guid'] = traceGUID;
+            }
+            if (parentGUID) {
+                carrier.tracerState[LIGHTSTEP_CARRIER_PREFIX+'parent_guid'] = parentGUID;
+            }
+            for (let key in baggage) {
+                carrier.baggage[LIGHTSTEP_CARRIER_PREFIX + key] = baggage[key];
+            }
+            break;
+
+        // The binary encoding here is optimized for correctness and uniformity
+        // across platforms: it is not efficient.
+        case OpenTracing.FORMAT_SPLIT_BINARY:
+            let temp = {
+                tracerState : {},
+                baggage : {},
+            };
+
+            temp.tracerState[LIGHTSTEP_CARRIER_PREFIX+'span_guid'] = span.guid();
+            if (traceGUID) {
+                carrier.tracerState[LIGHTSTEP_CARRIER_PREFIX+'trace_guid'] = traceGUID;
+            }
+            if (parentGUID) {
+                temp.tracerState[LIGHTSTEP_CARRIER_PREFIX+'parent_guid'] = parentGUID;
+            }
+            for (let key in baggage) {
+                temp.baggage[LIGHTSTEP_CARRIER_PREFIX + key] = baggage[key];
+            }
+
+            carrier.tracerState = this._objectToUint8Array(temp.tracerState);
+            carrier.baggage = this._objectToUint8Array(temp.baggage);
+            break;
+        default:
+            this._internalErrorf('Unknown format: %s', format);
+            break;
+        }
     }
 
-    startSpanWithContext(operationName, traceContext) {
-        let spanImp = new SpanImp(this, traceContext);
-        spanImp.setOperation(operationName);
-        return spanImp;
+    join(operationName, format, carrier) {
+        // Simplify the logic by converting the binary carrier to a split text
+        // carrier.
+        if (format === OpenTracing.FORMAT_SPLIT_BINARY) {
+            let splitText = new OpenTracing.SplitTextCarrier();
+            splitText.tracerState = this._uint8ArrayToObject(carrier.tracerState);
+            splitText.baggage = this._uint8ArrayToObject(carrier.baggage);
+            format = OpenTracing.FORMAT_SPLIT_TEXT;
+            carrier = splitText;
+        }
+
+        // Create the empty, raw span
+        let span = new SpanImp(this);
+        span.setOperationName(operationName);
+
+        switch (format) {
+
+            // Iterate over the contents of the carrier and set the properties
+            // accordingly.
+        case OpenTracing.FORMAT_SPLIT_TEXT:
+            for (let key in carrier.tracerState) {
+                let value = carrier.tracerState[key];
+
+                if (key.substr(0, LIGHTSTEP_CARRIER_PREFIX.length) !== LIGHTSTEP_CARRIER_PREFIX) {
+                    continue;
+                }
+                let suffix = key.substr(LIGHTSTEP_CARRIER_PREFIX.length);
+
+                switch (suffix) {
+                case 'trace_guid':
+                    span.setFields({ trace_guid : value });
+                    break;
+                case 'span_guid':
+                    // Transfer the carrier's "span_guid" to be the parent of this
+                    // new span
+                    span.setFields({ parent_guid : value });
+                    break;
+                case 'parent_guid':
+                    // Ignore
+                    break;
+                default:
+                    this._internalErrorf('Unrecognized carrier key with recognized prefix. Ignoring.');
+                    break;
+                }
+            }
+            for (let key in carrier.baggage) {
+                let value = carrier.baggage[key];
+                if (key.substr(0, LIGHTSTEP_CARRIER_PREFIX.length) !== LIGHTSTEP_CARRIER_PREFIX) {
+                    continue;
+                }
+                let suffix = key.substr(LIGHTSTEP_CARRIER_PREFIX.length);
+                span.setBaggageItem(suffix, value);
+            }
+            break;
+
+        default:
+            this._internalErrorf('Unknown format: %s', format);
+            break;
+        }
+
+        return span;
+    }
+
+    flush (done) {
+        if (arguments.length === 0) {
+            done = function() {};
+        }
+        this._flushReport(false, done);
     }
 
     //-----------------------------------------------------------------------//
@@ -431,14 +504,65 @@ export default class TracerImp extends EventEmitter {
     // Spans
     //-----------------------------------------------------------------------//
 
-    // TODO: Deprecate
-    span(name, context) {
-        let handle = new SpanImp(this, context);
-        handle.operation(name);
+    // TODO: Remove once this is no longer used.
+    span(name) {
+        let handle = new SpanImp(this);
+        handle.setOperationName(name);
 
         this.emit('span_started', handle);
 
         return handle;
+    }
+
+    //-----------------------------------------------------------------------//
+    // Encoding / decoding
+    //-----------------------------------------------------------------------//
+
+    _objectToUint8Array(obj) {
+        let jsonString;
+        try {
+            // encodeURIComponent() is a *very* inefficient, but simple and
+            // well-supported way to avoid having to think about Unicode in
+            // in the conversion to a UInt8Array.
+            //
+            // Writing multiple bytes for String.charCodeAt and
+            // String.codePointAt would be an alternate approach; again,
+            // simplicitly is being preferred over efficiency for the moment.
+            jsonString = encodeURIComponent(JSON.stringify(obj));
+        } catch (e) {
+            this._internalErrorf('Could not binary encode carrier data.');
+            return null;
+        }
+
+        let buffer = new ArrayBuffer(jsonString.length);
+        let view = new Uint8Array(buffer);
+        for (let i = 0; i < jsonString.length; i++) {
+            let code = jsonString.charCodeAt(i);
+            if (!(code >= 0 && code <= 255)) {
+                this._internalErrorf('Unexpected character code');
+                return null;
+            }
+            view[i] =code;
+        }
+        return view;
+    }
+
+    _uint8ArrayToObject(arr) {
+        if (!arr) {
+            this._internalErrorf('Array is null');
+            return null;
+        }
+
+        let jsonString = '';
+        for (let i = 0; i < arr.length; i++) {
+            jsonString += String.fromCharCode(arr[i]);
+        }
+        try {
+            return JSON.parse(decodeURIComponent(jsonString));
+        } catch (e) {
+            this._internalErrorf('Could not decode binary data.');
+            return null;
+        }
     }
 
     //-----------------------------------------------------------------------//
@@ -586,7 +710,7 @@ export default class TracerImp extends EventEmitter {
     //      to exit or otherwise wants the report to be sent as quickly and
     //      low-overhead as possible.
     //
-    flush(detached) {
+    _flush(detached) {
         detached = detached || false;
 
         if (this._options.disabled) {
@@ -623,7 +747,7 @@ export default class TracerImp extends EventEmitter {
         // the 'beforeExit' event to be re-emitted when those callbacks finish.
         let finalFlush = () => {
             this._internalInfof("Final flush before exit.");
-            this.flush(true);
+            this._flushReport(true);
         };
         let stopReporting = () => { this._stopReportingLoop() };
         this._platform.onBeforeExit(_.once(stopReporting));
@@ -741,6 +865,7 @@ export default class TracerImp extends EventEmitter {
             }));
         }
 
+        let timestampOffset = this._useClockState ? clockOffsetMicros : 0;
         let now = this._platform.nowMicros();
         let report = new crouton_thrift.ReportRequest({
             runtime         : this._thriftRuntime,
@@ -749,6 +874,7 @@ export default class TracerImp extends EventEmitter {
             log_records     : logRecords,
             span_records    : spanRecords,
             counters        : thriftCounters,
+            timestamp_offset_micros : timestampOffset,
         });
 
         this.emit("prereport", report);
