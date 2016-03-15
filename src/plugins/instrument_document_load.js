@@ -36,27 +36,31 @@ class InstrumentPageLoad {
             // the span yet.
             return;
         }
+
         if (!this._span) {
             this._span = Tracer.startSpan('document/load');
+            Tracer.imp().addActiveRootSpan(this._span.imp());
         }
 
         let span = this._span;
         let state = document.readyState;
         let payload = undefined;
-
         if (state === 'complete') {
             payload = {};
             if (window.performance && performance.timing) {
                 this._addTimingSpans(span, performance.timing);
                 payload['window.performance.timing'] = performance.timing;
             }
+
         }
 
-        span.imp().info(`document readystatechange ${state}`, payload);
+        span.logEvent(`document.readystatechange ${state}`, payload);
 
         if (state === 'complete') {
+            Tracer.imp().removeActiveRootSpan(span.imp());
             span.finish();
         }
+
     }
 
     _copyNavigatorProperties(nav) {

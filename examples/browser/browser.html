@@ -1,39 +1,113 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Example</title>
+        <title>LightStep - Simple Browser Example</title>
+        <style>
+            .main {
+                max-width : 720px;
+                margin    : 32px auto;
+            }
+            textarea {
+                width      : 100%;
+                min-height : 40em;
+            }
+        </style>
     </head>
     <body>
-        <h1>Example</h1>
-        <button id="button">Click here</button>
+        <div class="main">
+            <h1>LightStep: Simple Browser Example</h1>
+            <p>
+                In this trivial example, a request is made to the public GitHub
+                API to get info about the given username. The request is traced
+                and sent to LightStep.
+            </p>
+            <input id="username" type="text" placeholder="GitHub Username" value="lightstep"><br />
+            <button id="span-button">Get GitHub info</button>
 
-        <script type="text/javascript" src="../../dist/lightstep.js"></script>
+            <h3>Results</h3>
+            <textarea id='results'></textarea>
+        </div>
+
+        <!--
+            Include the standard OpenTracing APIs and the LightStep bindings.
+        -->
+        <script type="text/javascript" src="opentracing-browser.min.js"></script>
+        <script type="text/javascript" src="../../dist/lightstep-tracer.js"></script>
+
+        <!--
+            Add a quick example script using OpenTracing and LightStep
+        -->
         <script type="text/javascript">
         <!--
-        var Tracer = LightStep;
-        Tracer.options({
-            access_token   : "{your_access_token}",
-            group_name     : "js-example/browser",
-            debug          : true,
-            log_to_console : true,
-            verbosity      : 2,
-        });
 
-        document.getElementById('button').onclick = function() {
-            var span = Tracer.span("button_press");
-            span.infof("The button was pressed.");
-            setTimeout(function() {
-                span.end();
-            }, 250 + Math.floor(Math.random() * 750));
+        //
+        // Initialize the OpenTracing APIs to use the LightStep binding
+        //
+        Tracer.initGlobalTracer(LightStep.tracer({
+            // NOTE: this will need to be replaced with your project access
+            // token in order to see the reported spans on the LightStep app.
+            access_token   : '{your_access_token}',
+
+            group_name     : 'lightstep-tracer/examples/browser',
+        }));
+
+        //
+        // Add a button to send the request to GitHub
+        //
+        var username = document.getElementById('username');
+        var button = document.getElementById('span-button');
+        var results = document.getElementById('results');
+        button.onclick = function() {
+            // Start the span as soon as the button is clicked
+            var span = Tracer.startSpan('button_press');
+
+            // Additional data can be attached to span in the form of events
+            span.logEvent('onclick', {
+                message   : 'About to make XHR to GitHub',
+                username  : username.value,
+            });
+
+            // Tracing is most useful for asynchronous code and concurrent
+            // events.  A simple XHR to the GitHub public API used here as demo.
+            //
+            // This will record on a single span, not multi-level trace, but
+            // should help demonstrate the basics!
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'https://api.github.com/users/' + username.value);
+            xhr.send(null);
+            xhr.onreadystatechange = function () {
+                var DONE = 4; // readyState 4 means the request is done.
+                var OK = 200; // status 200 is a successful return.
+
+                // The request is done.  Log the results and finish the span!
+                if (xhr.readyState === DONE) {
+
+                    if (xhr.status === OK) {
+                        results.value = xhr.responseText;
+
+                        // The result should be JSON, so send the payload in
+                        // parsed, semi-structured format if we can.
+                        try {
+                            span.logEvent('results', {
+                                //result  : JSON.parse(xhr.responseText),
+                                result  : xhr.responseText,
+                            });
+                        } catch (e) {
+                            span.logEvent('parse_failed', {
+                                message   : 'GitHub did not return valid JSON',
+                                text      : xhr.responseText,
+                                exception : e,
+                            });
+                        }
+                    } else {
+                        // An error occurred during the request.
+                        results.value = 'Error: ' + xhr.status;
+                    }
+                    span.finish();
+                }
+            };
         };
 
-        setInterval(function() {
-            var span = Tracer.span("example/span");
-            span.infof("This is a test log.");
-            setTimeout(function() {
-                span.end();
-            }, 50 + Math.floor(Math.random() * 500));
-        }, 2000);
         -->
         </script>
     </body>

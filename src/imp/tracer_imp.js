@@ -19,7 +19,8 @@ const LogBuilder    = require('./log_builder');
 const ClockState    = require('./util/clock_state');
 const packageObject = require('../../package.json');
 
-const LIGHTSTEP_CARRIER_PREFIX = 'ot-lightstep-'
+const CARRIER_TRACER_STATE_PREFIX = 'ot-tracer-';
+const CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
 
 const DEFAULT_SERVICE_PORT_SECURE   = 443;
 const DEFAULT_SERVICE_PORT_INSECURE = 80;
@@ -80,6 +81,10 @@ export default class TracerImp extends EventEmitter {
         this._reportYoungestMicros = now;
         this._reportTimer = null;
         this._reportErrorStreak = 0;    // Number of consecuetive errors
+
+        // Set addActiveRootSpan() for detail
+        this._activeRootSpanSet = {};
+        this._activeRootSpan = null;
 
         // For clock skew adjustment.
         this._useClockState = true;
@@ -157,15 +162,13 @@ export default class TracerImp extends EventEmitter {
 
         case OpenTracing.FORMAT_SPLIT_TEXT:
 
-            carrier.tracerState[LIGHTSTEP_CARRIER_PREFIX+'span_guid'] = span.guid();
+            carrier.tracerState[CARRIER_TRACER_STATE_PREFIX+'spanid'] = span.guid();
             if (traceGUID) {
-                carrier.tracerState[LIGHTSTEP_CARRIER_PREFIX+'trace_guid'] = traceGUID;
+                carrier.tracerState[CARRIER_TRACER_STATE_PREFIX+'traceid'] = traceGUID;
             }
-            if (parentGUID) {
-                carrier.tracerState[LIGHTSTEP_CARRIER_PREFIX+'parent_guid'] = parentGUID;
-            }
+            carrier.tracerState[CARRIER_TRACER_STATE_PREFIX+'sampled'] = "true";
             for (let key in baggage) {
-                carrier.baggage[LIGHTSTEP_CARRIER_PREFIX + key] = baggage[key];
+                carrier.baggage[CARRIER_BAGGAGE_PREFIX + key] = baggage[key];
             }
             break;
 
@@ -177,15 +180,13 @@ export default class TracerImp extends EventEmitter {
                 baggage : {},
             };
 
-            temp.tracerState[LIGHTSTEP_CARRIER_PREFIX+'span_guid'] = span.guid();
+            temp.tracerState[CARRIER_TRACER_STATE_PREFIX+'spanid'] = span.guid();
             if (traceGUID) {
-                carrier.tracerState[LIGHTSTEP_CARRIER_PREFIX+'trace_guid'] = traceGUID;
+                carrier.tracerState[CARRIER_TRACER_STATE_PREFIX+'traceid'] = traceGUID;
             }
-            if (parentGUID) {
-                temp.tracerState[LIGHTSTEP_CARRIER_PREFIX+'parent_guid'] = parentGUID;
-            }
+            temp.tracerState[CARRIER_TRACER_STATE_PREFIX+'sampled'] = "true";
             for (let key in baggage) {
-                temp.baggage[LIGHTSTEP_CARRIER_PREFIX + key] = baggage[key];
+                temp.baggage[CARRIER_BAGGAGE_PREFIX + key] = baggage[key];
             }
 
             carrier.tracerState = this._objectToUint8Array(temp.tracerState);
@@ -219,23 +220,19 @@ export default class TracerImp extends EventEmitter {
         case OpenTracing.FORMAT_SPLIT_TEXT:
             for (let key in carrier.tracerState) {
                 let value = carrier.tracerState[key];
-
-                if (key.substr(0, LIGHTSTEP_CARRIER_PREFIX.length) !== LIGHTSTEP_CARRIER_PREFIX) {
+                if (key.substr(0, CARRIER_TRACER_STATE_PREFIX.length) !== CARRIER_TRACER_STATE_PREFIX) {
                     continue;
                 }
-                let suffix = key.substr(LIGHTSTEP_CARRIER_PREFIX.length);
+                let suffix = key.substr(CARRIER_TRACER_STATE_PREFIX.length);
 
                 switch (suffix) {
-                case 'trace_guid':
+                case 'traceid':
                     span.setFields({ trace_guid : value });
                     break;
-                case 'span_guid':
+                case 'spanid':
                     // Transfer the carrier's "span_guid" to be the parent of this
                     // new span
                     span.setFields({ parent_guid : value });
-                    break;
-                case 'parent_guid':
-                    // Ignore
                     break;
                 default:
                     this._internalErrorf('Unrecognized carrier key with recognized prefix. Ignoring.');
@@ -244,10 +241,10 @@ export default class TracerImp extends EventEmitter {
             }
             for (let key in carrier.baggage) {
                 let value = carrier.baggage[key];
-                if (key.substr(0, LIGHTSTEP_CARRIER_PREFIX.length) !== LIGHTSTEP_CARRIER_PREFIX) {
+                if (key.substr(0, CARRIER_BAGGAGE_PREFIX.length) !== CARRIER_BAGGAGE_PREFIX) {
                     continue;
                 }
-                let suffix = key.substr(LIGHTSTEP_CARRIER_PREFIX.length);
+                let suffix = key.substr(CARRIER_BAGGAGE_PREFIX.length);
                 span.setBaggageItem(suffix, value);
             }
             break;
@@ -273,6 +270,15 @@ export default class TracerImp extends EventEmitter {
 
     guid() {
         return this._runtimeGUID;
+    }
+
+    // Call to generate a new Trace GUID
+    generateTraceGUIDForRootSpan() {
+        let guid = this._platform.generateUUID();
+        if (this._activeRootSpan) {
+            guid = this._activeRootSpan.traceGUID();
+        }
+        return guid;
     }
 
     // TODO: deprecated
@@ -503,6 +509,47 @@ export default class TracerImp extends EventEmitter {
     //-----------------------------------------------------------------------//
     // Spans
     //-----------------------------------------------------------------------//
+
+    // This is a LightStep-specific feature that should be sparingly. It sets
+    // a "global" root span such that spans that would *otherwise* be root span
+    // instead inherit the trace GUID of the active root span. This is best
+    // clarified by example:
+    //
+    // On document load in the browser, an "active root span" is created for
+    // the page load process. Any spans started without an explicit parent
+    // will the document load trace GUID instead of starting a trace GUID.
+    // This implicit root remains active only until the page is done loading.
+    //
+    // Any span adding itself as a root span *must* remove itself along with
+    // calling finish(). This will *not* be done automatically.
+    //
+    // NOTE: currently, only the trace GUID is transferred; it may or may not
+    // make sure to make this a proper parent.
+    //
+    // NOTE: the root span tracking is handled as a set rather than a single
+    // global to avoid conflicts between libraries.
+    addActiveRootSpan(span) {
+        this._activeRootSpanSet[span._guid] = span;
+        this._setActiveRootSpanToYoungest();
+    }
+
+    removeActiveRootSpan(span) {
+        delete this._activeRootSpanSet[span._guid];
+        this._setActiveRootSpanToYoungest();
+    }
+
+    _setActiveRootSpanToYoungest() {
+        // Set the _activeRootSpan to the youngest of the roots in case of
+        // multiple.
+        this._activeRootSpan = null;
+        for (let guid in this._activeRootSpanSet) {
+            let span = this._activeRootSpanSet[guid];
+            if (!this._activeRootSpan ||
+                span._beginMicros > this._activeRootSpan._beginMicros) {
+                this._activeRootSpan = span;
+            }
+        }
+    }
 
     // TODO: Remove once this is no longer used.
     span(name) {

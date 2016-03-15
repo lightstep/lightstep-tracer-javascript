@@ -84,7 +84,7 @@ export default class SpanImp {
         this._ended           = false;
 
         this._guid            = tracer._platform.generateUUID();
-        this._traceGUID       = null; // <-- TODO
+        this._traceGUID       = tracer.generateTraceGUIDForRootSpan();
         this._operation       = '';
         this._tags            = {};
         this._baggage         = {};
@@ -116,8 +116,6 @@ export default class SpanImp {
     }
 
     setParentGUID(guid) {
-        if (guid === undefined)
-         throw Error();
         this._tags['parent_span_guid'] = coerce.toString(guid);
     }
 
@@ -150,7 +148,9 @@ export default class SpanImp {
                     this._traceGUID = coerce.toString(value);
                     break;
                 case 'parent':
-                    this.setParentGUID(value.imp().guid());
+                    if (value) {
+                        this.parent(value.imp());
+                    }
                     break;
                 case 'parent_guid':
                     this.setParentGUID(value);
@@ -186,6 +186,7 @@ export default class SpanImp {
             return;
         }
         this.setParentGUID(parentSpan.guid());
+        this._traceGUID = parentSpan.traceGUID();
     }
 
     span(operation) {
@@ -201,6 +202,7 @@ export default class SpanImp {
                 child._joinIDs[key] = true;
             }
         }
+        child.parent(this);
         return child;
     }
 
@@ -312,7 +314,7 @@ export default class SpanImp {
         // Explicitly set the trace GUID as a join ID
         if (this._traceGUID) {
             joinIDs.push(new crouton_thrift.TraceJoinId({
-                TraceKey : 'trace_guid',
+                TraceKey : 'join:trace_guid',
                 Value    : coerce.toString(this._traceGUID),
             }));
         }

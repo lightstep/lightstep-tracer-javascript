@@ -1,24 +1,24 @@
-
 // Capture the proxied values as soon as possible in case there are
 // multiple layers of instrumentation.
 let proxied = {};
 if (typeof window === "object" && typeof window.XMLHttpRequest !== "undefined") {
     proxied = {
-        XMLHttpRequest : XMLHttpRequest,
-        open           : XMLHttpRequest.prototype.open,
-        send           : XMLHttpRequest.prototype.send,
+        XMLHttpRequest   : XMLHttpRequest,
+        open             : XMLHttpRequest.prototype.open,
+        send             : XMLHttpRequest.prototype.send,
+        setRequestHeader : XMLHttpRequest.prototype.setRequestHeader,
     };
 }
 
 
 // Automatically create spans for all XMLHttpRequest objects.
 //
-// NOTE: this code currently works only with a single runtime.
+// NOTE: this code currently works only with a single Tracer.
 //
 class InstrumentXHR {
     constructor() {
         this._enabled = this._isValidContext();
-        this._runtime = null;
+        this._tracer = null;
         this._handleOptions = this._handleOptions.bind(this);
 
         if (!this._enabled) {
@@ -30,22 +30,23 @@ class InstrumentXHR {
         return "instrument_xhr";
     }
 
-    start(runtime) {
+    start(tracer) {
         if (!this._enabled) {
             return;
         }
-        this._runtime = runtime;
+        this._tracer = tracer;
 
         let proto = proxied.XMLHttpRequest.prototype;
+        proto.setRequestHeader = this._instrumentSetRequestHeader();
         proto.open = this._instrumentOpen();
         proto.send = this._instrumentSend();
 
-        runtime.addOption("xhr_url_exclusion_patterns", { type : "any", defaultValue: [] });
-        this._addServiceHostToExclusions(runtime.options());
-        runtime.on('options', this._handleOptions);
+        tracer.addOption("xhr_url_exclusion_patterns", { type : "any", defaultValue: [] });
+        this._addServiceHostToExclusions(tracer.options());
+        tracer.on('options', this._handleOptions);
     }
 
-    stop(runtime) {
+    stop(tracer) {
         if (!this._enabled) {
             return;
         }
@@ -84,7 +85,7 @@ class InstrumentXHR {
             set.push(new RegExp('^https://' + host));
         }
         let patterns = opts.xhr_url_exclusion_patterns.concat(set);
-        this._runtime.options({ xhr_url_exclusion_patterns : patterns });
+        this._tracer.options({ xhr_url_exclusion_patterns : patterns });
     }
 
     _isValidContext() {
@@ -100,17 +101,23 @@ class InstrumentXHR {
         return true;
     }
 
+    _instrumentSetRequestHeader() {
+        return function (header, value) {
+            this.__requestHeaders = this.__requestHeaders || {};
+            this.__requestHeaders[header] = value;
+            return proxied.setRequestHeader.apply(this, arguments);
+        };
+    }
+
     _instrumentOpen() {
         let self = this;
-        let tracer = this._runtime;
+        let tracer = this._tracer;
 
         return function (method, url, asyncArg, user, password) {
             if (!self._shouldTrace(tracer, this, url)) {
                 return proxied.open.apply(this, arguments);
             }
 
-            let span = tracer.span('XMLHttpRequest');
-            this.__tracer_span = span;
             this.__tracer_url = url;
 
             let tags = {
@@ -129,23 +136,24 @@ class InstrumentXHR {
             }
             openPayload.cookies = getCookies();
 
-            span.info(`XMLHttpRequest open ${method} ${url}`, openPayload);
-            span.addTags(tags);
-
             // Note: async defaults to true
             let async = (asyncArg === undefined ? true : asyncArg);
+            let syncSpan = undefined;
             if (async) {
                 this.addEventListener('readystatechange', function() {
-                    if (this.readyState == 1) {
-                        span.info('XMLHttpRequest unsent (readyState=0)');
+                    if (this.readyState == 0) {
+                        // Do nothing (the XHR span will not be ready yet)
                     } else if (this.readyState == 1) {
-                        span.info('XMLHttpRequest opened (readyState=1)');
+                        // Do nothing (the XHR span will not be ready yet)
                     } else if (this.readyState == 2) {
+                        let span = self._getXHRSpan(this);
+                        span.info(`XMLHttpRequest: ${method} ${url}`, openPayload);
+                        span.addTags(tags);
                         span.info('XMLHttpRequest headers received (readyState=2)', {
                             headers : getResponseHeaders(this),
                         });
                     } else if (this.readyState == 3) {
-                            span.info('XMLHttpRequest loading (readyState=3)');
+                        self._getXHRSpan(this).info('XMLHttpRequest loading (readyState=3)');
                     } else  if (this.readyState == 4) {
                         let responseType = this.responseType;
                         let payload = {
@@ -173,6 +181,7 @@ class InstrumentXHR {
                         }
 
                         let prefix = `XMLHttpRequest ${tags.method} done (readyState=4), status ${this.status}`;
+                        let span = self._getXHRSpan(this);
                         if (!(this.status > 99)) {
                             span.error(`${prefix} (unknown)`, payload);
                         } else if (this.status < 199) {
@@ -193,11 +202,13 @@ class InstrumentXHR {
                         span.info(`XMLHttpRequest readyState=${this.readyState}`);
                     }
                 });
+            } else {
+                syncSpan = self._getXHRSpan(this);
             }
 
             let result = proxied.open.apply(this, arguments);
             if (!async) {
-                span.end();
+                syncSpan.end();
             }
             return result;
         };
@@ -205,13 +216,14 @@ class InstrumentXHR {
 
     _instrumentSend() {
         let self = this;
-        let tracer = this._runtime;
+        let tracer = this._tracer;
         return function() {
             let url = this.__tracer_url;
             if (!self._shouldTrace(tracer, this, this.__tracer_url)) {
                 return proxied.send.apply(this, arguments);
             }
-            let span = this.__tracer_span;
+
+            let span = self._getXHRSpan(this);
             if (!span) {
                 return proxied.send.apply(this, arguments);
             }
@@ -232,6 +244,29 @@ class InstrumentXHR {
             span.info(`XMLHttpRequest send${lenStr}`, { data : data });
             return proxied.send.apply(this, arguments);
         }
+    }
+
+    _getXHRSpan(xhr) {
+        var self = this;
+
+        // Check if we've already joined successfully; if so, return early.
+        if (xhr.__xhr_span) {
+            return xhr.__xhr_span;
+        }
+
+        // Join via the recorded request headers.
+        //
+        // NOTE: we would like to re-inject `span` into the headers (swapping
+        // out the ones we joined with) but CORS restrictions prevent us from
+        // doing so.
+        let splitTextCarrier = new Tracer.SplitTextCarrier();
+        splitTextCarrier.tracerState = xhr.__requestHeaders;
+        splitTextCarrier.baggage = xhr.__requestHeaders;
+        let span = self._tracer.join('XMLHttpRequest', Tracer.FORMAT_SPLIT_TEXT, splitTextCarrier);
+        if (span) {
+            xhr.__xhr_span = span;
+        }
+        return span;
     }
 
     _shouldTrace(tracer, xhr, url) {

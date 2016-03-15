@@ -40,25 +40,26 @@ it("should emit a 'span_added' event when each span ends", function() {
 it("should handle inject / join to split text carriers correctly" , function() {
     var span = Tracer.startSpan('my_span');
     span.setBaggageItem('footwear', 'sandals');
-    span.setBaggageItem('credit_card', 'visa');
+    span.setBaggageItem('creditcard', 'visa');
 
     var carrier = new Tracer.SplitTextCarrier();
     Tracer.inject(span, Tracer.FORMAT_SPLIT_TEXT, carrier);
 
-    expect(carrier.tracerState['ot-lightstep-span_guid']).to.equal(span.imp().guid());
-    expect(carrier.baggage['ot-lightstep-footwear']).to.equal('sandals');
-    expect(carrier.baggage['ot-lightstep-credit_card']).to.equal('visa');
+    expect(carrier.tracerState['ot-tracer-traceid']).to.equal(span.imp().traceGUID());
+    expect(carrier.tracerState['ot-tracer-spanid']).to.equal(span.imp().guid());
+    expect(carrier.baggage['ot-baggage-footwear']).to.equal('sandals');
+    expect(carrier.baggage['ot-baggage-creditcard']).to.equal('visa');
 
     var naps = Tracer.join('naps_ym', Tracer.FORMAT_SPLIT_TEXT, carrier);
     expect(naps.imp().parentGUID()).to.equal(span.imp().guid());
     expect(naps.getBaggageItem('footwear')).to.equal('sandals');
-    expect(naps.getBaggageItem('credit_card')).to.equal('visa');
+    expect(naps.getBaggageItem('creditcard')).to.equal('visa');
 });
 
 it("should handle inject / join to binary carriers correctly" , function() {
     var span = Tracer.startSpan('my_span');
     span.setBaggageItem('footwear', 'sandals');
-    span.setBaggageItem('credit_card', 'visa');
+    span.setBaggageItem('creditcard', 'visa');
 
     var carrier = new Tracer.BinaryCarrier();
     Tracer.inject(span, Tracer.FORMAT_SPLIT_BINARY, carrier);
@@ -66,5 +67,5 @@ it("should handle inject / join to binary carriers correctly" , function() {
     var naps = Tracer.join('naps_ym', Tracer.FORMAT_SPLIT_BINARY, carrier);
     expect(naps.imp().parentGUID()).to.equal(span.imp().guid());
     expect(naps.getBaggageItem('footwear')).to.equal('sandals');
-    expect(naps.getBaggageItem('credit_card')).to.equal('visa');
+    expect(naps.getBaggageItem('creditcard')).to.equal('visa');
 });

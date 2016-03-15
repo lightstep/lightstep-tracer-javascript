@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "main": "index.js",
   "dependencies": {
-    "opentracing": "^0.1.0"
+    "opentracing": "*"
   }
 }
