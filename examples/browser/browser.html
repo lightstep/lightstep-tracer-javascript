@@ -40,14 +40,14 @@
         <script type="text/javascript">
         <!--
 
+        // Initialize the OpenTracing APIs to use the LightStep bindings
         //
-        // Initialize the OpenTracing APIs to use the LightStep binding
+        // NOTE: the access token will need to be replaced with your project's access
+        // token. The group_name can be an identifier you wish to use to identify the
+        // service or process.
         //
         Tracer.initGlobalTracer(LightStep.tracer({
-            // NOTE: this will need to be replaced with your project access
-            // token in order to see the reported spans on the LightStep app.
             access_token   : '{your_access_token}',
-
             group_name     : 'lightstep-tracer/examples/browser',
         }));
 
@@ -57,23 +57,114 @@
         var username = document.getElementById('username');
         var button = document.getElementById('span-button');
         var results = document.getElementById('results');
+
         button.onclick = function() {
-            // Start the span as soon as the button is clicked
-            var span = Tracer.startSpan('button_press');
+            printUserInfo(username.value);
+        };
 
-            // Additional data can be attached to span in the form of events
-            span.logEvent('onclick', {
-                message   : 'About to make XHR to GitHub',
-                username  : username.value,
+        function printUserInfo(username) {
+
+            // Start the outer operation span
+            var span = Tracer.startSpan('printUserInfo');
+            span.logEvent('query_started');
+
+            queryUserInfo(span, username, function(err, user) {
+                span.logEvent('query_finished', user);
+
+                var text = '';
+                text += 'User: ' + user.login + '\n';
+                text += 'Type: ' + user.type + '\n';
+                text += 'Public repositories: ' + user.repoNames.length + '\n';
+                for (var i = 0; i < user.repoNames.length; i++) {
+                    text += '  ' + user.repoNames[i] + '\n';
+                }
+                text += 'Recent events: ' + user.recentEvents + '\n';
+                for (var key in user.eventCounts) {
+                    text += '  ' + key + ': ' + user.eventCounts[key] + '\n';
+                }
+                results.value = text;
+
+                // Lastly, log the remaining rate limit data to see how many more times
+                // the public GitHub APIs can be queried!
+                httpGet(span, 'https://api.github.com/rate_limit', function (err, json) {
+                    if (!err) {
+                        span.logEvent('rate_limit', json);
+                    } else {
+                        span.logEvent('error', err);
+                    }
+                    span.finish();
+                });
             });
+        }
 
-            // Tracing is most useful for asynchronous code and concurrent
-            // events.  A simple XHR to the GitHub public API used here as demo.
-            //
-            // This will record on a single span, not multi-level trace, but
-            // should help demonstrate the basics!
+        function queryUserInfo(parentSpan, username, callback) {
+            // Aggregated user information across multiple API calls
+            var user = {
+                login        : null,
+                type         : null,
+                repoNames    : [],
+                recentEvents : 0,
+                eventCounts  : {},
+            };
+
+            // Call the callback only when all three API requests finish or on the
+            // first error.
+            var remainingCalls = 3;
+            var next = function (err) {
+                if (err) {
+                    remainingCalls = 0;
+                    return callback(err, null);
+                }
+                remainingCalls--;
+                if (remainingCalls === 0) {
+                    callback(null, user);
+                }
+            };
+
+            // First query the user info for the given username
+            httpGet(parentSpan, 'https://api.github.com/users/' + username, function (err, json) {
+                if (err) {
+                    return next(err);
+                }
+                user.login = json.login;
+                user.type  = json.type;
+
+                // Use the user info to query names of all the user's public repositories
+                httpGet(parentSpan, json.repos_url, function (err, json) {
+                    if (err) {
+                        return next(err);
+                    }
+                    for (var i = 0; i < json.length; i++) {
+                        user.repoNames.push(json[i].name);
+                    }
+                    next(null);
+                });
+
+                // In parallel, query the recent events activity for the user
+                httpGet(parentSpan, json.received_events_url, function (err, json) {
+                    if (err) {
+                        return next(err);
+                    }
+                    user.recentEvents = json.length;
+                    for (var i = 0; i < json.length; i++) {
+                        var eventType = json[i].type;
+                        user.eventCounts[eventType] = user.eventCounts[eventType] || 0;
+                        user.eventCounts[eventType]++;
+                    }
+                    next(null);
+                });
+
+                next(null);
+            });
+        }
+
+        function httpGet(parentSpan, urlString, callback) {
+            // Create a span representing the https request
+            var span = Tracer.startSpan('https.get', { parent : parentSpan });
+            span.setTag('url', urlString);
+
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', 'https://api.github.com/users/' + username.value);
+            xhr.open('GET', urlString);
             xhr.send(null);
             xhr.onreadystatechange = function () {
                 var DONE = 4; // readyState 4 means the request is done.
@@ -82,31 +173,34 @@
                 // The request is done.  Log the results and finish the span!
                 if (xhr.readyState === DONE) {
 
+                    var parsedJSON, err;
                     if (xhr.status === OK) {
-                        results.value = xhr.responseText;
+                        var bodyBuffer = xhr.responseText;
+                        span.logEvent('response_end', {
+                            body   : bodyBuffer,
+                            length : bodyBuffer.length,
+                        });
 
-                        // The result should be JSON, so send the payload in
-                        // parsed, semi-structured format if we can.
                         try {
-                            span.logEvent('results', {
-                                //result  : JSON.parse(xhr.responseText),
-                                result  : xhr.responseText,
-                            });
-                        } catch (e) {
-                            span.logEvent('parse_failed', {
-                                message   : 'GitHub did not return valid JSON',
-                                text      : xhr.responseText,
-                                exception : e,
-                            });
+                            parsedJSON = JSON.parse(bodyBuffer);
+                        } catch (exception) {
+                            err = {
+                                buffer    : bodyBuffer,
+                                exception : exception,
+                            };
+                            span.logEvent('error', err);
                         }
                     } else {
                         // An error occurred during the request.
-                        results.value = 'Error: ' + xhr.status;
+                        err = 'Error: ' + xhr.status;
                     }
+
+                    // Finish the span representing the request
                     span.finish();
+                    callback(err, parsedJSON);
                 }
             };
-        };
+        }
 
         -->
         </script>

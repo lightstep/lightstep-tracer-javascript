@@ -1,58 +1,187 @@
+//
+// node index.js [username]
+//
+// Makes a series of GitHub API calls to return information about the user.
+// Creates a trace with spans for the overall query as well as the individual
+// API requests.
+//
 'use strict';
 
+//
+// Dependencies
+//
+// Note: the LightStep package is included directly. Normally this require()
+// would simply be:
+// var LightStep = require('lightstep');
+//
+var https     = require('https');
+var url       = require('url');
 var Tracer    = require('opentracing');
-var LightStep = require('../../dist/lightstep-tracer-node-debug');
+var LightStep = require('../../dist/lightstep-tracer-node');
 
 //
-// Initialize the OpenTracing APIs to use the LightStep binding
+// The first argument to the script is the GitHub user name
+//
+var username = process.argv[2] || 'lightstep';
+
+// Initialize the OpenTracing APIs to use the LightStep bindings
+//
+// NOTE: the access token will need to be replaced with your project's access
+// token. The group_name can be an identifier you wish to use to identify the
+// service or process.
 //
 Tracer.initGlobalTracer(LightStep.tracer({
-    // NOTE: this will need to be replaced with your project access
-    // token in order to see the reported spans on the LightStep app.
     access_token   : '{your_access_token}',
-
-    // String identifier of the service or process
-    group_name     : 'lightstep-tracer/examples/opentracing',
-
-    // Option to also log events to the console
-    log_to_console : true,
+    group_name     : 'lightstep-tracer/examples/node',
 }));
 
-var span = Tracer.startSpan('test_span');
-span.logEvent('start_span_event', {
-    date : new Date(),
-    message : "Starting span " + Date.now(),
-});
+printUserInfo(username);
 
-function step1() {
-    span.logEvent('step_1');
-    var child = Tracer.startSpan('test_span_child', { parent : span });
-    setTimeout(function() {
-        child.logEvent('message', { message : 'Child span is done.' });
-        child.finish();
-    }, 50 + Math.floor(50 * Math.random()));
-    setTimeout(step2, 150);
-}
-function step2() {
-    span.logEvent('step_2');
-    var child = Tracer.startSpan('test_child_from_context', { parent : span });
-    setTimeout(function() {
-        child.logEvent('message', { message : 'Child span from context is done.' });
-        child.finish();
-    }, 50 + Math.floor(50 * Math.random()));
-    setTimeout(step3, 150);
-}
-function step3() {
-    span.logEvent('message', { message : 'Step 3' });
-    span.logEvent('message', {
-        message : "Ending span " + Date.now(),
-        favorite_bool   : true,
-        favorite_number : 42,
-        favorite_string : "twine",
-        favorite_array  : [ 2, 3, 5, 7, 11, 13, 17 ],
-        favorite_object : new Object,
+//
+// Worker functions
+//
+
+function printUserInfo(username) {
+
+    // Start the outer operation span
+    var span = Tracer.startSpan('printUserInfo');
+    span.logEvent('query_started');
+
+    queryUserInfo(span, username, function(err, user) {
+        span.logEvent('query_finished', user);
+
+        console.log('User: ' + user.login);
+        console.log('Type: ' + user.type);
+        console.log('Public repositories: ' + user.repoNames.length);
+        for (var i = 0; i < user.repoNames.length; i++) {
+            console.log('  ' + user.repoNames[i]);
+        }
+        console.log('Recent events: ' + user.recentEvents);
+        for (var key in user.eventCounts) {
+            console.log('  ' + key + ': ' + user.eventCounts[key]);
+        }
+
+        // Lastly, log the remaining rate limit data to see how many more times
+        // the public GitHub APIs can be queried!
+        httpGet(span, 'https://api.github.com/rate_limit', function (err, json) {
+            span.logEvent('rate_limit', {
+                error : err,
+                json  : json,
+            })
+            span.finish();
+        });
     });
-    span.finish();
 }
 
-setTimeout(step1, 250);
+/**
+ * Make a series GitHub calls and aggregate the data into the `user` object
+ * defined below.
+ */
+function queryUserInfo(parentSpan, username, callback) {
+    // Aggregated user information across multiple API calls
+    var user = {
+        login        : null,
+        type         : null,
+        repoNames    : [],
+        recentEvents : 0,
+        eventCounts  : {},
+    };
+
+    // Call the callback only when all three API requests finish or on the
+    // first error.
+    var remainingCalls = 3;
+    var next = function (err) {
+        if (err) {
+            remainingCalls = 0;
+            return callback(err, null);
+        }
+        remainingCalls--;
+        if (remainingCalls === 0) {
+            callback(null, user);
+        }
+    };
+
+    // First query the user info for the given username
+    httpGet(parentSpan, 'https://api.github.com/users/' + username, function (err, json) {
+        if (err) {
+            return next(err);
+        }
+        user.login = json.login;
+        user.type  = json.type;
+
+        // Use the user info to query names of all the user's public repositories
+        httpGet(parentSpan, json.repos_url, function (err, json) {
+            if (err) {
+                return next(err);
+            }
+            for (var i = 0; i < json.length; i++) {
+                user.repoNames.push(json[i].name);
+            }
+            next(null);
+        });
+
+        // In parallel, query the recent events activity for the user
+        httpGet(parentSpan, json.received_events_url, function (err, json) {
+            if (err) {
+                return next(err);
+            }
+            user.recentEvents = json.length;
+            for (var i = 0; i < json.length; i++) {
+                var eventType = json[i].type;
+                user.eventCounts[eventType] = user.eventCounts[eventType] || 0;
+                user.eventCounts[eventType]++;
+            }
+            next(null);
+        });
+
+        next(null);
+    });
+}
+
+/**
+ * Helper function to make a GET request and return parsed JSON data.
+ */
+function httpGet(parentSpan, urlString, callback) {
+    var dest = url.parse(urlString);
+    var options = {
+        host : dest.hostname,
+        path : dest.path,
+        headers: {
+            // User-Agent is required by the GitHub APIs
+            'User-Agent': 'LightStep Example',
+        }
+    };
+
+    // Create a span representing the https request
+    var span = Tracer.startSpan('https.get', { parent : parentSpan });
+    span.setTag('url', urlString);
+    span.logEvent('options', options);
+
+    return https.get(options, function(response) {
+        var bodyBuffer = '';
+        response.on('data', function(chunk) {
+            bodyBuffer += chunk;
+        });
+        response.on('end', function() {
+            span.logEvent('response_end', {
+                body   : bodyBuffer,
+                length : bodyBuffer.length,
+            });
+
+            var parsedJSON, err;
+            try {
+                parsedJSON = JSON.parse(bodyBuffer);
+            } catch (exception) {
+                err = {
+                    buffer    : bodyBuffer,
+                    exception : exception,
+                };
+                span.logEvent('error', err);
+            }
+
+            // Finish the span representing the request
+            span.finish();
+            callback(err, parsedJSON);
+        });
+    });
+}
