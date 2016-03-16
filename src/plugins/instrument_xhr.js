@@ -1,7 +1,7 @@
-// Capture the proxied values as soon as possible in case there are
-// multiple layers of instrumentation.
 import OpenTracing from 'opentracing';
 
+// Capture the proxied values on script load (i.e. ASAP) in case there are
+// multiple layers of instrumentation.
 let proxied = {};
 if (typeof window === "object" && typeof window.XMLHttpRequest !== "undefined") {
     proxied = {
@@ -12,7 +12,6 @@ if (typeof window === "object" && typeof window.XMLHttpRequest !== "undefined") 
     };
 }
 
-
 // Automatically create spans for all XMLHttpRequest objects.
 //
 // NOTE: this code currently works only with a single Tracer.
@@ -20,6 +19,7 @@ if (typeof window === "object" && typeof window.XMLHttpRequest !== "undefined") 
 class InstrumentXHR {
     constructor() {
         this._enabled = this._isValidContext();
+        this._internalExclusions = [];
         this._tracer = null;
         this._handleOptions = this._handleOptions.bind(this);
 
@@ -43,7 +43,8 @@ class InstrumentXHR {
         proto.open = this._instrumentOpen();
         proto.send = this._instrumentSend();
 
-        tracer.addOption("xhr_url_exclusion_patterns", { type : "any", defaultValue: [] });
+        tracer.addOption('xhr_url_inclusion_patterns', { type : 'array', defaultValue: [ /.*/ ] })
+        tracer.addOption("xhr_url_exclusion_patterns", { type : "array", defaultValue: [] });
         this._addServiceHostToExclusions(tracer.options());
         tracer.on('options', this._handleOptions);
     }
@@ -66,6 +67,10 @@ class InstrumentXHR {
         }
     }
 
+    /**
+     * Ensure that the reports to the collector don't get instrumented as well,
+     * as that recursive instrumentation is more confusing than valuable!
+     */
     _addServiceHostToExclusions(opts) {
         if (opts.service_host.length === 0) {
             return;
@@ -86,10 +91,13 @@ class InstrumentXHR {
         } else if (port == "443") {
             set.push(new RegExp('^https://' + host));
         }
-        let patterns = opts.xhr_url_exclusion_patterns.concat(set);
-        this._tracer.options({ xhr_url_exclusion_patterns : patterns });
+        this._internalExclusions = set;
     }
 
+    /**
+     * Check preconditions for the auto-instrumentation of XHRs to work properly.
+     * There are a lot of potential JavaScript platforms.
+     */
     _isValidContext() {
         if (typeof window === "undefined") {
             return false;
@@ -277,6 +285,21 @@ class InstrumentXHR {
             return false;
         }
         if (!url) {
+            return false;
+        }
+        for (let ex of this._internalExclusions) {
+            if (ex.test(url)) {
+                return false;
+            }
+        }
+        let include = false;
+        for (let inc of opts.xhr_url_inclusion_patterns) {
+            if (inc.test(url)) {
+                include = true;
+                break;
+            }
+        }
+        if (!include) {
             return false;
         }
         for (let ex of opts.xhr_url_exclusion_patterns) {

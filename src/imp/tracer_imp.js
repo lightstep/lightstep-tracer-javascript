@@ -81,6 +81,7 @@ export default class TracerImp extends EventEmitter {
         this._reportYoungestMicros = now;
         this._reportTimer = null;
         this._reportErrorStreak = 0;    // Number of consecuetive errors
+        this._visibleErrorCount = 0;
 
         // Set addActiveRootSpan() for detail
         this._activeRootSpanSet = {};
@@ -364,19 +365,19 @@ export default class TracerImp extends EventEmitter {
 
         case "bool":
             if (value !== true && value !== false) {
-                this._internalWarnf("Invalid boolean option '%s' '%j'", name, value);
+                this._visibleWarnfOnce("Invalid boolean option '%s' '%j'", name, value);
                 return;
             }
             break;
 
         case "int":
             if (valueType !== "number" || Math.floor(value) != value) {
-                this._internalWarnf("Invalid int option '%s' '%j'", name, value);
+                this._visibleWarnfOnce("Invalid int option '%s' '%j'", name, value);
                 return;
             }
             if (desc.min !== undefined && desc.max !== undefined ) {
                 if (!(value >= desc.min && value <= desc.max)) {
-                    this._internalWarnf("Option '%s' out of range '%j' is not between %j and %j", name, value, min, max);
+                    this._visibleWarnfOnce("Option '%s' out of range '%j' is not between %j and %j", name, value, min, max);
                     return;
                 }
             }
@@ -390,13 +391,21 @@ export default class TracerImp extends EventEmitter {
                 value = coerce.toString(value);
                 break;
             default:
-                this._internalWarnf("Invalid string option '%s' '%j'", name, value);
+                this._visibleWarnfOnce("Invalid string option '%s' '%j'", name, value);
+                return;
+            }
+            break;
+
+        case "array":
+            // Per http://stackoverflow.com/questions/4775722/check-if-object-is-array
+            if (Object.prototype.toString.call(value) !== "[object Array]") {
+                this._visibleWarnfOnce("Invalid type for array option %s: found '%s'", name, valueType);
                 return;
             }
             break;
 
         default:
-            this._internalWarnf(`Unknown option type '${desc.type}'`);
+            this._visibleWarnfOnce(`Unknown option type '${desc.type}'`);
             return;
         }
 
@@ -1009,5 +1018,24 @@ export default class TracerImp extends EventEmitter {
         if (this._options.debug) {
             this.logFmt(level, null, prefix + fmt, ...args);
         }
+    }
+
+    /**
+     * Display a user-visible warning - but only once (for all warnings) to
+     * avoid spamming the host application.  Also creates an internal log of
+     * the warning.
+     */
+    _visibleWarnfOnce(fmt, ...args) {
+        this._visibleErrorCount++;
+        if (this._visibleErrorCount === 1) {
+            let msg;
+            try {
+                msg = sprintf(fmt, ...args);
+            } catch (e) {
+                msg = "[FORMAT ERROR]: " + fmt;
+            }
+            console.warn(msg);
+        }
+        this._internalLog("[LightStep:I] ", constants.LOG_INFO, fmt, ...args);
     }
 }

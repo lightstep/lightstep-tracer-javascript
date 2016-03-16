@@ -28,6 +28,26 @@ Tracer.initGlobalTracer(LightStep.tracer({
 
 * **Node**: Node versions >= 0.12 are supported.
 
+## LightStep Initialization Options
+
+### Browser-specific
+
+#### `xhr_url_inclusion_patterns RegExp[]`
+
+The LightStep browser library automatically instruments all XMLHttpRequests (i.e. AJAX requests). This array allows an inclusion list to be specified: only URLs that match one or more of the regular expressions in this list will be considered for auto-instrumentation.
+
+The default value is a single regular expression wildcard matching all strings.
+
+For a given URL to be auto-instrumented, it must match at least one regular expression in `xhr_url_inclusion_patterns` and not match any regular expressions in `xhr_url_exclusion_patterns`.
+
+#### `xhr_url_exclusion_patterns RegExp[]`
+
+The LightStep browser library automatically instruments all XMLHttpRequests (i.e. AJAX requests). This array allows an exclusion list to be specified: a URL matching any of the exclusion patterns will not be instrumented.
+
+The default value is an empty array.
+
+For a given URL to be auto-instrumented, it must match at least one regular expression in `xhr_url_inclusion_patterns` and not match any regular expressions in `xhr_url_exclusion_patterns`.
+
 ## License
 
 [The MIT License](LICENSE).
