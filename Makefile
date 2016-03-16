@@ -1,15 +1,29 @@
+DST_FILES = \
+	dist/lightstep-tracer-node-debug.js \
+	dist/lightstep-tracer-node.js \
+	dist/lightstep-tracer.js \
+	dist/lightstep-tracer.min.js
+SRC_FILES = $(shell find src/ -type f)
+
+
 .PHONY: build
-build:
+build: $(DST_FILES)
+$(DST_FILES) : $(SRC_FILES)
 	npm run webpack
 
 .PHONY: publish
 publish: test test_all
 	npm version patch
+	git add .
+	git commit -m "Increment version to $(shell npm view lightstep-tracer version)"
+	git tag $(shell npm view lightstep-tracer version)
+	git push -u origin master
+	git push -u origin master --tags
 	npm whoami
 	npm publish
 
 .PHONY: test
-test: test_node test_browser
+test: build test_node test_browser
 	echo Running tests
 
 .PHONY: test_quick
@@ -17,25 +31,26 @@ test_quick:
 	npm run webpack-node-debug
 	npm test
 
-.PHONY: test_node
+.PHONY: build test_node
 test_node:
 	npm test
 
-.PHONY: test_browser
+.PHONY: build test_browser
 test_browser:
 	cp node_modules/opentracing/dist/opentracing-browser.js test/dist
 	cp dist/lightstep-tracer.js test/dist
 	cd test && node ../node_modules/webpack/bin/webpack.js unittest_browser.js dist/unittest_browser.bundle.js
 	open unittest.html
 
-# Note: versions < 0.10 are *not* supported.  The 'beforeExit' event has
+# Note: versions < 0.12 are *not* supported.  The 'beforeExit' event has
 # different behavior that does not work with the current implementation.
 .PHONY: test_all
-test_all:
+test_all: build
 	scripts/docker_test.sh latest
+	scripts/docker_test.sh 5.8
 	scripts/docker_test.sh 5.1
 	scripts/docker_test.sh 5.0
-	scripts/docker_test.sh 4.1
+	scripts/docker_test.sh 4.4
 	scripts/docker_test.sh 4.0
 	scripts/docker_test.sh 0.12
 
