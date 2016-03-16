@@ -2,3 +2,4 @@ node_modules/
 dist/*
 tmp-publish
 npm-debug.log
+npm-debug.log.*
