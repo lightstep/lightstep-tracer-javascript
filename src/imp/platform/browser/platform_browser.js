@@ -7,10 +7,10 @@ const kCookieTimeToLiveSeconds = 7 * 24 * 60 * 60;
 
 let nowMicrosImp = (function() {
     // Is a hi-res timer available?
-    if (performance &&
-        performance.now &&
-        performance.timing &&
-        performance.timing.navigationStart) {
+    if (window.performance &&
+        window.performance.now &&
+        window.performance.timing &&
+        window.performance.timing.navigationStart) {
 
         var start = performance.timing.navigationStart;
         return function() {
