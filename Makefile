@@ -14,11 +14,6 @@ $(DST_FILES) : $(SRC_FILES)
 .PHONY: publish
 publish: test test_all
 	npm version patch
-	git add .
-	git commit -m "Increment version to $(shell npm view lightstep-tracer version)"
-	git tag $(shell npm view lightstep-tracer version)
-	git push -u origin master
-	git push -u origin master --tags
 	npm whoami
 	npm publish
 
@@ -40,7 +35,7 @@ test_browser:
 	cp node_modules/opentracing/dist/opentracing-browser.js test/dist
 	cp dist/lightstep-tracer.js test/dist
 	cd test && node ../node_modules/webpack/bin/webpack.js unittest_browser.js dist/unittest_browser.bundle.js
-	open unittest.html
+	cd test && open unittest.html
 
 # Note: versions < 0.12 are *not* supported.  The 'beforeExit' event has
 # different behavior that does not work with the current implementation.
