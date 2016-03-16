@@ -11,11 +11,15 @@ build: $(DST_FILES)
 $(DST_FILES) : $(SRC_FILES)
 	npm run webpack
 
+# NOTE: `npm version` automatically creates a git commit ang git tag for the
+# incremented version
 .PHONY: publish
 publish: test test_all
 	npm version patch
 	npm whoami
 	npm publish
+	git push
+	git push --tags
 
 .PHONY: test
 test: build test_node test_browser
