@@ -3,7 +3,9 @@ DST_FILES = \
 	dist/lightstep-tracer-node.js \
 	dist/lightstep-tracer.js \
 	dist/lightstep-tracer.min.js
-SRC_FILES = $(shell find src/ -type f)
+SRC_FILES = $(shell find src/ -type f) \
+	webpack.config.js \
+	package.json
 
 
 .PHONY: build

@@ -1,8 +1,7 @@
-var webpack = require("webpack");
+var webpack = require('webpack');
 
 const CONFIG   = process.env.BUILD_CONFIG
 const PLATFORM = process.env.BUILD_PLATFORM;
-
 
 //
 // Modulate the webpack settings based on the configuration
@@ -14,18 +13,18 @@ var defines = {
     PLATFORM_BROWSER : false,
 };
 
-var bundlePlatform = "";
-var bundleSuffix = "";
-var libraryTarget = "";
-var target = "";
+var bundlePlatform = '';
+var bundleSuffix = '';
+var libraryTarget = '';
+var target = '';
 var devtool = undefined;
 
 switch (CONFIG) {
-    case "debug":
+    case 'debug':
         defines.DEBUG = true;
-        devtool = "source-map";
+        devtool = 'source-map';
         break;
-    case "prod":
+    case 'prod':
         plugins.push(new webpack.optimize.UglifyJsPlugin({
             minimize: true,
             compress : {
@@ -39,52 +38,52 @@ switch (CONFIG) {
         plugins.push(new webpack.optimize.DedupePlugin());
         break;
     default:
-        console.error("Unexpected BUILD_CONFIG!");
+        console.error('Unexpected BUILD_CONFIG!');
         process.exit(1);
 }
 
 switch (PLATFORM) {
-    case "node":
-        bundlePlatform = "-node";
-        bundleSuffix = (CONFIG === "debug") ? "-debug" : "";
+    case 'node':
+        bundlePlatform = '-node';
+        bundleSuffix = (CONFIG === 'debug') ? '-debug' : '';
         defines.PLATFORM_NODE = true;
-        target = "node";
-        libraryTarget = "commonjs2";
+        target = 'node';
+        libraryTarget = 'commonjs2';
 
-        if (CONFIG === "debug") {
-            plugins.push(new webpack.BannerPlugin('require("source-map-support").install();', {
+        if (CONFIG === 'debug') {
+            plugins.push(new webpack.BannerPlugin("require('source-map-support').install();", {
                 raw: true,
                 entryOnly: false
             }));
         }
         break;
 
-    case "browser":
-        bundlePlatform = "";
-        bundleSuffix = (CONFIG === "debug") ? "" : ".min";
+    case 'browser':
+        bundlePlatform = '';
+        bundleSuffix = (CONFIG === 'debug') ? '' : '.min';
         defines.PLATFORM_BROWSER = true;
-        target = "web";
-        libraryTarget = "umd";
+        target = 'web';
+        libraryTarget = 'umd';
         break;
 
     default:
-        console.error("Unexpected BUILD_PLATFORM!");
+        console.error('Unexpected BUILD_PLATFORM!');
         process.exit(1);
 }
 
 //
 // Webpack configuration
 //
-var bundleName = "lightstep-tracer" + bundlePlatform + bundleSuffix;
+var bundleName = 'lightstep-tracer' + bundlePlatform + bundleSuffix;
 
 module.exports = {
-    entry   : "./src/lib.js",
+    entry   : './src/lib.js',
     target  : target,
     devtool : devtool,
     output  : {
-        path          : "dist/",
-        filename      : bundleName + ".js",
-        library       : "LightStep",
+        path          : 'dist/',
+        filename      : bundleName + '.js',
+        library       : 'LightStep',
         libraryTarget : libraryTarget,
     },
     plugins :[
@@ -97,18 +96,18 @@ module.exports = {
         loaders : [
             {
                 test    : /\.js$/,
-                loader  : "babel",
+                loader  : 'babel',
                 include : /src\//,
                 excluse : /node_modules/,
                 query   : {
                     cacheDirectory : true,
-                    presets : [ "es2015" ],
-                    plugins : [ "add-module-exports" ],
+                    presets : [ 'es2015' ],
+                    plugins : [ 'add-module-exports' ],
                 }
             },
             {
                 test    : /\.json$/,
-                loader  : "json",
+                loader  : 'json',
             },
         ]
     },
