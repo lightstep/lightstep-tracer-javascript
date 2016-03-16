@@ -1,5 +1,7 @@
 // Capture the proxied values as soon as possible in case there are
 // multiple layers of instrumentation.
+import OpenTracing from 'opentracing';
+
 let proxied = {};
 if (typeof window === "object" && typeof window.XMLHttpRequest !== "undefined") {
     proxied = {
@@ -259,10 +261,10 @@ class InstrumentXHR {
         // NOTE: we would like to re-inject `span` into the headers (swapping
         // out the ones we joined with) but CORS restrictions prevent us from
         // doing so.
-        let splitTextCarrier = new Tracer.SplitTextCarrier();
+        let splitTextCarrier = new OpenTracing.SplitTextCarrier();
         splitTextCarrier.tracerState = xhr.__requestHeaders;
         splitTextCarrier.baggage = xhr.__requestHeaders;
-        let span = self._tracer.join('XMLHttpRequest', Tracer.FORMAT_SPLIT_TEXT, splitTextCarrier);
+        let span = self._tracer.join('XMLHttpRequest', OpenTracing.FORMAT_SPLIT_TEXT, splitTextCarrier);
         if (span) {
             xhr.__xhr_span = span;
         }
