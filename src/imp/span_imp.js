@@ -119,6 +119,27 @@ export default class SpanImp {
         this._tags['parent_span_guid'] = coerce.toString(guid);
     }
 
+    /**
+     * Returns a URL to the trace containing this span.
+     *
+     * Unlike most methods, it *is* safe to call this method after `finish()`.
+     *
+     * @return {string} the absolute URL for the span
+     */
+    generateTraceURL() {
+        let micros;
+        if (this._beginMicros > 0 && this._endMicros > 0) {
+            micros = Math.floor((this._beginMicros + this._endMicros) / 2);
+        } else {
+            micros = tracer._platform.nowMicros();
+        }
+
+        let urlPrefix = constants.LIGHTSTEP_APP_URL_PREFIX;
+        let accessToken = this._tracer.options()['access_token'];
+        let guid = this.guid();
+        return `${urlPrefix}/${accessToken}/trace?span_guid=${guid}&at_micros=${micros}`;
+    }
+
     getTags() {
         return this._tags;
     }

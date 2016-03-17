@@ -69,6 +69,13 @@ function printUserInfo(username) {
                 json  : json,
             })
             span.finish();
+
+            // Generate a LightStep-specific URL
+            // Note the call to imp() to access the LightStep implementation
+            // object.
+            var url = span.imp().generateTraceURL();
+            console.log('');
+            console.log('View the trace at: ' + url);
         });
     });
 }

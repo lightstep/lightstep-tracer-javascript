@@ -19,3 +19,5 @@ export const LOG_STRING_TO_LEVEL = {
 
 // The report interval for empty reports used to sample the clock skew
 export const CLOCK_STATE_REFRESH_INTERVAL_MS = 350;
+
+export const LIGHTSTEP_APP_URL_PREFIX = 'https://app.lightstep.com';
