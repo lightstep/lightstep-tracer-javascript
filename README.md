@@ -1,5 +1,7 @@
 # lightstep-tracer
 
+[![npm version](https://badge.fury.io/js/lightstep-tracer.svg)](https://badge.fury.io/js/lightstep-tracer)
+
 LightStep implementation of the [OpenTracing API](http://opentracing.io/).
 
 ## Installation
