@@ -2,7 +2,6 @@ import globals from './imp/globals';
 import * as Constants from './constants';
 import TracerImp from './imp/tracer_imp';
 import { Platform } from './platform_abstraction_layer';
-require('babel-polyfill');
 
 class Library {
 
