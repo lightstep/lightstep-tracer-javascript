@@ -8,6 +8,8 @@ LightStep implementation of the [OpenTracing API](http://opentracing.io/).
 npm install --save lightstep-tracer opentracing
 ```
 
+All modern browsers and Node versions >= 0.12 are supported.
+
 ## Getting Started
 
 To use LightStep as the OpenTracing binding, initialize the global tracer with the LightStep implementation:
@@ -24,29 +26,39 @@ Tracer.initGlobalTracer(LightStep.tracer({
 * See [examples/node](https://github.com/lightstep/lightstep-tracer-javascript/tree/master/examples/node) for a Node.js server-side example
 
 
-## Supported Platforms
+## LightStep Specific API
 
-* **Node**: Node versions >= 0.12 are supported.
+### LightStep
 
-## LightStep Initialization Options
+---
 
-### Browser-specific
+### tracer(options)
 
-#### `xhr_url_inclusion_patterns RegExp[]`
+* `access_token` `string` *required* - the project access token
+* `group_name` `string` *required* - the string identifier for the application, service, or process. (*NOTE:* this parameter is subject to renaming for consistency with other LightStep / OpenTracing libraries and maybe be optional in the future.)
 
-The LightStep browser library automatically instruments all XMLHttpRequests (i.e. AJAX requests). This array allows an inclusion list to be specified: only URLs that match one or more of the regular expressions in this list will be considered for auto-instrumentation.
+**Browser-specific initialization options**
 
-The default value is a single regular expression wildcard matching all strings.
+* `xhr_url_inclusion_patterns` `RegExp[]` - an array of regular expressions used to whitelist URLs for `XMLHttpRequest` auto-instrumentation. The default value is wildcard matching all strings. For a given URL to be instrumented, it must match at least one regular expression in `xhr_url_inclusion_patterns` and not match any regular expressions in `xhr_url_exclusion_patterns`.
 
-For a given URL to be auto-instrumented, it must match at least one regular expression in `xhr_url_inclusion_patterns` and not match any regular expressions in `xhr_url_exclusion_patterns`.
+* `xhr_url_exclusion_patterns` `RegExp[]` - an array of regular expressions used to exclude URLs from `XMLHttpRequest` auto-instrumentation. The default value is an empty array. For a given URL to be instrumented, it must match at least one regular expression in `xhr_url_inclusion_patterns` and not match any regular expressions in `xhr_url_exclusion_patterns`.
 
-#### `xhr_url_exclusion_patterns RegExp[]`
+### SpanImp
 
-The LightStep browser library automatically instruments all XMLHttpRequests (i.e. AJAX requests). This array allows an exclusion list to be specified: a URL matching any of the exclusion patterns will not be instrumented.
+---
 
-The default value is an empty array.
+### generateTraceURL()
 
-For a given URL to be auto-instrumented, it must match at least one regular expression in `xhr_url_inclusion_patterns` and not match any regular expressions in `xhr_url_exclusion_patterns`.
+Returns an absolute URL to the LightStep application for the trace containing this span. It is safe to call this method after `finish()`.
+
+```js
+...
+span.finish();
+
+var url = span.imp().generateTraceURL())
+console.log('View the trace for this span at:', url);
+```
+
 
 ## License
 

@@ -25,6 +25,9 @@
             <button id="span-button">Get GitHub info</button>
 
             <h3>Results</h3>
+            <div id="trace-link-div" style="opacity : 0">
+                <a id="trace-link" href="" target="_blank">Link to trace on LightStep</a>
+            </div>
             <textarea id='results'></textarea>
         </div>
 
@@ -57,6 +60,8 @@
         var username = document.getElementById('username');
         var button = document.getElementById('span-button');
         var results = document.getElementById('results');
+        var linkDiv = document.getElementById('trace-link-div');
+        var link = document.getElementById('trace-link');
 
         button.onclick = function() {
             printUserInfo(username.value);
@@ -93,6 +98,13 @@
                         span.logEvent('error', err);
                     }
                     span.finish();
+
+                    // Generate a LightStep-specific URL
+                    // Note the call to imp() to access the LightStep implementation
+                    // object.
+                    var url = span.imp().generateTraceURL();
+                    link.href = url;
+                    linkDiv.style.opacity = 1.0;
                 });
             });
         }
