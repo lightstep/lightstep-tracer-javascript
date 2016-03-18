@@ -19,6 +19,7 @@ if (typeof window === "object" && typeof window.XMLHttpRequest !== "undefined") 
 class InstrumentXHR {
     constructor() {
         this._enabled = this._isValidContext();
+        this._proxyInited = false;
         this._internalExclusions = [];
         this._tracer = null;
         this._handleOptions = this._handleOptions.bind(this);
@@ -38,11 +39,7 @@ class InstrumentXHR {
         }
         this._tracer = tracer;
 
-        let proto = proxied.XMLHttpRequest.prototype;
-        proto.setRequestHeader = this._instrumentSetRequestHeader();
-        proto.open = this._instrumentOpen();
-        proto.send = this._instrumentSend();
-
+        tracer.addOption('xhr_instrumentation',        { type : 'bool',  defaultValue: true });
         tracer.addOption('xhr_url_inclusion_patterns', { type : 'array', defaultValue: [ /.*/ ] })
         tracer.addOption("xhr_url_exclusion_patterns", { type : "array", defaultValue: [] });
         this._addServiceHostToExclusions(tracer.options());
@@ -58,12 +55,28 @@ class InstrumentXHR {
         proto.send = proxied.send;
     }
 
+    /**
+     * Respond to options changes on the Tracer.
+     *
+     * Note that `modified` is the options that have changed in this call,
+     * along with their previous and new values. `current` is the full set of
+     * current options *including* the newly modified values.
+     */
     _handleOptions(modified, current) {
         // Automatically add the service host itself to the list of exclusions
         // to avoid reporting on the reports themselves
         let serviceHost = modified.service_host;
         if (serviceHost) {
             this._addServiceHostToExclusions(current);
+        }
+
+        // Set up the proxied XHR calls unless disabled
+        if (!this._proxyInited && current.xhr_instrumentation) {
+            this._proxyInited  = true;
+            let proto = proxied.XMLHttpRequest.prototype;
+            proto.setRequestHeader = this._instrumentSetRequestHeader();
+            proto.open = this._instrumentOpen();
+            proto.send = this._instrumentSend();
         }
     }
 

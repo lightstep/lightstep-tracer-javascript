@@ -121,8 +121,8 @@ export default class TracerImp extends EventEmitter {
 
         // Initialize the platform options after the built-in plugins in
         // case any of those options affect the built-ins.
-        this.addPlatformPlugins();
-        this.setPlatformOptions();
+        this.addPlatformPlugins(opts);
+        this.setPlatformOptions(opts);
 
         // Set constructor arguments
         if (opts) {
@@ -287,8 +287,14 @@ export default class TracerImp extends EventEmitter {
         this.options(opts || {});
     }
 
-    setPlatformOptions() {
-        this.options(this._platform.options(this));
+    setPlatformOptions(userOptions) {
+        let opts = this._platform.options(this) || {};
+        if (userOptions) {
+            for (let key in userOptions) {
+                opts[key] = userOptions[key];
+            }
+        }
+        this.options(opts);
     }
 
     // Register a new option.  Used by plug-ins.
@@ -499,13 +505,15 @@ export default class TracerImp extends EventEmitter {
     // Plugins
     //-----------------------------------------------------------------------//
 
-    addPlatformPlugins() {
-        for (let plugin of this._platform.plugins()) {
+    addPlatformPlugins(opts) {
+        let pluginSet = this._platform.plugins(opts);
+        for (let plugin of pluginSet) {
             this.addPlugin(plugin);
         }
     }
 
     addPlugin(plugin) {
+        // Don't initialize plug-ins twice
         let name = plugin.name();
         if (this._pluginNames[name]) {
             return;

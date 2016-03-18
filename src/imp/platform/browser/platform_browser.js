@@ -77,7 +77,7 @@ class PlatformBrowser {
         }
     }
 
-    plugins() {
+    plugins(opts) {
         return [
             require('../../../plugins/instrument_xhr'),
             require('../../../plugins/instrument_document_load'),
