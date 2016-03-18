@@ -19,7 +19,7 @@ export default class TransportNode {
             transport   : thrift.TBufferedTransport,
             protocol    : thrift.TBinaryProtocol,
             path        : "/_rpc/v1/reports/binary",
-            https       : opts.secure,
+            https       : (opts.collector_encryption !== 'none'),
             nodeOptions : {},
         };
         if (!opts.certificate_verification) {
@@ -28,7 +28,7 @@ export default class TransportNode {
             thriftOptions.nodeOptions.strictSSL = false;
         }
 
-        this._connection = thrift.createHttpConnection(opts.service_host, opts.service_port, thriftOptions);
+        this._connection = thrift.createHttpConnection(opts.collector_host, opts.collector_port, thriftOptions);
         this._client = thrift.createHttpClient(crouton_thrift.ReportingServiceClient, this._connection);
     }
 

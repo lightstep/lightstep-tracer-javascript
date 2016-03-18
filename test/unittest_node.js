@@ -4,8 +4,8 @@ global.expect = require('chai').expect;
 global.Tracer = require('opentracing');
 global.util = require('./util/util');
 global.requireES6 = requireES6;
+global.LightStep = require('../dist/lightstep-tracer-node-debug');
 var path = require('path');
-var LightStep = require('../dist/lightstep-tracer-node-debug');
 var FileTransport = require("./util/file_transport");
 
 // Use for "override" options specifically for unit testing

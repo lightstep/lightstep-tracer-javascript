@@ -17,9 +17,9 @@ export default class TransportBrowser {
             return;
         }
 
-        let host = opts.service_host;
-        let port = opts.service_port;
-        let scheme = opts.secure ? "https" : "http";
+        let host = opts.collector_host;
+        let port = opts.collector_port;
+        let scheme = opts.collector_encryption !== 'none' ? 'https' : 'http';
         this._hostport = `${scheme}://${host}:${port}`;
 
         // Currently the only support Thrift browser protocol is JSON.
