@@ -19,6 +19,9 @@ All modern browsers and Node versions >= 0.12 are supported.
 To use LightStep as the OpenTracing binding, initialize the global tracer with the LightStep implementation:
 
 ```javascript
+var Tracer    = require('opentracing');
+var LightStep = require('lightstep-tracer');
+
 Tracer.initGlobalTracer(LightStep.tracer({
     access_token   : '{your_access_token}',
     group_name     : '{your_service_or_app_name}',
@@ -42,6 +45,8 @@ Tracer.initGlobalTracer(LightStep.tracer({
 * `group_name` `string` *required* - the string identifier for the application, service, or process. (*NOTE:* this parameter is subject to renaming for consistency with other LightStep / OpenTracing libraries and maybe be optional in the future.)
 
 **Browser-specific initialization options**
+
+* `xhr_instrumentation` `bool` - if false, disables automatic instrumentation of XMLHttpRequests (XHRs). This must be set at initialization; changes after initialization will have no effect. Defaults to true.  
 
 * `xhr_url_inclusion_patterns` `RegExp[]` - an array of regular expressions used to whitelist URLs for `XMLHttpRequest` auto-instrumentation. The default value is wildcard matching all strings. For a given URL to be instrumented, it must match at least one regular expression in `xhr_url_inclusion_patterns` and not match any regular expressions in `xhr_url_exclusion_patterns`.
 
