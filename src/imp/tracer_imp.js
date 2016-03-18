@@ -56,6 +56,8 @@ export default class TracerImp extends EventEmitter {
 
         // Debugging options
         //
+        // These are not part of the supported public API.
+        //
         // If false, SSL certificate verification is skipped. Useful for testing.
         this.addOption('certificate_verification',      { type: 'bool',    defaultValue: true });
         // If true, internal logs will be included in the reports
@@ -67,6 +69,7 @@ export default class TracerImp extends EventEmitter {
 
         // Unit testing options
         this.addOption('override_transport',    { type : 'any',    defaultValue: null });
+        this.addOption('silent',                { type : 'bool',   defaultValue: false });
 
         // Hard upper limits to protect against worst-case scenarios
         this.addOption('log_message_length_hard_limit', { type: 'int',     defaultValue: 512 * 1024 });
@@ -1056,7 +1059,9 @@ export default class TracerImp extends EventEmitter {
             } catch (e) {
                 msg = "[FORMAT ERROR]: " + fmt;
             }
-            console.warn(msg);
+            if (!this._options.silent) {
+                console.warn(msg);
+            }
         }
         this._internalLog("[LightStep:I] ", constants.LOG_INFO, fmt, ...args);
     }

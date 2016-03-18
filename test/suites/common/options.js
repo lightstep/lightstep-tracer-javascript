@@ -78,6 +78,7 @@ describe('options()', function() {
                 access_token : '{your_access_token}',
                 group_name   : '{node_test_suite}',
                 disable_reporting_loop : true,
+                silent       : true,
                 tags         : testTable[i][0],
             });
             var actual = {};

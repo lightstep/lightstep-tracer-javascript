@@ -37,7 +37,7 @@ describe("Reporting loop", function() {
 });
 
 describe("Final report", function () {
-    /*it("flush on exit", function (done) {
+    it("flush on exit", function (done) {
         var script = path.join(__dirname, "on_exit/child.js");
         var reportFile = "on_exit_child.json";
 
@@ -61,5 +61,5 @@ describe("Final report", function () {
 
             done();
         });
-    });*/
+    });
 });
