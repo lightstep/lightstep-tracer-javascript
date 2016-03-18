@@ -1,4 +1,4 @@
-
+const os = require('os');
 
 let startTimeMicros = computeStartMicros();
 
@@ -26,10 +26,10 @@ export default class PlatformNode {
         }
 
         let packageObject = require('../../../../package.json');
-        let requiredVersionString = packageObject.engines["node"];
+        let requiredVersionString = packageObject.engines['node'];
         let requiredMatch = /^>=(\d+)\.(\d+)\.(\d+)$/.exec(requiredVersionString);
         if (!requiredMatch || requiredMatch.length !== 4) {
-            throw new Error("Internal error: package.json node requirement malformed");
+            throw new Error('Internal error: package.json node requirement malformed');
         }
 
         let err = `Fatal Error: insufficient node version. Requires node ${requiredVersionString}`;
@@ -62,7 +62,7 @@ export default class PlatformNode {
     }
 
     name() {
-        return "node";
+        return 'node';
     }
 
     static initLibrary(lib) {
@@ -79,7 +79,7 @@ export default class PlatformNode {
     }
 
     generateUUID() {
-        return require("crypto").randomBytes(8).toString('hex');
+        return require('crypto').randomBytes(8).toString('hex');
     }
 
     onBeforeExit(...args) {
@@ -98,22 +98,22 @@ export default class PlatformNode {
         let opts = {};
         for (let value of process.argv) {
             switch (value.toLowerCase()) {
-            case "--lightstep-log_to_console":
-            case "--lightstep-log_to_console=true":
-            case "--lightstep-log_to_console=1":
+            case '--lightstep-log_to_console':
+            case '--lightstep-log_to_console=true':
+            case '--lightstep-log_to_console=1':
                 opts.log_to_console = true;
                 break;
 
-            case "--lightstep-debug":
-            case "--lightstep-debug=true":
-            case "--lightstep-debug=1":
+            case '--lightstep-debug':
+            case '--lightstep-debug=true':
+            case '--lightstep-debug=1':
                 opts.debug = true;
                 break;
 
-            case "--lightstep-verbosity=2":
+            case '--lightstep-verbose=2':
                 opts.verbosity = 2;
                 break;
-            case "--lightstep-verbosity=1":
+            case '--lightstep-verbose=1':
                 opts.verbosity = 1;
                 break;
             }
@@ -121,13 +121,22 @@ export default class PlatformNode {
         return opts;
     }
 
-    runtimeAttributes() {
-        return {
-            cruntime_platform : "node",
+    tracerTags() {
+        let tags = {
+            lightstep_tracer_platform : 'node',
             node_version      : process.version,
             node_platform     : process.platform,
             node_arch         : process.arch,
+            hostname          : os.hostname(),
         };
+        if (process.argv) {
+            tags.command_line = process.argv.join(' ');
+        }
+        if (process.execArgv) {
+            tags.node_arguments = process.execArgv.join(' ');
+        }
+
+        return tags;
     }
 
     fatal(message) {

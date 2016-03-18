@@ -65,7 +65,7 @@ class InstrumentXHR {
     _handleOptions(modified, current) {
         // Automatically add the service host itself to the list of exclusions
         // to avoid reporting on the reports themselves
-        let serviceHost = modified.service_host;
+        let serviceHost = modified.collector_host;
         if (serviceHost) {
             this._addServiceHostToExclusions(current);
         }
@@ -85,7 +85,7 @@ class InstrumentXHR {
      * as that recursive instrumentation is more confusing than valuable!
      */
     _addServiceHostToExclusions(opts) {
-        if (opts.service_host.length === 0) {
+        if (opts.collector_host.length === 0) {
             return;
         }
 
@@ -96,8 +96,8 @@ class InstrumentXHR {
 
         // Check against the hostname without the port as well as the canonicalized
         // URL may drop the standard port.
-        let host = escapeRegExp(opts.service_host);
-        let port = escapeRegExp(opts.service_port);
+        let host = escapeRegExp(opts.collector_host);
+        let port = escapeRegExp(opts.collector_port);
         let set = [ new RegExp('^https?://' + host + ':' + port) ];
         if (port == "80") {
             set.push(new RegExp('^http://' + host));

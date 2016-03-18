@@ -22,35 +22,41 @@ const packageObject = require('../../package.json');
 const CARRIER_TRACER_STATE_PREFIX = 'ot-tracer-';
 const CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
 
-const DEFAULT_SERVICE_PORT_SECURE   = 443;
-const DEFAULT_SERVICE_PORT_INSECURE = 80;
+const DEFAULT_COLLECTOR_HOSTNAME   = 'collector.lightstep.com';
+const DEFAULT_COLLECTOR_PORT_TLS   = 443;
+const DEFAULT_COLLECTOR_PORT_PLAIN = 80;
 
 export default class TracerImp extends EventEmitter {
 
     constructor(opts) {
         super();
+        opts = opts || {};
 
         // Platform abstraction layer
         this._platform = new Platform(this);
-        this._runtimeGUID = this.override_runtime_guid || null;  // Set once the group name is set
+        this._runtimeGUID = opts.guid || this.override_runtime_guid || null;  // Set once the group name is set
         this._pluginNames = {};
         this._options = {};
         this._optionDescs = [];
 
         // Core options
-        //
-        this.addOption('access_token',                  { type: 'string',  defaultValue: '' });
-        this.addOption('group_name',                    { type: 'string',  defaultValue: '' });
-        this.addOption('disabled',                      { type: 'bool',    defaultValue: false });
-        this.addOption('service_host',                  { type: 'string',  defaultValue: 'collector.lightstep.com' });
-        this.addOption('service_port',                  { type: 'int',     defaultValue: DEFAULT_SERVICE_PORT_SECURE });
-        this.addOption('secure',                        { type: 'bool',    defaultValue: true });
-        this.addOption('report_period_millis',          { type: 'int',     defaultValue: 2500 });
-        this.addOption('max_log_records',               { type: 'int',     defaultValue: 4096 });
-        this.addOption('max_span_records',              { type: 'int',     defaultValue: 4096 });
-        this.addOption('join_ids',                      { type: 'any',     defaultValue: {} });
+        this.addOption('access_token',          { type: 'string',  defaultValue: '' });
+        this.addOption('group_name',            { type: 'string',  defaultValue: '' });
+        this.addOption('collector_host',        { type: 'string',  defaultValue: DEFAULT_COLLECTOR_HOSTNAME });
+        this.addOption('collector_port',        { type: 'int',     defaultValue: DEFAULT_COLLECTOR_PORT_TLS });
+        this.addOption('collector_encryption',  { type: 'string',  defaultValue: 'tls' });
+        this.addOption('tags',                  { type: 'any',     defaultValue: {} });
+        this.addOption('max_reporting_interval_millis',  { type: 'int',     defaultValue: 2500 });
+
+        // Non-standard, may be deprecated
+        this.addOption('disabled',              { type: 'bool',    defaultValue: false });
+        this.addOption('max_log_records',       { type: 'int',     defaultValue: 4096 });
+        this.addOption('max_span_records',      { type: 'int',     defaultValue: 4096 });
+        this.addOption('join_ids',              { type: 'any',     defaultValue: {} });
 
         // Debugging options
+        //
+        // These are not part of the supported public API.
         //
         // If false, SSL certificate verification is skipped. Useful for testing.
         this.addOption('certificate_verification',      { type: 'bool',    defaultValue: true });
@@ -59,10 +65,11 @@ export default class TracerImp extends EventEmitter {
         // I.e. report only on explicit calls to flush()
         this.addOption('disable_reporting_loop',        { type: 'bool',    defaultValue: false });
         // Log verbosity level
-        this.addOption('verbosity',                     { type: 'int', min: 0, max: 2, defaultValue: 0 });
+        this.addOption('verbose',               { type : 'int', min: 0, max: 9, defaultValue: 0 });
 
         // Unit testing options
-        this.addOption('override_transport',            { type : 'any',    defaultValue: null });
+        this.addOption('override_transport',    { type : 'any',    defaultValue: null });
+        this.addOption('silent',                { type : 'bool',   defaultValue: false });
 
         // Hard upper limits to protect against worst-case scenarios
         this.addOption('log_message_length_hard_limit', { type: 'int',     defaultValue: 512 * 1024 });
@@ -92,11 +99,11 @@ export default class TracerImp extends EventEmitter {
         this._clockState = new ClockState({
             nowMicros : () => this._platform.nowMicros(),
             localStoreGet : () => {
-                let key = `clock_state/${this._options.service_host}`;
+                let key = `clock_state/${this._options.collector_host}`;
                 return this._platform.localStoreGet(key);
             },
             localStoreSet : (value) => {
-                let key = `clock_state/${this._options.service_host}`;
+                let key = `clock_state/${this._options.collector_host}`;
                 return this._platform.localStoreSet(key, value);
             },
         })
@@ -315,11 +322,11 @@ export default class TracerImp extends EventEmitter {
             throw new UserException('options() must be called with an object: type was ' + typeof opts);
         }
 
-        // 'secure' is an alias for the common cases of 'service_port'
-        if (opts.secure !== undefined && opts.service_port === undefined) {
-            opts.service_port = opts.secure ?
-                DEFAULT_SERVICE_PORT_SECURE :
-                DEFAULT_SERVICE_PORT_INSECURE;
+        // "collector_encryption" acts an alias for the common cases of 'collector_port'
+        if (opts.collector_encryption !== undefined && opts.collector_port === undefined) {
+            opts.collector_port = opts.collector_encryption !== 'none' ?
+                DEFAULT_COLLECTOR_PORT_TLS :
+                DEFAULT_COLLECTOR_PORT_PLAIN;
         }
 
         // Track what options have been modified
@@ -444,29 +451,29 @@ export default class TracerImp extends EventEmitter {
         if (this._thriftAuth !== null) {
 
             if (!this._thriftRuntime) {
-                return this._internalErrorf("Inconsistent state: thrift auth initialized without runtime.")
+                return this._internalErrorf('Inconsistent state: thrift auth initialized without runtime.')
             }
             if (modified.access_token) {
-                throw new UserException("Cannot change access_token after it has been set.");
+                throw new UserException('Cannot change access_token after it has been set.');
             }
             if (modified.group_name) {
-                throw new UserException("Cannot change group_name after it has been set.");
+                throw new UserException('Cannot change group_name after it has been set.');
             }
-            if (modified.service_host) {
-                throw new UserException("Cannot change service_host after the connection is established");
+            if (modified.collector_host) {
+                throw new UserException('Cannot change collector_host after the connection is established');
             }
-            if (modified.service_port) {
-                throw new UserException("Cannot change service_host after the connection is established");
+            if (modified.collector_port) {
+                throw new UserException('Cannot change collector_port after the connection is established');
             }
-            if (modified.secure) {
-                throw new UserException("Cannot change service_host after the connection is established");
+            if (modified.collector_encryption) {
+                throw new UserException('Cannot change collector_encryption after the connection is established');
             }
             return;
         }
 
         // See if the Thrift data can be initialized
         if (this._options.access_token.length > 0 && this._options.group_name.length > 0) {
-            this._internalInfofV2("Initializing thrift reporting data");
+            this._internalInfofV2('Initializing thrift reporting data');
 
             this._runtimeGUID = this._platform.runtimeGUID(this._options.group_name);
 
@@ -474,20 +481,30 @@ export default class TracerImp extends EventEmitter {
                 access_token : this._options.access_token,
             });
 
-            let attrs = {
-                cruntime_name    : packageObject.name,
-                cruntime_version : packageObject.version,
-            };
-            let platformAttrs = this._platform.runtimeAttributes();
-            for (let key in platformAttrs) {
-                attrs[key] = platformAttrs[key];
+            //
+            // Assemble the tracer tags from the user-specified and automatic,
+            // internal tags.
+            //
+            let tags = {};
+            for (let key in this._options.tags) {
+                let value = this._options.tags[key];
+                if (typeof value !== 'string') {
+                    this._visibleWarnfOnce('Tracer tag value is not a string: key=%s', key);
+                    continue;
+                }
+                tags[key] = value;
+            }
+            tags.lightstep_tracer_version = packageObject.version;
+            let platformTags = this._platform.tracerTags();
+            for (let key in platformTags) {
+                tags[key] = platformTags[key];
             }
 
             let thriftAttrs = [];
-            for (let key in attrs) {
+            for (let key in tags) {
                 thriftAttrs.push(new crouton_thrift.KeyValue({
                     Key   : coerce.toString(key),
-                    Value : coerce.toString(attrs[key]),
+                    Value : coerce.toString(tags[key]),
                 }));
             }
             this._thriftRuntime = new crouton_thrift.Runtime({
@@ -845,15 +862,15 @@ export default class TracerImp extends EventEmitter {
 
         // If the clock state is still being primed, potentially use the
         // shorted report interval
-        let reportPeriod = this._options.report_period_millis;
+        let reportInterval = this._options.max_reporting_interval_millis;
         if (!this._clockState.isReady()) {
-            reportPeriod = Math.min(constants.CLOCK_STATE_REFRESH_INTERVAL_MS, reportPeriod);
+            reportInterval = Math.min(constants.CLOCK_STATE_REFRESH_INTERVAL_MS, reportInterval);
         }
 
         // After 3 consecutive errors, expand the retry delay up to 8x the
         // normal interval. Also, jitter the delay by +/- 10%
         let backOff = 1 + Math.min(7, Math.max(0, this._reportErrorStreak - 3));
-        let basis = backOff * reportPeriod;
+        let basis = backOff * reportInterval;
         let jitter = 1.0 + (Math.random() * 0.2 - 0.1);
         let delay = Math.floor(Math.max(0, jitter * basis));
 
@@ -1042,7 +1059,9 @@ export default class TracerImp extends EventEmitter {
             } catch (e) {
                 msg = "[FORMAT ERROR]: " + fmt;
             }
-            console.warn(msg);
+            if (!this._options.silent) {
+                console.warn(msg);
+            }
         }
         this._internalLog("[LightStep:I] ", constants.LOG_INFO, fmt, ...args);
     }

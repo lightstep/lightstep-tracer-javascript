@@ -111,9 +111,9 @@ class PlatformBrowser {
         Tracer.initGlobalTracer(lib.tracer(opts));
     }
 
-    runtimeAttributes() {
+    tracerTags() {
         return {
-            cruntime_platform : 'browser',
+            lightstep_tracer_platform : 'browser',
         };
     }
 

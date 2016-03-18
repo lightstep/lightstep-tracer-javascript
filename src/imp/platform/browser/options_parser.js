@@ -54,29 +54,13 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
     if (typeof groupName === "string" && groupName.length > 0) {
         opts.group_name = groupName;
     }
-    let serviceHost = dataset.service_host;
-    if (typeof serviceHost === "string" && serviceHost.length > 0) {
-        opts.service_host = serviceHost;
+    let collectorHost = dataset.collector_host;
+    if (typeof collectorHost === "string" && collectorHost.length > 0) {
+        opts.collector_host = collectorHost;
     }
-    let servicePort = dataset.service_port;
-    if (servicePort) {
-        opts.service_port = parseInt(servicePort);
-    }
-    let joinIds = dataset.join_ids;
-    if (joinIds) {
-        try {
-            opts.join_ids = JSON.parse(joinIds);
-        } catch (e) {
-            console.error("Could not parse join_ids string:", joinIds);
-        }
-    }
-
-    // Special case the "end_user_id" since that is by far the most likely
-    // join ID to be set globally by browser instrumentation
-    var endUserId = dataset.end_user_id;
-    if (endUserId) {
-        opts.join_ids = opts.join_ids || {};
-        opts.join_ids.end_user_id = endUserId;
+    let collectorPort = dataset.collector_port;
+    if (collectorPort) {
+        opts.collector_port = parseInt(collectorPort);
     }
 
     let enable = dataset.enable;
@@ -91,9 +75,9 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
     if (typeof debug == "string" && debug == "true") {
         opts.debug = true;
     }
-    let verbosity = dataset.verbosity;
-    if (typeof verbosity === "string") {
-        opts.verbosity = parseInt(verbosity);
+    let verbose = dataset.verbose;
+    if (typeof verbose === "string") {
+        opts.verbose = parseInt(verbose);
     }
 
     let init = dataset.init_global_tracer;
@@ -122,9 +106,9 @@ module.exports.parseURLQueryOptions = function(opts) {
     if (params.lightstep_debug) {
         opts.debug = true;
     }
-    if (params.lightstep_verbosity) {
+    if (params.lightstep_verbose) {
         try {
-            opts.verbosity = parseInt(params.lightstep_verbosity);
+            opts.verbose = parseInt(params.lightstep_verbose);
         } catch (_ignored) {}
     }
     if (params.lightstep_log_to_console) {

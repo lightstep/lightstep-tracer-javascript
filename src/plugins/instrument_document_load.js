@@ -125,8 +125,6 @@ class InstrumentPageLoad {
                 continue;
             }
 
-
-
             let micros = value * 1000.0;
             let payload = undefined;
 

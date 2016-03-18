@@ -12,7 +12,7 @@ describe("Reporting loop", function() {
         var runtime = Tracer.initNewTracer(LightStep.tracer({
             access_token           : "{your_access_token}",
             group_name             : "api-javascript/unit-test/report_flush_loop",
-            report_period_millis   : 10,
+            max_reporting_interval_millis : 10,
             override_transport     : transport,
             disable_reporting_loop : false,
         }));
