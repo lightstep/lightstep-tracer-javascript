@@ -14,10 +14,14 @@
 // would simply be:
 // var LightStep = require('lightstep');
 //
-var https     = require('https');
+var http      = require('http');
 var url       = require('url');
 var Tracer    = require('opentracing');
 var LightStep = require('../../dist/lightstep-tracer-node');
+
+// Proxy the requests through a LightStep server
+var PROXY_HOST = 'example-proxy.lightstep.com';
+var PROXY_PORT = 8080;
 
 //
 // The first argument to the script is the GitHub user name
@@ -63,7 +67,7 @@ function printUserInfo(username) {
 
         // Lastly, log the remaining rate limit data to see how many more times
         // the public GitHub APIs can be queried!
-        httpGet(span, 'https://api.github.com/rate_limit', function (err, json) {
+        httpGet(span, 'http://api.github.com/rate_limit', function (err, json) {
             span.logEvent('rate_limit', {
                 error : err,
                 json  : json,
@@ -109,7 +113,7 @@ function queryUserInfo(parentSpan, username, callback) {
     };
 
     // First query the user info for the given username
-    httpGet(parentSpan, 'https://api.github.com/users/' + username, function (err, json) {
+    httpGet(parentSpan, 'http://api.github.com/users/' + username, function (err, json) {
         if (err) {
             return next(err);
         }
@@ -149,22 +153,28 @@ function queryUserInfo(parentSpan, username, callback) {
  * Helper function to make a GET request and return parsed JSON data.
  */
 function httpGet(parentSpan, urlString, callback) {
+    var span = Tracer.startSpan('http.get', { parent : parentSpan });
+
     var dest = url.parse(urlString);
     var options = {
-        host : dest.hostname,
+        host : PROXY_HOST,
         path : dest.path,
+        port : PROXY_PORT,
         headers: {
             // User-Agent is required by the GitHub APIs
             'User-Agent': 'LightStep Example',
+
+            // Optional: convey the trace context to the proxy server
+            'LightStep-Trace-GUID': span.imp().traceGUID(),
+            'LightStep-Parent-GUID': span.imp().guid(),
         }
     };
 
     // Create a span representing the https request
-    var span = Tracer.startSpan('https.get', { parent : parentSpan });
     span.setTag('url', urlString);
     span.logEvent('options', options);
 
-    return https.get(options, function(response) {
+    return http.get(options, function(response) {
         var bodyBuffer = '';
         response.on('data', function(chunk) {
             bodyBuffer += chunk;
