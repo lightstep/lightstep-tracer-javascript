@@ -135,8 +135,8 @@ export default class SpanImp {
         }
 
         let urlPrefix = constants.LIGHTSTEP_APP_URL_PREFIX;
-        let accessToken = this._tracer.options()['access_token'];
-        let guid = this.guid();
+        let accessToken = encodeURIComponent(this._tracer.options()['access_token']);
+        let guid = encodeURIComponent(this.guid());
         return `${urlPrefix}/${accessToken}/trace?span_guid=${guid}&at_micros=${micros}`;
     }
 
