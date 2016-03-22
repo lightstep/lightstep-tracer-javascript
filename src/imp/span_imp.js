@@ -287,6 +287,27 @@ export default class SpanImp {
             .payload(payload)
             .end();
     }
+    // Special case to format exception information a little bit more nicely
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error
+    exception(msg, exception) {
+        if (exception.message === undefined || exception.stack == undefined) {
+            return this.error(msg, exception);
+        }
+
+        let stack = exception.stack.split('\n');
+        this._tracer.log()
+            .span(this._guid)
+            .level(constants.LOG_ERROR)
+            .message(msg)
+            .payload({
+                name: exception.name,
+                message: exception.message,
+                filename: exception.filename,
+                line_number: exception.lineNumber,
+                stack: stack,
+            })
+            .end();
+    }
     fatal(msg, payload) {
         this._tracer.log()
             .span(this._guid)

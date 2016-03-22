@@ -9,6 +9,8 @@ var url       = require('url');
 var Tracer    = require('opentracing');
 var LightStep = require('lightstep-tracer');
 
+var PROXY_PORT = process.env.LIGHTSTEP_PROXY_PORT || 80;
+
 var githubAuth = '';
 if (process.env.GITHUB_CLIENT_ID) {
     githubAuth = '?client_id=' + process.env.GITHUB_CLIENT_ID +
@@ -73,19 +75,33 @@ var server = http.createServer(function (req, res) {
         headers: headers,
     };
     span.setTag('url', req.url);
+    span.imp().info('Forwarding equest to GitHub: ' + req.url, {
+        host: options.host,
+        path: req.url,
+        method: req.method,
+        headers: headers,
+    });
 
     // Queue up the request in main Node event queue
     setTimeout(function() {
         var ghSpan = tracer.startSpan('github_request', { parent : span });
+        ghSpan.imp().info('Request to ' + req.url);
+
         https.get(options, function(proxyResp) {
+            if (proxyResp.statusCode >= 400) {
+                ghSpan.imp().error('Status code = ' + proxyResp.statusCode);
+            } else {
+                ghSpan.imp().info('Status code = ' + proxyResp.statusCode);
+            }
+            ghSpan.logEvent('Response headers', proxyResp.headers);
+
             var bodyBuffer = '';
             proxyResp.on('data', function(chunk) {
                 bodyBuffer += chunk;
             });
             proxyResp.on('end', function() {
-                span.logEvent('response_end', {
+                span.imp().info('Response body (length='+bodyBuffer.length+')', {
                     body   : bodyBuffer,
-                    length : bodyBuffer.length,
                 });
                 res.writeHead(200, {
                     'Access-Control-Allow-Origin': '*',
@@ -99,8 +115,8 @@ var server = http.createServer(function (req, res) {
                 span.finish();
             });
         });
-    }, 0);
+    }, 12);
 });
-server.listen(8080, function() {
-    console.log('Listening on port 8080...');
+server.listen(PROXY_PORT, function() {
+    console.log('Listening on port '+PROXY_PORT+'...');
 });
