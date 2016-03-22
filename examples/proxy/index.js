@@ -9,43 +9,51 @@ var url       = require('url');
 var Tracer    = require('opentracing');
 var LightStep = require('lightstep-tracer');
 
-// Initialize the OpenTracing APIs to use the LightStep bindings
-//
-// NOTE: the access token will need to be replaced with your project's access
-// token. The group_name can be an identifier you wish to use to identify the
-// service or process.
-//
-Tracer.initGlobalTracer(LightStep.tracer({
-    access_token   : '{your_access_token}',
-    group_name     : 'lightstep-tracer/examples/node_proxy',
-}));
-
 var githubAuth = '';
 if (process.env.GITHUB_CLIENT_ID) {
     githubAuth = '?client_id=' + process.env.GITHUB_CLIENT_ID +
         'client_secret=' + process.env.GITHUB_CLIENT_SECRET;
 }
 
-var server = http.createServer(function (req, res) {
-    // Create a span representing the https request
-    var span = Tracer.startSpan('request_proxy');
+var tracerMap = {};
 
-    var headers = {};
+var server = http.createServer(function (req, res) {
+    var accessToken = '{your_access_token}';
     var traceGUID = null;
+    var parentGUID = null;
+    var headers = {
+        // User-Agent is required by the GitHub APIs
+        'User-Agent': 'LightStep Example Proxy'
+    };
     for (var i = 0; i + 1 < req.rawHeaders.length; i += 2) {
         var key = req.rawHeaders[i];
         var value = req.rawHeaders[i+1];
-        headers[key] = value;
-
         if (key == 'LightStep-Trace-GUID') {
-            span.imp().setFields({'trace_guid' : value });
+            traceGUID = value;
         } else if (key == 'LightStep-Parent-GUID') {
-            span.imp().setFields({'parent_guid' : value });
+            parentGUID = value;
+        } else if (key == 'LightStep-Access-Token') {
+            accessToken = value;
         }
     }
-    // User-Agent is required by the GitHub APIs
-    headers['User-Agent'] = 'LightStep Example Proxy';
-    delete headers['Host'];
+
+    var tracer = tracerMap[accessToken];
+    if (!tracer) {
+        tracer = Tracer.initNewTracer(LightStep.tracer({
+            access_token   : '{your_access_token}',
+            group_name     : 'lightstep-tracer/examples/node_proxy',
+        }));
+        tracerMap[accessToken] = tracer;
+    }
+
+    // Create a span representing the https request
+    var span = tracer.startSpan('request_proxy');
+    if (traceGUID) {
+        span.imp().setFields({'trace_guid' : value });
+    }
+    if (parentGUID) {
+        span.imp().setFields({'parent_guid' : value });
+    }
 
     var options = {
         host: 'api.github.com',
@@ -56,7 +64,7 @@ var server = http.createServer(function (req, res) {
 
     // Queue up the request in main Node event queue
     setTimeout(function() {
-        var ghSpan = Tracer.startSpan('github_request', { parent : span });
+        var ghSpan = tracer.startSpan('github_request', { parent : span });
         https.get(options, function(proxyResp) {
             var bodyBuffer = '';
             proxyResp.on('data', function(chunk) {
