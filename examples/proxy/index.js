@@ -7,7 +7,7 @@ var http      = require('http');
 var https     = require('https');
 var url       = require('url');
 var Tracer    = require('opentracing');
-var LightStep = require('../../dist/lightstep-tracer-node');
+var LightStep = require('lightstep-tracer');
 
 // Initialize the OpenTracing APIs to use the LightStep bindings
 //
