@@ -20,8 +20,8 @@ var Tracer    = require('opentracing');
 var LightStep = require('../../dist/lightstep-tracer-node');
 
 // Proxy the requests through a LightStep server
-var PROXY_HOST = 'example-proxy.lightstep.com';
-var PROXY_PORT = 8080;
+var PROXY_HOST = process.env.LIGHTSTEP_PROXY_HOST || 'example-proxy.lightstep.com';
+var PROXY_PORT = process.env.LIGHTSTEP_PROXY_PORT || 80;
 
 //
 // The first argument to the script is the GitHub user name
@@ -44,7 +44,6 @@ printUserInfo(username);
 //
 // Worker functions
 //
-
 function printUserInfo(username) {
 
     // Start the outer operation span
@@ -52,7 +51,15 @@ function printUserInfo(username) {
     span.logEvent('query_started');
 
     queryUserInfo(span, username, function(err, user) {
-        span.logEvent('query_finished', user);
+        if (err) {
+            span.imp().exception('Error in queryUserInfo', err);
+            span.finish();
+            require('child_process').exec('open \"' + span.imp().generateTraceURL() + '\"');
+            return;
+        }
+        span.logEvent('query_finished', {
+            user: user,
+        });
 
         console.log('User: ' + user.login);
         console.log('Type: ' + user.type);
@@ -80,6 +87,9 @@ function printUserInfo(username) {
             var url = span.imp().generateTraceURL();
             console.log('');
             console.log('View the trace at: ' + url);
+
+            // TEMPORARY:
+            require('child_process').exec('open \"' + url + '\"');
         });
     });
 }
@@ -102,13 +112,10 @@ function queryUserInfo(parentSpan, username, callback) {
     // first error.
     var remainingCalls = 3;
     var next = function (err) {
-        if (err) {
-            remainingCalls = 0;
-            return callback(err, null);
-        }
-        remainingCalls--;
+        // Early terminate on any error
+        remainingCalls -= err ? Math.max(remainingCalls, 1) : 1;
         if (remainingCalls === 0) {
-            callback(null, user);
+            callback(err, err ? null : user);
         }
     };
 
@@ -154,51 +161,59 @@ function queryUserInfo(parentSpan, username, callback) {
  */
 function httpGet(parentSpan, urlString, callback) {
     var span = Tracer.startSpan('http.get', { parent : parentSpan });
-
-    var dest = url.parse(urlString);
-    var options = {
-        host : PROXY_HOST,
-        path : dest.path,
-        port : PROXY_PORT,
-        headers: {
-            // User-Agent is required by the GitHub APIs
-            'User-Agent': 'LightStep Example',
-
-            // Optional: convey the trace context to the proxy server
-            'LightStep-Trace-GUID': span.imp().traceGUID(),
-            'LightStep-Parent-GUID': span.imp().guid(),
-        }
+    var callbackWrapper = function (err, data) {
+        span.finish();
+        callback(err, data);
     };
 
-    // Create a span representing the https request
-    span.setTag('url', urlString);
-    span.logEvent('options', options);
+    try {
+        var dest = url.parse(urlString);
+        var options = {
+            host : PROXY_HOST,
+            path : dest.path,
+            port : PROXY_PORT,
+            headers: {
+                // User-Agent is required by the GitHub APIs
+                'User-Agent': 'LightStep Example',
 
-    return http.get(options, function(response) {
-        var bodyBuffer = '';
-        response.on('data', function(chunk) {
-            bodyBuffer += chunk;
-        });
-        response.on('end', function() {
-            span.logEvent('response_end', {
-                body   : bodyBuffer,
-                length : bodyBuffer.length,
-            });
-
-            var parsedJSON, err;
-            try {
-                parsedJSON = JSON.parse(bodyBuffer);
-            } catch (exception) {
-                err = {
-                    buffer    : bodyBuffer,
-                    exception : exception,
-                };
-                span.logEvent('error', err);
+                // Optional: convey the trace context to the proxy server
+                'LightStep-Trace-GUID': span.imp().traceGUID(),
+                'LightStep-Parent-GUID': span.imp().guid(),
             }
+        };
 
-            // Finish the span representing the request
-            span.finish();
-            callback(err, parsedJSON);
+        // Create a span representing the https request
+        span.setTag('url', urlString);
+        span.logEvent('options', options);
+
+        return http.get(options, function(response) {
+            var bodyBuffer = '';
+            response.on('data', function(chunk) {
+                bodyBuffer += chunk;
+            });
+            response.on('end', function() {
+                span.logEvent('response_end', {
+                    body   : bodyBuffer,
+                    length : bodyBuffer.length,
+                });
+
+                var parsedJSON, err;
+                try {
+                    parsedJSON = JSON.parse(bodyBuffer);
+                } catch (exception) {
+                    err = {
+                        buffer    : bodyBuffer,
+                        exception : exception,
+                    };
+                    span.logEvent('error', err);
+                }
+
+                callbackWrapper(err, parsedJSON);
+            });
         });
-    });
+
+    } catch (exception) {
+        span.imp().exception('Exception thrown during request', exception);
+        callbackWrapper(exception, null);
+    }
 }
