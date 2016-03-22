@@ -52,7 +52,7 @@ var server = http.createServer(function (req, res) {
     var tracer = tracerMap[accessToken];
     if (!tracer) {
         tracer = Tracer.initNewTracer(LightStep.tracer({
-            access_token   : '{your_access_token}',
+            access_token   : accessToken,
             group_name     : 'lightstep-tracer/examples/node_proxy',
         }));
         tracerMap[accessToken] = tracer;
@@ -61,10 +61,10 @@ var server = http.createServer(function (req, res) {
     // Create a span representing the https request
     var span = tracer.startSpan('request_proxy');
     if (traceGUID) {
-        span.imp().setFields({'trace_guid' : value });
+        span.imp().setFields({'trace_guid' : traceGUID });
     }
     if (parentGUID) {
-        span.imp().setFields({'parent_guid' : value });
+        span.imp().setFields({'parent_guid' : parentGUID });
     }
 
     var options = {
