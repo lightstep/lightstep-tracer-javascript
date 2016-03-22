@@ -54,7 +54,6 @@ function printUserInfo(username) {
         if (err) {
             span.imp().exception('Error in queryUserInfo', err);
             span.finish();
-            require('child_process').exec('open \"' + span.imp().generateTraceURL() + '\"');
             return;
         }
         span.logEvent('query_finished', {
@@ -87,9 +86,6 @@ function printUserInfo(username) {
             var url = span.imp().generateTraceURL();
             console.log('');
             console.log('View the trace at: ' + url);
-
-            // TEMPORARY:
-            require('child_process').exec('open \"' + url + '\"');
         });
     });
 }
