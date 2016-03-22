@@ -18,6 +18,18 @@ if (process.env.GITHUB_CLIENT_ID) {
 var tracerMap = {};
 
 var server = http.createServer(function (req, res) {
+
+    // CORS options handling
+    if (req.method === 'OPTIONS') {
+        res.writeHead(200, {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET',
+            'Access-Control-Allow-Headers': 'Accept',
+        });
+        res.end();
+        return;
+    }
+
     var accessToken = '{your_access_token}';
     var traceGUID = null;
     var parentGUID = null;
@@ -76,6 +88,9 @@ var server = http.createServer(function (req, res) {
                     length : bodyBuffer.length,
                 });
                 res.writeHead(200, {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET',
+                    'Access-Control-Allow-Headers': 'Accept',
                     'Content-Length' : bodyBuffer.length,
                 });
                 res.end(bodyBuffer);
