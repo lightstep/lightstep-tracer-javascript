@@ -7,6 +7,6 @@
     "opentracing": "*"
   },
   "scripts":{
-    "forever:" : "forever start --append -l forever.log -o out.log -e err.log index.js"
+    "forever" : "forever start --append -l forever.log -o out.log -e err.log index.js"
   }
 }
