@@ -52,28 +52,31 @@ var server = http.createServer(function (req, res) {
         path: req.url + githubAuth,
         headers: headers,
     };
-
     span.setTag('url', req.url);
 
-    return https.get(options, function(proxyResp) {
-        var bodyBuffer = '';
-        proxyResp.on('data', function(chunk) {
-            bodyBuffer += chunk;
-        });
-        proxyResp.on('end', function() {
-            span.logEvent('response_end', {
-                body   : bodyBuffer,
-                length : bodyBuffer.length,
+    // Queue up the request in main Node event queue
+    setTimeout(function() {
+        var ghSpan = Trace.startSpan('github_request', { parent : span });
+        https.get(options, function(proxyResp) {
+            var bodyBuffer = '';
+            proxyResp.on('data', function(chunk) {
+                bodyBuffer += chunk;
             });
-            console.log(bodyBuffer.toString('utf8'));
-            res.writeHead(200, {
-                'Content-Length' : bodyBuffer.length,
-            });
-            res.end(bodyBuffer);
+            proxyResp.on('end', function() {
+                span.logEvent('response_end', {
+                    body   : bodyBuffer,
+                    length : bodyBuffer.length,
+                });
+                res.writeHead(200, {
+                    'Content-Length' : bodyBuffer.length,
+                });
+                res.end(bodyBuffer);
 
-            span.finish();
+                ghSpan.finish();
+                span.finish();
+            });
         });
-    });
+    }, 0);
 });
 server.listen(8080, function() {
     console.log('Listening on port 8080...');
