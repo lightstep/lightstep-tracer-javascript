@@ -56,7 +56,7 @@ var server = http.createServer(function (req, res) {
 
     // Queue up the request in main Node event queue
     setTimeout(function() {
-        var ghSpan = Trace.startSpan('github_request', { parent : span });
+        var ghSpan = Tracer.startSpan('github_request', { parent : span });
         https.get(options, function(proxyResp) {
             var bodyBuffer = '';
             proxyResp.on('data', function(chunk) {
