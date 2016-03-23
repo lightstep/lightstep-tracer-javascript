@@ -14,7 +14,7 @@ var PROXY_PORT = process.env.LIGHTSTEP_PROXY_PORT || 80;
 var githubAuth = '';
 if (process.env.GITHUB_CLIENT_ID) {
     githubAuth = '?client_id=' + process.env.GITHUB_CLIENT_ID +
-        'client_secret=' + process.env.GITHUB_CLIENT_SECRET;
+        '&client_secret=' + process.env.GITHUB_CLIENT_SECRET;
 }
 
 var tracerMap = {};
