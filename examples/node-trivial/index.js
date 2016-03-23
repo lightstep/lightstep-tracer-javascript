@@ -18,4 +18,3 @@ setTimeout(function() {
 
 var url = span.imp().generateTraceURL();
 console.log('URL: ' + url);
-require('child_process').execSync(`open "${url}"`);
