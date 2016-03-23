@@ -131,7 +131,7 @@ export default class SpanImp {
         if (this._beginMicros > 0 && this._endMicros > 0) {
             micros = Math.floor((this._beginMicros + this._endMicros) / 2);
         } else {
-            micros = tracer._platform.nowMicros();
+            micros = this._tracer._platform.nowMicros();
         }
 
         let urlPrefix = constants.LIGHTSTEP_APP_URL_PREFIX;
