@@ -11,7 +11,6 @@ import SpanImp from './span_imp';
 import * as Constants from '../constants';
 import globals from './globals';
 
-const _             = require('underscore');
 const constants     = require('../constants');
 const coerce        = require('./coerce');
 const util          = require('./util/util');
@@ -354,9 +353,11 @@ export default class TracerImp extends EventEmitter {
         }
 
         if (this._options.debug) {
-            let optionsString = _.map(modified, (val, key) => {
-                return "\t" + JSON.stringify(key) + " : " + JSON.stringify(val);
-            }).join("\n");
+            let optionsString = '';
+            for (let key in modified) {
+                let val = modified[key];
+                optionsString += "\t" + JSON.stringify(key) + " : " + JSON.stringify(val);
+            }
             this._internalInfofV2("Options modified:\n%s", optionsString);
         }
         this.emit('options', modified, this._options);
@@ -826,13 +827,19 @@ export default class TracerImp extends EventEmitter {
         // not turn a Node process into a zombie) and do a final explicit flush.
         // Note that the final flush may enqueue asynchronous callbacks that cause
         // the 'beforeExit' event to be re-emitted when those callbacks finish.
+        let finalFlushOnce = 0;
         let finalFlush = () => {
+            if (finalFlushOnce++ > 0) { return; }
             this._internalInfof("Final flush before exit.");
             this._flushReport(true);
         };
-        let stopReporting = () => { this._stopReportingLoop() };
-        this._platform.onBeforeExit(_.once(stopReporting));
-        this._platform.onBeforeExit(_.once(finalFlush));
+        let stopReportingOnce = 0;
+        let stopReporting = () => {
+            if (stopReportingOnce++ > 0) { return; }
+            this._stopReportingLoop();
+        };
+        this._platform.onBeforeExit(stopReporting);
+        this._platform.onBeforeExit(finalFlush);
 
         // Begin the asynchronous reporting loop
         let loop = ()=>{

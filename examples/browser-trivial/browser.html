@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>LightStep - Simple Browser Example</title>
+        <style>
+            .main {
+                max-width : 720px;
+                margin    : 32px auto;
+            }
+            textarea {
+                width      : 100%;
+                min-height : 40em;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="main">
+            <h1>LightStep: Trivial Browser Example</h1>
+            <h3>Results</h3>
+            <div id="trace-link-div" style="opacity : 0">
+                <a id="trace-link" href="" target="_blank">Link to trace on LightStep</a>
+            </div>
+            <textarea id='results'></textarea>
+        </div>
+        <!--
+            Include the standard OpenTracing APIs and the LightStep bindings.
+        -->
+        <script type="text/javascript" src="opentracing-browser.min.js"></script>
+        <script type="text/javascript" src="../../dist/lightstep-tracer.js"></script>
+
+        <!--
+            Add a quick example script using OpenTracing and LightStep
+        -->
+        <script type="text/javascript">
+        <!--
+        Tracer.initGlobalTracer(LightStep.tracer({
+            access_token   : '{your_access_token}',
+            group_name     : 'lightstep-tracer/examples/browser-trivial',
+        }));
+
+        var span = Tracer.startSpan('trivial_span');
+        setTimeout(function() {
+            span.logEvent('log_event');
+        }, 100);
+        setTimeout(function() {
+            span.finish();
+
+            // Update the page
+            var results = document.getElementById('results');
+            var linkDiv = document.getElementById('trace-link-div');
+            var link = document.getElementById('trace-link');
+            results.value = 'Span finished.'
+            var url = span.imp().generateTraceURL();
+            link.href = url;
+            linkDiv.style.opacity = 1.0;
+        }, 200);
+        -->
+        </script>
+    </body>
+</html>

@@ -7,10 +7,10 @@ var fs      = require("fs"),
 var baseDir = path.join(__dirname, "../src/imp/platform/browser");
 var src = {
     types   : fs.readFileSync(path.join(baseDir, "thrift_api/crouton_types.js"), "utf8"),
-    service : fs.readFileSync(path.join(baseDir, "thrift_api/ReportingService.js"), "utf8"),
-    thrift  : fs.readFileSync(path.join(baseDir, "thrift/thrift.js"), "utf8"),
-    patch   : fs.readFileSync(path.join(baseDir, "thrift_patch.js"), "utf8"),
 };
+
+// Use constant propogation to remove code not needed from the Thrift libraries
+src.types = src.types.replace(/(crouton_thrift\.[\w_]+\.prototype.(read|write)) = func/g, "$1 = false && func");
 
 // Concatenate into one file and explicitly add exports (for package compatibility)
 var outfile = path.join(baseDir, "/generated/thrift_all.js");
@@ -25,12 +25,10 @@ fs.writeFileSync(outfile, [
     "(function() {",
     // This next line is needed to keep crouton_types.js from injecting itself into
     // the global namespace.
+    "var Thrift = {};",
     "var crouton_thrift = {};",
     src.types,
-    src.service,
-    src.thrift,
-    src.patch,
     "module.exports.crouton_thrift = crouton_thrift;",
-    "module.exports.Thrift = Thrift;",
+    "module.exports.Thrift = {}",
     "})();"
 ].join("\n"));

@@ -25,11 +25,15 @@ switch (CONFIG) {
         devtool = 'source-map';
         break;
     case 'prod':
+        plugins.push(new webpack.optimize.OccurenceOrderPlugin());
         plugins.push(new webpack.optimize.UglifyJsPlugin({
             minimize: true,
+            //beautify: true,
+            //mangle: true,
             compress : {
                 dead_code : true,
                 unused : true,
+
                 // Hide the dead code warnings. The defines intentionally create
                 // dead code paths.
                 warnings  : false,

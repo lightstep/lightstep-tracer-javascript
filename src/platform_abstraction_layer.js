@@ -6,14 +6,14 @@
 if (PLATFORM_NODE) {
     module.exports = {
         Platform          : require('./imp/platform/node/platform_node.js'),
-        Transport         : require('./imp/platform/node/transport_node.js'),
+        Transport         : require('./imp/platform/node/transport_httpjson.js'),
         thrift            : require('thrift'),
         crouton_thrift    : require('./imp/platform/node/crouton_thrift.js'),
     };
 } else if (PLATFORM_BROWSER) {
     module.exports = {
         Platform          : require('./imp/platform/browser/platform_browser.js'),
-        Transport         : require('./imp/platform/browser/transport_browser.js'),
+        Transport         : require('./imp/platform/browser/transport_httpjson.js'),
         thrift            : require('./imp/platform/browser/thrift.js'),
         crouton_thrift    : require('./imp/platform/browser/crouton_thrift.js'),
     }

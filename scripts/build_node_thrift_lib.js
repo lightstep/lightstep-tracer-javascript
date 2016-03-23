@@ -7,17 +7,10 @@ var fs      = require("fs"),
 var baseDir = path.join(__dirname, "../src/imp/platform/node");
 var src = {
     types   : fs.readFileSync(path.join(baseDir, "thrift_api/crouton_types.js"), "utf8"),
-    service : fs.readFileSync(path.join(baseDir, "thrift_api/ReportingService.js"), "utf8"),
 };
 
 fs.writeFileSync(path.join(baseDir, "/generated/crouton_types.js"), [
     "// Declare crouton_thrift to make the source ES6 compliant",
     "var crouton_thrift = {};",
     src.types,
-].join("\n"));
-fs.writeFileSync(path.join(baseDir, "/generated/ReportingService.js"), [
-    "// Declare crouton_thrift to make the source ES6 compliant",
-    "var crouton_thrift = {};",
-    "exports.crouton_thrift = crouton_thrift;",
-    src.service,
 ].join("\n"));
