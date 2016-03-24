@@ -28,7 +28,6 @@
     "opentracing": "^0.9.13"
   },
   "devDependencies": {
-    "underscore": "^1.8.3",
     "babel-core": "^6.3.26",
     "babel-loader": "^6.2.0",
     "babel-plugin-add-module-exports": "^0.1.2",
@@ -37,10 +36,14 @@
     "chai": "^3.4.1",
     "clone": "^1.0.2",
     "colors": "^1.1.2",
+    "eslint": "^2.4.0",
+    "eslint-config-airbnb": "^6.2.0",
+    "eslint-plugin-react": "^4.2.3",
     "json-loader": "^0.5.4",
     "mocha": "^2.3.4",
     "shelljs": "^0.5.3",
     "sprintf-js": "^1.0.3",
+    "underscore": "^1.8.3",
     "watch-trigger": "0.0.2",
     "webpack": "^1.12.9"
   }

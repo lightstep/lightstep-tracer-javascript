@@ -9,23 +9,23 @@ class LogToConsole {
     }
 
     name() {
-        return "log_to_console";
+        return 'log_to_console';
     }
     start(runtime) {
         this._runtime = runtime;
-        this._runtime.addOption("log_to_console", {
-            type         : "bool",
+        this._runtime.addOption('log_to_console', {
+            type         : 'bool',
             defaultValue : false,
         });
         this._runtime.on('options', this._optionsCb);
     }
-    stop(runtime) {
+    stop() {
         this._runtime.removeListener('options', this._optionsCb);
     }
 
     _handleOptions(modified, current) {
         let enabled = current.log_to_console;
-        if (this._enabled == enabled) {
+        if (this._enabled === enabled) {
             return;
         }
         this._enabled = enabled;
@@ -38,7 +38,7 @@ class LogToConsole {
 
     _handleLogAdded(record) {
         let level = constants.LOG_STRING_TO_LEVEL[record.level];
-        let message  = record.message;
+        let message = record.message;
 
         // Ignore records without a message (e.g. a stable_name log record)
         if (!message) {
@@ -48,14 +48,14 @@ class LogToConsole {
         switch (level) {
         case constants.LOG_ERROR:
         case constants.LOG_FATAL:
-            console.error(message);
+            console.error(message); // eslint-disable-line no-console
             break;
         case constants.LOG_WARN:
-            console.warn(message);
+            console.warn(message); // eslint-disable-line no-console
             break;
         case constants.LOG_INFO:
         default:
-            console.log(message);
+            console.log(message); // eslint-disable-line no-console
             break;
         }
     }

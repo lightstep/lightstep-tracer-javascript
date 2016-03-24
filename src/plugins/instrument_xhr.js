@@ -3,7 +3,7 @@ import OpenTracing from 'opentracing';
 // Capture the proxied values on script load (i.e. ASAP) in case there are
 // multiple layers of instrumentation.
 let proxied = {};
-if (typeof window === "object" && typeof window.XMLHttpRequest !== "undefined") {
+if (typeof window === 'object' && typeof window.XMLHttpRequest !== 'undefined') {
     proxied = {
         XMLHttpRequest   : XMLHttpRequest,
         open             : XMLHttpRequest.prototype.open,
@@ -30,7 +30,7 @@ class InstrumentXHR {
     }
 
     name() {
-        return "instrument_xhr";
+        return 'instrument_xhr';
     }
 
     start(tracer) {
@@ -39,9 +39,9 @@ class InstrumentXHR {
         }
         this._tracer = tracer;
 
-        tracer.addOption('xhr_instrumentation',        { type : 'bool',  defaultValue: true });
-        tracer.addOption('xhr_url_inclusion_patterns', { type : 'array', defaultValue: [ /.*/ ] })
-        tracer.addOption("xhr_url_exclusion_patterns", { type : "array", defaultValue: [] });
+        tracer.addOption('xhr_instrumentation', { type : 'bool', defaultValue : true });
+        tracer.addOption('xhr_url_inclusion_patterns', { type : 'array', defaultValue : [ /.*/ ]})
+        tracer.addOption('xhr_url_exclusion_patterns', { type : 'array', defaultValue : [] });
         this._addServiceHostToExclusions(tracer.options());
         tracer.on('options', this._handleOptions);
     }
@@ -91,7 +91,7 @@ class InstrumentXHR {
 
         // http://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
         function escapeRegExp(str) {
-            return ('' + str).replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+            return ('' + str).replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
         }
 
         // Check against the hostname without the port as well as the canonicalized
@@ -99,9 +99,9 @@ class InstrumentXHR {
         let host = escapeRegExp(opts.collector_host);
         let port = escapeRegExp(opts.collector_port);
         let set = [ new RegExp('^https?://' + host + ':' + port) ];
-        if (port == "80") {
+        if (port == '80') {
             set.push(new RegExp('^http://' + host));
-        } else if (port == "443") {
+        } else if (port == '443') {
             set.push(new RegExp('^https://' + host));
         }
         this._internalExclusions = set;
@@ -112,7 +112,7 @@ class InstrumentXHR {
      * There are a lot of potential JavaScript platforms.
      */
     _isValidContext() {
-        if (typeof window === "undefined") {
+        if (typeof window === 'undefined') {
             return false;
         }
         if (!window.XMLHttpRequest) {
@@ -164,20 +164,20 @@ class InstrumentXHR {
             let syncSpan = undefined;
             if (async) {
                 this.addEventListener('readystatechange', function() {
-                    if (this.readyState == 0) {
+                    if (this.readyState === 0) {
                         // Do nothing (the XHR span will not be ready yet)
-                    } else if (this.readyState == 1) {
+                    } else if (this.readyState === 1) {
                         // Do nothing (the XHR span will not be ready yet)
-                    } else if (this.readyState == 2) {
+                    } else if (this.readyState === 2) {
                         let span = self._getXHRSpan(this);
                         span.info(`XMLHttpRequest: ${method} ${url}`, openPayload);
                         span.addTags(tags);
                         span.info('XMLHttpRequest headers received (readyState=2)', {
                             headers : getResponseHeaders(this),
                         });
-                    } else if (this.readyState == 3) {
+                    } else if (this.readyState === 3) {
                         self._getXHRSpan(this).info('XMLHttpRequest loading (readyState=3)');
-                    } else  if (this.readyState == 4) {
+                    } else  if (this.readyState === 4) {
                         let responseType = this.responseType;
                         let payload = {
                             url          : url,
@@ -191,7 +191,7 @@ class InstrumentXHR {
                         // The responseText property is only valid if the responseType is
                         // '' or 'text'.  There are other types like 'arraybuffer' for which
                         // attempting to read responseText will throw an exception.
-                        let validResponseType = (responseType === '' || responseType == 'text');
+                        let validResponseType = (responseType === '' || responseType === 'text');
                         if (validResponseType && this.responseText) {
                             // Display the payload as JSON if it's parseable as such
                             try {
@@ -266,11 +266,11 @@ class InstrumentXHR {
             let lenStr = (len === undefined) ? '' : `, data length=${len}`;
             span.info(`XMLHttpRequest send${lenStr}`, { data : data });
             return proxied.send.apply(this, arguments);
-        }
+        };
     }
 
     _getXHRSpan(xhr) {
-        var self = this;
+        let self = this;
 
         // Check if we've already joined successfully; if so, return early.
         if (xhr.__xhr_span) {
@@ -325,21 +325,21 @@ class InstrumentXHR {
 }
 
 function getCookies() {
-    if (typeof document === "undefined" || !document.cookie) {
+    if (typeof document === 'undefined' || !document.cookie) {
         return null;
     }
 
-    let cookies = document.cookie.split(";");
+    let cookies = document.cookie.split(';');
     let data = {};
     let count = 0;
     for (let i = 0; i < cookies.length; i++) {
-        let parts = cookies[i].split("=", 2);
+        let parts = cookies[i].split('=', 2);
         if (parts.length === 2) {
-            let key = parts[0].replace(/^\s+/,"").replace(/\s+$/, "");
+            let key = parts[0].replace(/^\s+/, '').replace(/\s+$/, '');
             data[key] = decodeURIComponent(parts[1]);
             try {
                 data[key] = JSON.parse(data[key]);
-            } catch (_ignored) {}
+            } catch (_ignored) { /* Ignored */ }
             count++;
         }
     }
@@ -352,9 +352,9 @@ function getCookies() {
 // Normalize the getAllResponseHeaders output
 function getResponseHeaders(xhr) {
     let raw = xhr.getAllResponseHeaders();
-    let parts = raw.replace(/\s+$/, "").split(/\n/);
+    let parts = raw.replace(/\s+$/, '').split(/\n/);
     for (let i in parts) {
-        parts[i] = parts[i].replace(/\r/g, "").replace(/^\s+/,"").replace(/\s+$/,"");
+        parts[i] = parts[i].replace(/\r/g, '').replace(/^\s+/, '').replace(/\s+$/, '');
     }
     return parts;
 }

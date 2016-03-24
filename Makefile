@@ -1,5 +1,6 @@
 .PHONY: build publish \
 	test test_quick test_node test_browser test_all \
+	lint \
 	thrift
 
 DST_FILES = \
@@ -52,6 +53,10 @@ test_all: build
 	scripts/docker_test.sh 4.4
 	scripts/docker_test.sh 4.0
 	scripts/docker_test.sh 0.12
+
+# This is not run by default as currently too many tests fail
+lint:
+	node_modules/eslint/bin/eslint.js --color src
 
 # LightStep internal target
 thrift:

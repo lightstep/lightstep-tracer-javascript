@@ -12,7 +12,6 @@ export default class TransportBrowser {
     ensureConnection (opts) {
         this._host = opts.collector_host;
         this._port = opts.collector_port;
-
         this._encryption = opts.collector_encryption;
     }
 
@@ -49,7 +48,9 @@ export default class TransportBrowser {
                 done(err, null);
             }
         };
-        xhr.send(report)
+        xhr.onerror = function(e) {
+        };
+        xhr.send(payload);
     }
 
     // Do a "tail flush" using an async browser script load.  This does not get

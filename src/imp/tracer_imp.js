@@ -316,7 +316,7 @@ export default class TracerImp extends EventEmitter {
             return this._options;
         }
         if (typeof opts !== 'object') {
-            throw new UserException('options() must be called with an object: type was ' + typeof opts);
+            throw new Error('options() must be called with an object: type was ' + typeof opts);
         }
 
         // "collector_encryption" acts an alias for the common cases of 'collector_port'
@@ -337,7 +337,7 @@ export default class TracerImp extends EventEmitter {
         // that didn't result either in a change or a reset to the existing value?
         for (let key in opts) {
             if (modified[key] === undefined && unchanged[key] === undefined) {
-                throw new UserException("Invalid option '%s'", key);
+                throw new Error(`Invalid option ${key}`);
             }
         }
 
