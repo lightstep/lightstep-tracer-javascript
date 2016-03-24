@@ -329,7 +329,8 @@ export default class TracerImp extends EventEmitter {
         // Track what options have been modified
         let modified = {};
         let unchanged = {};
-        for (let desc of this._optionDescs) {
+        for (let  key in this._optionDescs) {
+            const desc = this._optionDescs[key];
             this._setOptionInternal(modified, unchanged, opts, desc);
         }
 
@@ -523,8 +524,8 @@ export default class TracerImp extends EventEmitter {
 
     addPlatformPlugins(opts) {
         let pluginSet = this._platform.plugins(opts);
-        for (let plugin of pluginSet) {
-            this.addPlugin(plugin);
+        for (let key in pluginSet) {
+            this.addPlugin(pluginSet[key]);
         }
     }
 
@@ -693,11 +694,8 @@ export default class TracerImp extends EventEmitter {
         if (this._spanRecords.length > 0) {
             return false;
         }
-
-        // `let <value> of <object>` is problematic in Node v4.1.
-        // https://github.com/babel/babel-loader/issues/84
-        for (let value of Object.entries(this._counters)) {
-            if (value > 0) {
+        for (let key in this._counters) {
+            if (this._counters[key] > 0) {
                 return false;
             }
         }
@@ -763,13 +761,14 @@ export default class TracerImp extends EventEmitter {
     }
 
     _restoreRecords(logs, spans, counters) {
-        for (let record of logs) {
-            this._internalAddLogRecord(record);
+        for (let key in logs) {
+            this._internalAddLogRecord(logs[key]);
         }
-        for (let record of spans) {
-            this._internalAddSpanRecord(record);
+        for (let key in spans) {
+            this._internalAddSpanRecord(spans[key]);
         }
-        for (let record of counters) {
+        for (let key in counters) {
+            const record = counters[key];
             if (this._counters[record.Name]) {
                 this._counters[record.Name] += record.Value;
             } else {
@@ -929,11 +928,11 @@ export default class TracerImp extends EventEmitter {
         // spans before the GUID is necessarily set.
         console.assert(this._runtimeGUID !== null, "No runtime GUID for Tracer");
 
-        for (let record of logRecords) {
-            record.runtime_guid = this._runtimeGUID;
+        for (let key in logRecords) {
+            logRecords[key].runtime_guid = this._runtimeGUID;
         }
-        for (let record of spanRecords) {
-            record.runtime_guid = this._runtimeGUID;
+        for (let key in spanRecords) {
+            spanRecords[key].runtime_guid = this._runtimeGUID;
         }
 
         let thriftCounters = [];

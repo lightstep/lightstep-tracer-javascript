@@ -300,13 +300,15 @@ class InstrumentXHR {
         if (!url) {
             return false;
         }
-        for (let ex of this._internalExclusions) {
+        for (let key in this._internalExclusions) {
+            const ex = this._internalExclusions[key];
             if (ex.test(url)) {
                 return false;
             }
         }
         let include = false;
-        for (let inc of opts.xhr_url_inclusion_patterns) {
+        for (let key in opts.xhr_url_inclusion_patterns) {
+            const inc = opts.xhr_url_inclusion_patterns[key];
             if (inc.test(url)) {
                 include = true;
                 break;
@@ -315,7 +317,8 @@ class InstrumentXHR {
         if (!include) {
             return false;
         }
-        for (let ex of opts.xhr_url_exclusion_patterns) {
+        for (let key in opts.xhr_url_exclusion_patterns) {
+            const ex = opts.xhr_url_exclusion_patterns[key];
             if (ex.test(url)) {
                 return false;
             }

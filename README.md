@@ -68,7 +68,6 @@ var url = span.imp().generateTraceURL())
 console.log('View the trace for this span at:', url);
 ```
 
-
 ## License
 
 [The MIT License](LICENSE).

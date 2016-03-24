@@ -96,7 +96,8 @@ export default class PlatformNode {
         }
 
         let opts = {};
-        for (let value of process.argv) {
+        for (let key in process.argv) {
+            const value = process.argv[key];
             switch (value.toLowerCase()) {
             case '--lightstep-log_to_console':
             case '--lightstep-log_to_console=true':

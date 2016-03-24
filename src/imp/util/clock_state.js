@@ -94,7 +94,8 @@ class ClockState {
         // offset is the "best" one.
         let minDelayMicros = Number.MAX_VALUE;
         let bestOffsetMicros = 0;
-        for (let sample of this._samples) {
+        for (let key in this._samples) {
+            const sample = this._samples[key];
             if (sample.delayMicros < minDelayMicros) {
                 minDelayMicros = sample.delayMicros;
                 bestOffsetMicros = sample.offsetMicros;
@@ -109,7 +110,8 @@ class ClockState {
         // Now compute the jitter, i.e. the error relative to the new
         // offset were we to use it.
         let jitter = 0;
-        for (let sample of this._samples) {
+        for (let key in this._samples) {
+            const sample = this._samples[key];
             jitter += Math.pow(bestOffsetMicros - sample.offsetMicros, 2);
         }
         jitter = Math.sqrt(jitter / this._samples.length);
