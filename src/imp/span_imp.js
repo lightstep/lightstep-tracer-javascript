@@ -177,7 +177,7 @@ export default class SpanImp {
                     this.setParentGUID(value);
                     break;
                 default:
-                    this._tracer._internalWarnf('Ignoring unknown field %s', key);
+                    this._tracer._warn(`Ignoring unknown field ${key}`);
                     break;
             }
         }
@@ -315,23 +315,6 @@ export default class SpanImp {
             .message(msg)
             .payload(payload)
             .end();
-    }
-
-    infof(fmt, ...args) {
-        this._tracer.logFmt(constants.LOG_INFO, this._guid, fmt, ...args);
-        return this;
-    }
-    warnf(fmt, ...args) {
-        this._tracer.logFmt(constants.LOG_WARN, this._guid, fmt, ...args);
-        return this;
-    }
-    errorf(fmt, ...args) {
-        this._tracer.logFmt(constants.LOG_ERROR, this._guid, fmt, ...args);
-        return this;
-    }
-    fatalf(fmt, ...args) {
-        this._tracer.logFmt(constants.LOG_FATAL, this._guid, fmt, ...args);
-        return this;
     }
 
     _toThrift() {

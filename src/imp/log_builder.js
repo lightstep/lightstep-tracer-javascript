@@ -1,7 +1,6 @@
 'use strict';
 
 import { crouton_thrift } from '../platform_abstraction_layer';
-import { sprintf } from 'sprintf-js';
 const constants = require('../constants');
 const coerce    = require('./coerce');
 
@@ -59,27 +58,6 @@ class LogBuilder {
     name(stableName) {
         this._record.stable_name = coerce.toString(stableName);
         return this;
-    }
-
-    logf(fmt, ...args) {
-        // It's necessary to catch exceptions on the string format for cases
-        // such as circular data structure being passed in as a %j argument.
-        try {
-            this._record.message = sprintf(fmt, ...args);
-        } catch (e) {
-            this._record.message = "[FORMAT ERROR]: " + fmt;
-        }
-        return this;
-    }
-
-    infof(fmt, ...args) {
-        return this.level(constants.LOG_INFO).logf(fmt, ...args);
-    }
-    warnf(fmt, ...args) {
-        return this.level(constants.LOG_WARN).logf(fmt, ...args);
-    }
-    errorf(fmt, ...args){
-        return this.level(constants.LOG_ERROR).logf(fmt, ...args);
     }
 
     error(flag) {
