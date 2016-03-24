@@ -14,6 +14,7 @@ SRC_FILES = $(shell find src/ -type f) \
 
 build: $(DST_FILES)
 $(DST_FILES) : $(SRC_FILES)
+	[[ -d node_modules ]] || npm install
 	npm run webpack
 
 # NOTE: `npm version` automatically creates a git commit ang git tag for the
