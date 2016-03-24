@@ -329,7 +329,7 @@ export default class TracerImp extends EventEmitter {
         // Track what options have been modified
         let modified = {};
         let unchanged = {};
-        for (let  key in this._optionDescs) {
+        for (let key in this._optionDescs) {
             const desc = this._optionDescs[key];
             this._setOptionInternal(modified, unchanged, opts, desc);
         }
