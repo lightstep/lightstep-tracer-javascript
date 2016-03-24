@@ -1,0 +1,9 @@
+{
+    "command" : "make build --no-print-directory",
+    "include" : [
+        "src/**/*.js"
+    ],
+    "exclude" : [
+        "**/node_modules/**"
+    ]
+}

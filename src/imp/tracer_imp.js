@@ -3,15 +3,12 @@
 //============================================================================//
 
 import OpenTracing from 'opentracing';
-import { sprintf } from 'sprintf-js';
 import EventEmitter from 'eventemitter3';
 import { Platform, Transport, thrift, crouton_thrift } from '../platform_abstraction_layer';
-import { UserException, InternalException } from './exceptions';
 import SpanImp from './span_imp';
 import * as Constants from '../constants';
 import globals from './globals';
 
-const _             = require('underscore');
 const constants     = require('../constants');
 const coerce        = require('./coerce');
 const util          = require('./util/util');
@@ -201,7 +198,7 @@ export default class TracerImp extends EventEmitter {
             carrier.baggage = this._objectToUint8Array(temp.baggage);
             break;
         default:
-            this._internalErrorf('Unknown format: %s', format);
+            this._error(`Unknown format: ${format}`);
             break;
         }
     }
@@ -243,7 +240,7 @@ export default class TracerImp extends EventEmitter {
                     span.setFields({ parent_guid : value });
                     break;
                 default:
-                    this._internalErrorf('Unrecognized carrier key with recognized prefix. Ignoring.');
+                    this._error(`Unrecognized carrier key with recognized prefix. Ignoring.`);
                     break;
                 }
             }
@@ -258,7 +255,7 @@ export default class TracerImp extends EventEmitter {
             break;
 
         default:
-            this._internalErrorf('Unknown format: %s', format);
+            this._error(`Unknown format: ${format}`);
             break;
         }
 
@@ -306,7 +303,7 @@ export default class TracerImp extends EventEmitter {
 
     // Register a new option.  Used by plug-ins.
     addOption(name, desc) {
-        this._internalInfofV2(`Adding options ${name} with value = ${desc.defaultValue}`);
+        this._infoV(2, `Adding options ${name} with value = ${desc.defaultValue}`);
 
         desc.name = name;
         this._optionDescs.push(desc);
@@ -319,7 +316,7 @@ export default class TracerImp extends EventEmitter {
             return this._options;
         }
         if (typeof opts !== 'object') {
-            throw new UserException('options() must be called with an object: type was ' + typeof opts);
+            throw new Error('options() must be called with an object: type was ' + typeof opts);
         }
 
         // "collector_encryption" acts an alias for the common cases of 'collector_port'
@@ -340,7 +337,7 @@ export default class TracerImp extends EventEmitter {
         // that didn't result either in a change or a reset to the existing value?
         for (let key in opts) {
             if (modified[key] === undefined && unchanged[key] === undefined) {
-                throw new UserException("Invalid option '%s'", key);
+                throw new Error(`Invalid option ${key}`);
             }
         }
 
@@ -354,10 +351,12 @@ export default class TracerImp extends EventEmitter {
         }
 
         if (this._options.debug) {
-            let optionsString = _.map(modified, (val, key) => {
-                return "\t" + JSON.stringify(key) + " : " + JSON.stringify(val);
-            }).join("\n");
-            this._internalInfofV2("Options modified:\n%s", optionsString);
+            let optionsString = '';
+            for (let key in modified) {
+                let val = modified[key];
+                optionsString += "\t" + JSON.stringify(key) + " : " + JSON.stringify(val);
+            }
+            this._infoV(2, `Options modified:\n${optionsString}`);
         }
         this.emit('options', modified, this._options);
     }
@@ -378,19 +377,19 @@ export default class TracerImp extends EventEmitter {
 
         case "bool":
             if (value !== true && value !== false) {
-                this._visibleWarnfOnce("Invalid boolean option '%s' '%j'", name, value);
+                this._warnOnce(`Invalid boolean option '${name}' '${value}'`);
                 return;
             }
             break;
 
         case "int":
             if (valueType !== "number" || Math.floor(value) != value) {
-                this._visibleWarnfOnce("Invalid int option '%s' '%j'", name, value);
+                this._warnOnce(`Invalid int option '${name}' '${value}'`);
                 return;
             }
             if (desc.min !== undefined && desc.max !== undefined ) {
                 if (!(value >= desc.min && value <= desc.max)) {
-                    this._visibleWarnfOnce("Option '%s' out of range '%j' is not between %j and %j", name, value, min, max);
+                    this._warnOnce(`Option '${name}' out of range '${value}' is not between ${min} and ${max}`);
                     return;
                 }
             }
@@ -404,7 +403,7 @@ export default class TracerImp extends EventEmitter {
                 value = coerce.toString(value);
                 break;
             default:
-                this._visibleWarnfOnce("Invalid string option '%s' '%j'", name, value);
+                this._warnOnce("Invalid string option '%s' '%j'", name, value);
                 return;
             }
             break;
@@ -412,20 +411,20 @@ export default class TracerImp extends EventEmitter {
         case "array":
             // Per http://stackoverflow.com/questions/4775722/check-if-object-is-array
             if (Object.prototype.toString.call(value) !== "[object Array]") {
-                this._visibleWarnfOnce("Invalid type for array option %s: found '%s'", name, valueType);
+                this._warnOnce(`Invalid type for array option ${name}: found '${valueType}'`);
                 return;
             }
             break;
 
         default:
-            this._visibleWarnfOnce(`Unknown option type '${desc.type}'`);
+            this._warnOnce(`Unknown option type '${desc.type}'`);
             return;
         }
 
         // Set the new value, recording any modifications
         let oldValue = this._options[name];
         if (oldValue === undefined) {
-            throw this._internalException("Attempt to set unknown option '%s'", name);
+            throw new Error(`Attempt to set unknown option ${name}`);
         }
 
         // Ignore no-op changes for types that can be checked quickly
@@ -451,29 +450,29 @@ export default class TracerImp extends EventEmitter {
         if (this._thriftAuth !== null) {
 
             if (!this._thriftRuntime) {
-                return this._internalErrorf('Inconsistent state: thrift auth initialized without runtime.')
+                return this._error(`Inconsistent state: thrift auth initialized without runtime.`);
             }
             if (modified.access_token) {
-                throw new UserException('Cannot change access_token after it has been set.');
+                throw new Error('Cannot change access_token after it has been set.');
             }
             if (modified.group_name) {
-                throw new UserException('Cannot change group_name after it has been set.');
+                throw new Error('Cannot change group_name after it has been set.');
             }
             if (modified.collector_host) {
-                throw new UserException('Cannot change collector_host after the connection is established');
+                throw new Error('Cannot change collector_host after the connection is established');
             }
             if (modified.collector_port) {
-                throw new UserException('Cannot change collector_port after the connection is established');
+                throw new Error('Cannot change collector_port after the connection is established');
             }
             if (modified.collector_encryption) {
-                throw new UserException('Cannot change collector_encryption after the connection is established');
+                throw new Error('Cannot change collector_encryption after the connection is established');
             }
             return;
         }
 
         // See if the Thrift data can be initialized
         if (this._options.access_token.length > 0 && this._options.group_name.length > 0) {
-            this._internalInfofV2('Initializing thrift reporting data');
+            this._infoV(2, 'Initializing thrift reporting data');
 
             this._runtimeGUID = this._platform.runtimeGUID(this._options.group_name);
 
@@ -489,7 +488,7 @@ export default class TracerImp extends EventEmitter {
             for (let key in this._options.tags) {
                 let value = this._options.tags[key];
                 if (typeof value !== 'string') {
-                    this._visibleWarnfOnce('Tracer tag value is not a string: key=%s', key);
+                    this._warnOnce(`Tracer tag value is not a string: key=${key}`);
                     continue;
                 }
                 tags[key] = value;
@@ -611,7 +610,7 @@ export default class TracerImp extends EventEmitter {
             // simplicitly is being preferred over efficiency for the moment.
             jsonString = encodeURIComponent(JSON.stringify(obj));
         } catch (e) {
-            this._internalErrorf('Could not binary encode carrier data.');
+            this._error('Could not binary encode carrier data.');
             return null;
         }
 
@@ -620,7 +619,7 @@ export default class TracerImp extends EventEmitter {
         for (let i = 0; i < jsonString.length; i++) {
             let code = jsonString.charCodeAt(i);
             if (!(code >= 0 && code <= 255)) {
-                this._internalErrorf('Unexpected character code');
+                this._error('Unexpected character code');
                 return null;
             }
             view[i] =code;
@@ -630,7 +629,7 @@ export default class TracerImp extends EventEmitter {
 
     _uint8ArrayToObject(arr) {
         if (!arr) {
-            this._internalErrorf('Array is null');
+            this._error('Array is null');
             return null;
         }
 
@@ -641,7 +640,7 @@ export default class TracerImp extends EventEmitter {
         try {
             return JSON.parse(decodeURIComponent(jsonString));
         } catch (e) {
-            this._internalErrorf('Could not decode binary data.');
+            this._error('Could not decode binary data.');
             return null;
         }
     }
@@ -663,15 +662,13 @@ export default class TracerImp extends EventEmitter {
     }
 
     // Create a thrift log record and add it to the internal buffer
-    logFmt(level, spanGUID, fmt, ...args) {
+    logDetail(level, spanGUID, msg, payload) {
         let log = this.log()
             .level(level)
             .span(spanGUID)
-            .logf(fmt, ...args);
-        if (args.length > 0) {
-            log.payload({
-                "arguments" : args,
-            });
+            .message(msg);
+        if (payload !== undefined) {
+            log.payload(payload);
         }
         log.end();
     }
@@ -732,7 +729,7 @@ export default class TracerImp extends EventEmitter {
     // log message to the console with the assumption this is a new record.
     _internalAddLogRecord(record) {
         if (!record) {
-            this._internalErrorf("Attempt to add null record to buffer");
+            this._error('Attempt to add null record to buffer');
             return;
         }
 
@@ -752,7 +749,7 @@ export default class TracerImp extends EventEmitter {
 
     _internalAddSpanRecord(record) {
         if (!record) {
-            this._internalErrorf("Attempt to add null record to buffer");
+            this._error("Attempt to add null record to buffer");
             return;
         }
 
@@ -776,7 +773,7 @@ export default class TracerImp extends EventEmitter {
             if (this._counters[record.Name]) {
                 this._counters[record.Name] += record.Value;
             } else {
-                this._internalErrorf("Bad counter name: '%s'", record.Name);
+                this._error("Bad counter name: '%s'", record.Name);
             }
         }
     }
@@ -802,11 +799,11 @@ export default class TracerImp extends EventEmitter {
 
     _startReportingLoop() {
         if (this._options.disabled) {
-            this._internalInfof("Not starting reporting loop: instrumentation is disabled.");
+            this._info("Not starting reporting loop: instrumentation is disabled.");
             return;
         }
         if (this._options.disable_reporting_loop) {
-            this._internalInfof("Not starting reporting loop: reporting loop is disabled.");
+            this._info("Not starting reporting loop: reporting loop is disabled.");
             return;
         }
         if (this._thriftAuth === null) {
@@ -815,24 +812,30 @@ export default class TracerImp extends EventEmitter {
             return;
         }
         if (this._reportingLoopActive) {
-            this._internalErrorf("Reporting loop already started!");
+            this._info("Reporting loop already started!");
             return;
         }
 
-        this._internalInfofV1("Starting reporting loop: %j", this._thriftRuntime);
+        this._infoV(1, "Starting reporting loop:", this._thriftRuntime);
         this._reportingLoopActive = true;
 
         // Set up the script exit clean-up: stop the reporting loop (so it does
         // not turn a Node process into a zombie) and do a final explicit flush.
         // Note that the final flush may enqueue asynchronous callbacks that cause
         // the 'beforeExit' event to be re-emitted when those callbacks finish.
+        let finalFlushOnce = 0;
         let finalFlush = () => {
-            this._internalInfof("Final flush before exit.");
+            if (finalFlushOnce++ > 0) { return; }
+            this._info("Final flush before exit.");
             this._flushReport(true);
         };
-        let stopReporting = () => { this._stopReportingLoop() };
-        this._platform.onBeforeExit(_.once(stopReporting));
-        this._platform.onBeforeExit(_.once(finalFlush));
+        let stopReportingOnce = 0;
+        let stopReporting = () => {
+            if (stopReportingOnce++ > 0) { return; }
+            this._stopReportingLoop();
+        };
+        this._platform.onBeforeExit(stopReporting);
+        this._platform.onBeforeExit(finalFlush);
 
         // Begin the asynchronous reporting loop
         let loop = ()=>{
@@ -846,7 +849,7 @@ export default class TracerImp extends EventEmitter {
     }
 
     _stopReportingLoop() {
-        this._internalInfofV2("Stopping reporting loop");
+        this._infoV(2, "Stopping reporting loop");
 
         this._reportingLoopActive = false;
         clearTimeout(this._reportTimer);
@@ -874,7 +877,7 @@ export default class TracerImp extends EventEmitter {
         let jitter = 1.0 + (Math.random() * 0.2 - 0.1);
         let delay = Math.floor(Math.max(0, jitter * basis));
 
-        this._internalInfofV2("Delaying next flush for %dms", delay);
+        this._infoV(2, `Delaying next flush for ${delay}ms`);
         this._reportTimer = util.detachedTimeout(()=> {
             this._reportTimer = null;
             this._flushReport(false, done);
@@ -903,22 +906,21 @@ export default class TracerImp extends EventEmitter {
         // A detached flush (i.e. one intended to fire at exit or other "last
         // ditch effort" event) should always use the real data.
         if (this._useClockState && !clockReady && !detached) {
-            this._internalInfofV2("Flushing empty report to prime clock state");
+            this._infoV(2, "Flushing empty report to prime clock state");
             logRecords  = [];
             spanRecords = [];
             counters    = {};
         } else {
             // Early out if we can.
             if (this._buffersAreEmpty()) {
-                this._internalInfofV2("Skipping empty report");
+                this._infoV(2, "Skipping empty report");
                 return done(null);;
             }
 
             // Clear the object buffers as the data is now in the local
             // variables
             this._clearBuffers();
-
-            this._internalInfofV2("Flushing report (%d logs, %d spans)", logRecords.length, spanRecords.length);
+            this._infoV(2, `Flushing report (${logRecords.length} logs, ${spanRecords.length} spans)`);
         }
 
         this._transport.ensureConnection(this._options);
@@ -971,9 +973,9 @@ export default class TracerImp extends EventEmitter {
                 // On a failed report, re-enqueue the data that was going to be
                 // sent.
                 if (err.message) {
-                    this._internalErrorf("Error in report: %s (%j)", err.message, err);
+                    this._error(`Error in report: ${err.message}`, err);
                 } else {
-                    this._internalErrorf("Error in report: %j", err);
+                    this._error(`Error in report: ${err}`, err);
                 }
                 this._restoreRecords(report.log_records, report.span_records, report.counters);
 
@@ -987,7 +989,7 @@ export default class TracerImp extends EventEmitter {
 
                 if (this._options.debug) {
                     let reportWindowSeconds = (now - report.oldest_micros) / 1e6;
-                    this._internalInfof("Report flushed for last %0.3f seconds", reportWindowSeconds);
+                    this._info(`Report flushed for last ${reportWindowSeconds} seconds`);
                 }
 
                 // Update internal data after the successful report
@@ -1018,30 +1020,24 @@ export default class TracerImp extends EventEmitter {
     // Internal logging & errors
     //-----------------------------------------------------------------------//
 
-    _internalInfofV2(fmt, ...args) {
-        if (this._options.verbosity < 2) {
+    _infoV(v, msg, payload) {
+        if (this._options.verbosity < v) {
             return;
         }
-        this._internalLog("[LightStep:V2] ", constants.LOG_INFO, fmt, ...args);
+        this._internalLog(constants.LOG_INFO, '[LS:V'+v+'] ' + msg, payload);
     }
-    _internalInfofV1(fmt, ...args) {
-        if (this._options.verbosity < 1) {
-            return;
-        }
-        this._internalLog("[LightStep:V1] ", constants.LOG_INFO, fmt, ...args);
+    _info(msg, payload) {
+        this._internalLog(constants.LOG_INFO, '[LS:I] ' + msg, payload)
     }
-    _internalInfof(fmt, ...args) {
-        this._internalLog("[LightStep:I] ", constants.LOG_INFO, fmt, ...args);
+    _warn(msg, payload) {
+        this._internalLog(constants.LOG_WARN, '[LS:W] ' + msg, payload);
     }
-    _internalWarnf(fmt, ...args) {
-        this._internalLog("[LightStep:W] ", constants.LOG_WARN, fmt, ...args);
+    _error(msg, payload) {
+        this._internalLog(constants.LOG_ERROR, '[LS:E] ' + msg, payload);
     }
-    _internalErrorf(fmt, ...args) {
-        this._internalLog("[LightStep:E] ", constants.LOG_ERROR, fmt, ...args);
-    }
-    _internalLog(prefix, level, fmt, ...args) {
+    _internalLog(level, msg, payload) {
         if (this._options.debug) {
-            this.logFmt(level, null, prefix + fmt, ...args);
+            this.logDetail(level, null, msg, payload);
         }
     }
 
@@ -1050,19 +1046,13 @@ export default class TracerImp extends EventEmitter {
      * avoid spamming the host application.  Also creates an internal log of
      * the warning.
      */
-    _visibleWarnfOnce(fmt, ...args) {
+    _warnOnce(msg, payload) {
         this._visibleErrorCount++;
         if (this._visibleErrorCount === 1) {
-            let msg;
-            try {
-                msg = sprintf(fmt, ...args);
-            } catch (e) {
-                msg = "[FORMAT ERROR]: " + fmt;
-            }
             if (!this._options.silent) {
-                console.warn(msg);
+                console.warn(msg, payload);
             }
         }
-        this._internalLog("[LightStep:I] ", constants.LOG_INFO, fmt, ...args);
+        this._warn(msg, payload);
     }
 }

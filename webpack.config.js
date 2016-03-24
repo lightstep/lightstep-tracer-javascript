@@ -25,8 +25,10 @@ switch (CONFIG) {
         devtool = 'source-map';
         break;
     case 'prod':
+        plugins.push(new webpack.optimize.OccurenceOrderPlugin());
         plugins.push(new webpack.optimize.UglifyJsPlugin({
             minimize: true,
+            // beautify: true,
             compress : {
                 dead_code : true,
                 unused : true,
