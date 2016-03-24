@@ -22,6 +22,7 @@ $(DST_FILES) : $(SRC_FILES)
 # incremented version
 publish: test test_all
 	npm version patch
+	make build # need to rebuild with the new version number
 	git push
 	git push --tags
 	npm whoami
