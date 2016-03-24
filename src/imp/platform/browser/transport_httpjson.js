@@ -41,7 +41,7 @@ export default class TransportBrowser {
         xhr.onreadystatechange = function() {
             if (this.readyState === 4) {
                 let err = null;
-                if (status !== 200) {
+                if (this.status !== 200) {
                     err = new Error('status code = ' + this.status);
                 }
                 done(err, null);
