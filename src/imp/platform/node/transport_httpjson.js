@@ -39,8 +39,8 @@ export default class TransportHTTPJSON {
                 done(err, null);
             });
         });
-        req.on('error', (e) => {
-            done(e, null);
+        req.on('error', (err) => {
+            done(err, null);
         });
 
         let payload = JSON.stringify(reportRequest);

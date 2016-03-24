@@ -29,7 +29,6 @@ export default class TransportBrowser {
 
     _reportAJAX(auth, report, done) {
         let payload = JSON.stringify(report);
-
         let protocol = (this._encryption === 'none') ? 'http' : 'https';
         let url = `${protocol}://${this._host}:${this._port}/api/v0/reports`;
         let xhr = new XMLHttpRequest();
@@ -47,8 +46,6 @@ export default class TransportBrowser {
                 }
                 done(err, null);
             }
-        };
-        xhr.onerror = function(e) {
         };
         xhr.send(payload);
     }

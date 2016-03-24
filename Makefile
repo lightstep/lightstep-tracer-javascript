@@ -22,10 +22,10 @@ $(DST_FILES) : $(SRC_FILES)
 # incremented version
 publish: test test_all
 	npm version patch
-	npm whoami
-	npm publish
 	git push
 	git push --tags
+	npm whoami
+	npm publish
 
 test: build test_node test_browser
 	echo Running tests
