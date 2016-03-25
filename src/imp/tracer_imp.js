@@ -319,6 +319,11 @@ export default class TracerImp extends EventEmitter {
             throw new Error('options() must be called with an object: type was ' + typeof opts);
         }
 
+        // "collector_port" 0 acts as an alias for "use the default".
+        if (opts.collector_port === 0) {
+            delete opts.collector_port;
+        }
+
         // "collector_encryption" acts an alias for the common cases of 'collector_port'
         if (opts.collector_encryption !== undefined && opts.collector_port === undefined) {
             opts.collector_port = opts.collector_encryption !== 'none' ?
