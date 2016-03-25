@@ -282,10 +282,7 @@ class InstrumentXHR {
         // NOTE: we would like to re-inject `span` into the headers (swapping
         // out the ones we joined with) but CORS restrictions prevent us from
         // doing so.
-        let splitTextCarrier = new OpenTracing.SplitTextCarrier();
-        splitTextCarrier.tracerState = xhr.__requestHeaders;
-        splitTextCarrier.baggage = xhr.__requestHeaders;
-        let span = self._tracer.join('XMLHttpRequest', OpenTracing.FORMAT_SPLIT_TEXT, splitTextCarrier);
+        let span = self._tracer.join('XMLHttpRequest', OpenTracing.FORMAT_TEXT_MAP, xhr.__requestHeaders);
         if (span) {
             xhr.__xhr_span = span;
         }

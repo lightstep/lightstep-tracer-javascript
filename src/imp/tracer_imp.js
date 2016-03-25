@@ -159,59 +159,45 @@ export default class TracerImp extends EventEmitter {
     }
 
     inject(span, format, carrier) {
-        let baggage = span.getBaggage();
-        let traceGUID = span.traceGUID();
-        let parentGUID = span.parentGUID();
-
         switch (format) {
-
-        case OpenTracing.FORMAT_SPLIT_TEXT:
-
-            carrier.tracerState[CARRIER_TRACER_STATE_PREFIX+'spanid'] = span.guid();
-            if (traceGUID) {
-                carrier.tracerState[CARRIER_TRACER_STATE_PREFIX+'traceid'] = traceGUID;
-            }
-            carrier.tracerState[CARRIER_TRACER_STATE_PREFIX+'sampled'] = "true";
-            for (let key in baggage) {
-                carrier.baggage[CARRIER_BAGGAGE_PREFIX + key] = baggage[key];
-            }
+        case OpenTracing.FORMAT_TEXT_MAP:
+            this._injectToTextMap(span, carrier);
             break;
 
         // The binary encoding here is optimized for correctness and uniformity
-        // across platforms: it is not efficient.
-        case OpenTracing.FORMAT_SPLIT_BINARY:
-            let temp = {
-                tracerState : {},
-                baggage : {},
-            };
-
-            temp.tracerState[CARRIER_TRACER_STATE_PREFIX+'spanid'] = span.guid();
-            if (traceGUID) {
-                carrier.tracerState[CARRIER_TRACER_STATE_PREFIX+'traceid'] = traceGUID;
-            }
-            temp.tracerState[CARRIER_TRACER_STATE_PREFIX+'sampled'] = "true";
-            for (let key in baggage) {
-                temp.baggage[CARRIER_BAGGAGE_PREFIX + key] = baggage[key];
-            }
-
-            carrier.tracerState = this._objectToUint8Array(temp.tracerState);
-            carrier.baggage = this._objectToUint8Array(temp.baggage);
+        // across platforms: it is currently not efficient.
+        case OpenTracing.FORMAT_BINARY:
+            carrier.buffer = this._objectToUint8Array(this._injectToTextMap(span, {}));
             break;
+
         default:
             this._error(`Unknown format: ${format}`);
             break;
         }
     }
 
+    _injectToTextMap(span, carrier) {
+        let baggage = span.getBaggage();
+        let traceGUID = span.traceGUID();
+        let parentGUID = span.parentGUID();
+
+        carrier[CARRIER_TRACER_STATE_PREFIX+'spanid'] = span.guid();
+        if (traceGUID) {
+            carrier[CARRIER_TRACER_STATE_PREFIX+'traceid'] = traceGUID;
+        }
+        carrier[CARRIER_TRACER_STATE_PREFIX+'sampled'] = "true";
+        for (let key in baggage) {
+            carrier[CARRIER_BAGGAGE_PREFIX + key] = baggage[key];
+        }
+        return carrier;
+    }
+
     join(operationName, format, carrier) {
         // Simplify the logic by converting the binary carrier to a split text
         // carrier.
-        if (format === OpenTracing.FORMAT_SPLIT_BINARY) {
-            let splitText = new OpenTracing.SplitTextCarrier();
-            splitText.tracerState = this._uint8ArrayToObject(carrier.tracerState);
-            splitText.baggage = this._uint8ArrayToObject(carrier.baggage);
-            format = OpenTracing.FORMAT_SPLIT_TEXT;
-            carrier = splitText;
+        if (format === OpenTracing.FORMAT_BINARY) {
+            format = OpenTracing.FORMAT_TEXT_MAP;
+            carrier = this._uint8ArrayToObject(carrier.buffer);
         }
 
         // Create the empty, raw span
@@ -222,9 +208,9 @@ export default class TracerImp extends EventEmitter {
 
             // Iterate over the contents of the carrier and set the properties
             // accordingly.
-        case OpenTracing.FORMAT_SPLIT_TEXT:
-            for (let key in carrier.tracerState) {
-                let value = carrier.tracerState[key];
+        case OpenTracing.FORMAT_TEXT_MAP:
+            for (let key in carrier) {
+                let value = carrier[key];
                 if (key.substr(0, CARRIER_TRACER_STATE_PREFIX.length) !== CARRIER_TRACER_STATE_PREFIX) {
                     continue;
                 }
@@ -244,8 +230,8 @@ export default class TracerImp extends EventEmitter {
                     break;
                 }
             }
-            for (let key in carrier.baggage) {
-                let value = carrier.baggage[key];
+            for (let key in carrier) {
+                let value = carrier[key];
                 if (key.substr(0, CARRIER_BAGGAGE_PREFIX.length) !== CARRIER_BAGGAGE_PREFIX) {
                     continue;
                 }
