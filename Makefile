@@ -1,7 +1,7 @@
 .PHONY: build publish \
 	test test_quick test_node test_browser test_all \
 	lint \
-	thrift
+	watch thrift
 
 DST_FILES = \
 	dist/lightstep-tracer-node-debug.js \
@@ -58,6 +58,10 @@ test_all: build
 # This is not run by default as currently too many tests fail
 lint:
 	node_modules/eslint/bin/eslint.js --color src
+
+# Dev convenience for automatically rebuilding on file changes
+watch:
+	node node_modules/watch-trigger/index.js watch-trigger.config.json
 
 # LightStep internal target
 thrift:

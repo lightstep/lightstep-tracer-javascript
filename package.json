@@ -60,7 +60,7 @@
     "shelljs": "^0.5.3",
     "sprintf-js": "^1.0.3",
     "underscore": "^1.8.3",
-    "watch-trigger": "0.0.2",
+    "watch-trigger": "0.0.4",
     "webpack": "^1.12.9"
   }
 }

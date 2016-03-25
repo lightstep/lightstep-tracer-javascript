@@ -870,7 +870,7 @@ export default class TracerImp extends EventEmitter {
         // If the clock state is still being primed, potentially use the
         // shorted report interval
         let reportInterval = this._options.max_reporting_interval_millis;
-        if (!this._clockState.isReady()) {
+        if (this._useClockState && !this._clockState.isReady()) {
             reportInterval = Math.min(constants.CLOCK_STATE_REFRESH_INTERVAL_MS, reportInterval);
         }
 
