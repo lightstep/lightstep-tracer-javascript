@@ -1,10 +1,27 @@
 describe('options()', function() {
 
+    function makeLSTracer(extraOpts) {
+        var opts = {
+            access_token : 'your_access_token',
+            group_name : 'test_suite',
+            disable_reporting_loop : true,
+            silent : true,
+        };
+        for (var key in extraOpts) {
+            opts[key] = extraOpts[key];
+        }
+        return Tracer.initNewTracer(LightStep.tracer(opts));
+    }
+
+    it('tracer.imp().options() should return an object"', function() {
+        var tracer = makeLSTracer();
+        expect(tracer.imp()).to.be.an('object');
+        expect(tracer.imp().options()).to.be.an('object');
+    });
+
     it('should throw a UserError on invalid options', function() {
 
-        expect(function () {
-            Tracer.imp().options({ });
-        }).to.not.throw();
+        expect(function () { makeLSTracer() }).to.not.throw();
 
         expect(function () {
             Tracer.imp().options({ not_a_real_option : 100 });
@@ -21,7 +38,7 @@ describe('options()', function() {
     it('should allow the group_name and access_token to be set only once', function() {
 
         expect(function () {
-            var rt = LightStep.createRuntime();
+            var rt = makeLSTracer();
             rt.options({
                 group_name   : 'my_group',
                 access_token : '1',
@@ -33,7 +50,7 @@ describe('options()', function() {
         }).to.throw();
 
         expect(function () {
-            var rt = LightStep.createRuntime();
+            var rt = makeLSTracer();
             rt.options({
                 group_name   : 'my_group',
                 access_token : '1',
@@ -91,5 +108,33 @@ describe('options()', function() {
                 expect(actual[key]).to.equal(expectSet[key]);
             }
         }
+    });
+
+    it('should default to an HTTPS port', function() {
+        expect(makeLSTracer().imp().options().collector_port).to.equal(443);
+    });
+
+    it('should default to correct ports when collector_encryption is set', function() {
+        expect(makeLSTracer({
+            collector_encryption : 'none',
+        }).imp().options().collector_port).to.equal(80);
+        expect(makeLSTracer({
+            collector_encryption : 'tls',
+        }).imp().options().collector_port).to.equal(443);
+    });
+
+    it('should treat collector_port=0 as meaning "use the default"', function() {
+        expect(makeLSTracer({
+            collector_port : 4000,
+        }).imp().options().collector_port).to.equal(4000);
+
+        expect(makeLSTracer({
+            collector_port : 0,
+        }).imp().options().collector_port).to.equal(443);
+
+        expect(makeLSTracer({
+            collector_port : 0,
+            collector_encryption : 'none',
+        }).imp().options().collector_port).to.equal(80);
     });
 });
