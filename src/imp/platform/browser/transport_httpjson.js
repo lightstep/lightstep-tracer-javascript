@@ -41,10 +41,19 @@ export default class TransportBrowser {
         xhr.onreadystatechange = function() {
             if (this.readyState === 4) {
                 let err = null;
+                let resp = null;
                 if (this.status !== 200) {
                     err = new Error('status code = ' + this.status);
+                } else if (!this.responseText) {
+                    err = new Error('unexpected empty response');
+                } else {
+                    try {
+                        resp = JSON.parse(this.responseText);
+                    } catch (exception) {
+                        err = exception;
+                    }
                 }
-                done(err, null);
+                return done(err, resp);
             }
         };
         xhr.send(payload);
