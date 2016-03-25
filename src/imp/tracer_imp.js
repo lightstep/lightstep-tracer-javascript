@@ -867,7 +867,7 @@ export default class TracerImp extends EventEmitter {
         let jitter = 1.0 + (Math.random() * 0.2 - 0.1);
         let delay = Math.floor(Math.max(0, jitter * basis));
 
-        this._infoV(2, `Delaying next flush for ${delay}ms`);
+        this._infoV(3, `Delaying next flush for ${delay}ms`);
         this._reportTimer = util.detachedTimeout(()=> {
             this._reportTimer = null;
             this._flushReport(false, done);
@@ -949,6 +949,7 @@ export default class TracerImp extends EventEmitter {
             counters        : thriftCounters,
             timestamp_offset_micros : timestampOffset,
         });
+        this._infoV(2, `timestamp_offset_micros = ${timestampOffset}`);
 
         this.emit("prereport", report);
         let originMicros = this._platform.nowMicros();
@@ -979,7 +980,7 @@ export default class TracerImp extends EventEmitter {
 
                 if (this._options.debug) {
                     let reportWindowSeconds = (now - report.oldest_micros) / 1e6;
-                    this._info(`Report flushed for last ${reportWindowSeconds} seconds`);
+                    this._infoV(2, `Report flushed for last ${reportWindowSeconds} seconds`);
                 }
 
                 // Update internal data after the successful report
@@ -1011,7 +1012,7 @@ export default class TracerImp extends EventEmitter {
     //-----------------------------------------------------------------------//
 
     _infoV(v, msg, payload) {
-        if (this._options.verbosity < v) {
+        if (v > this._options.verbose) {
             return;
         }
         this._internalLog(constants.LOG_INFO, '[LS:V'+v+'] ' + msg, payload);

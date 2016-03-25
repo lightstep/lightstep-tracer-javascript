@@ -32,11 +32,20 @@ export default class TransportHTTPJSON {
                 buffer += chunk;
             });
             res.on('end', () => {
-                var err = null;
+                let err = null;
+                let resp = null;
                 if (res.statusCode !== 200) {
                     err = new Error('status code = ' + res.statusCode);
+                } else if (!buffer) {
+                    err = new Error('unexpected empty response');
+                } else {
+                    try {
+                        resp = JSON.parse(buffer);
+                    } catch (exception) {
+                        err = exception;
+                    }
                 }
-                done(err, null);
+                return done(err, resp);
             });
         });
         req.on('error', (err) => {
