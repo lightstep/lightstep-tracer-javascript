@@ -7,7 +7,7 @@ const kStoredSamplesTTLMicros = 60 * 60 * 1000 * 1000; // 1 hour
 
 class ClockState {
 
-    constructor (opts) {
+    constructor(opts) {
         this._nowMicros     = opts.nowMicros;
         this._localStoreGet = opts.localStoreGet;
         this._localStoreSet = opts.localStoreSet;
@@ -27,17 +27,17 @@ class ClockState {
             storedData.timestamp_micros &&
             storedData.timestamp_micros > this._nowMicros() - kStoredSamplesTTLMicros) {
             // Make sure there are no more than (kMaxOffsetAge+1) elements
-            this._samples = storedData.samples.slice(-(kMaxOffsetAge+1));
+            this._samples = storedData.samples.slice(-(kMaxOffsetAge + 1));
         }
         // Update the current offset based on these data.
         this.update();
     }
 
     // Add a new timing sample and update the offset.
-    addSample (originMicros,
-               receiveMicros,
-               transmitMicros,
-               destinationMicros
+    addSample(originMicros,
+              receiveMicros,
+              transmitMicros,
+              destinationMicros
     ) {
         let latestDelayMicros = Number.MAX_NUMBER;
         let latestOffsetMicros = 0;
@@ -52,7 +52,7 @@ class ClockState {
         }
 
         // Discard the oldest sample and push the new one.
-        if (this._samples.length === kMaxOffsetAge+1) {
+        if (this._samples.length === kMaxOffsetAge + 1) {
             this._samples.shift();
         }
         this._samples.push({
@@ -70,7 +70,7 @@ class ClockState {
     }
 
     // Update the time offset based on the current samples.
-    update () {
+    update() {
         // This is simplified version of the clock filtering in Simple
         // NTP. It ignores precision and dispersion (frequency error). In
         // brief, it keeps the 8 (kMaxOffsetAge+1) most recent
@@ -103,7 +103,7 @@ class ClockState {
         }
 
         // No update.
-        if (bestOffsetMicros == this._currentOffsetMicros) {
+        if (bestOffsetMicros === this._currentOffsetMicros) {
             return;
         }
 
@@ -132,17 +132,17 @@ class ClockState {
     // and our clock. This should be added to any local timestamps before
     // sending them to the server. Note that a negative offset means that
     // the local clock is ahead of the server's.
-    offsetMicros () {
+    offsetMicros() {
         return Math.floor(this._currentOffsetMicros);
     }
 
     // Returns true if we've performed enough measurements to be confident
     // in the current offset.
-    isReady () {
+    isReady() {
         return this._samples.length > 3;
     }
 
-    activeSampleCount () {
+    activeSampleCount() {
         return this._samples.length;
     }
 }
