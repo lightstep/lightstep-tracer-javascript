@@ -1,3 +1,5 @@
+import OpenTracing from 'opentracing';
+
 class InstrumentPageLoad {
 
     constructor() {
@@ -9,7 +11,7 @@ class InstrumentPageLoad {
         return 'instrument_page_load';
     }
 
-    start() {
+    start(tracerImp) {
         if (this._inited) {
             return;
         }
@@ -22,24 +24,33 @@ class InstrumentPageLoad {
             return;
         }
 
+        this._ensureSpanStarted(tracerImp);
         document.addEventListener('readystatechange', this._handleReadyStateChange.bind(this));
     }
 
     stop() {
     }
 
-    _handleReadyStateChange() {
-        // TODO: LightStep plug-in initialization should be better defined. This
-        // "lazy" initialization of the span should be more well-defined.
-        if (!Tracer.imp()) {
-            // The Tracer implementation has not yet been set up. Can't record
-            // the span yet.
-            return;
-        }
-
+    // NOTE: the plug-in initialization could be more elegant here. The core
+    // problem here is that a common usage pattern the below:
+    //
+    //      initGlobalTracer(LightStep.tracer({ ... }))
+    //
+    // The plug-ins are initialized during the tracer() call, *but* the OpenTracing
+    // Tracer is not set until the tracer() call *finishes*; thus, the global
+    // tracer is not yet set for the plug-in initialization and it needs to
+    // create a temporary handle.
+    _ensureSpanStarted(tracerImp) {
         if (!this._span) {
-            this._span = Tracer.startSpan('document/load');
-            Tracer.imp().addActiveRootSpan(this._span.imp());
+            let tracer = OpenTracing.initNewTracer(tracerImp);
+            this._span = tracer.startSpan('document/load');
+            tracerImp.addActiveRootSpan(this._span.imp());
+        }
+    }
+
+    _handleReadyStateChange() {
+        if (!this._span) {
+            return;
         }
 
         let span = this._span;
@@ -56,7 +67,7 @@ class InstrumentPageLoad {
         span.logEvent(`document.readystatechange ${state}`, payload);
 
         if (state === 'complete') {
-            Tracer.imp().removeActiveRootSpan(span.imp());
+            OpenTracing.imp().removeActiveRootSpan(span.imp());
             span.finish();
         }
     }

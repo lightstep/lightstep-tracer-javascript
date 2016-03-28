@@ -272,11 +272,6 @@ export default class TracerImp extends EventEmitter {
         return guid;
     }
 
-    // TODO: deprecated
-    initialize(opts) {
-        this.options(opts || {});
-    }
-
     setPlatformOptions(userOptions) {
         let opts = this._platform.options(this) || {};
         if (userOptions) {
@@ -574,16 +569,6 @@ export default class TracerImp extends EventEmitter {
                 this._activeRootSpan = span;
             }
         }
-    }
-
-    // TODO: Remove once this is no longer used.
-    span(name) {
-        let handle = new SpanImp(this);
-        handle.setOperationName(name);
-
-        this.emit('span_started', handle);
-
-        return handle;
     }
 
     //-----------------------------------------------------------------------//

@@ -17,6 +17,6 @@
       "no-unused-vars": [2, { "vars": "all", "args" : "none" }],
       "no-console": [1],
       "func-names": [0],
-      "no-multi-spaces": [2, { "exceptions": { "VariableDeclarator": true }} ]
+      "no-multi-spaces": [2, { "exceptions": { "AssignmentExpression": true }} ]
   }
 }

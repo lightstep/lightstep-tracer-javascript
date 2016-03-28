@@ -152,33 +152,33 @@ export default class SpanImp {
         for (let key in fields) {
             let value = fields[key];
             switch (key) {
-                case 'operationName':
-                    this._operation = value;
-                    break;
-                case 'startTime':
-                    // startTime is in milliseconds
-                    this._beginMicros = value * 1000;
-                    break;
-                case 'tags':
-                    this.addTags(value);
-                    break;
-                case 'span_guid':
-                    this._guid = coerce.toString(value);
-                    break;
-                case 'trace_guid':
-                    this._traceGUID = coerce.toString(value);
-                    break;
-                case 'parent':
-                    if (value) {
-                        this.parent(value.imp());
-                    }
-                    break;
-                case 'parent_guid':
-                    this.setParentGUID(value);
-                    break;
-                default:
-                    this._tracer._warn(`Ignoring unknown field ${key}`);
-                    break;
+            case 'operationName':
+                this._operation = value;
+                break;
+            case 'startTime':
+                // startTime is in milliseconds
+                this._beginMicros = value * 1000;
+                break;
+            case 'tags':
+                this.addTags(value);
+                break;
+            case 'span_guid':
+                this._guid = coerce.toString(value);
+                break;
+            case 'trace_guid':
+                this._traceGUID = coerce.toString(value);
+                break;
+            case 'parent':
+                if (value) {
+                    this.parent(value.imp());
+                }
+                break;
+            case 'parent_guid':
+                this.setParentGUID(value);
+                break;
+            default:
+                this._tracer._warn(`Ignoring unknown field ${key}`);
+                break;
             }
         }
     }
@@ -227,11 +227,6 @@ export default class SpanImp {
         return child;
     }
 
-    // Used by the OpenTracing adapter layer ????
-    newEmptySpan() {
-        return new SpanImp(this._tracer);
-    }
-
     /**
      * Finishes the span.
      *
@@ -260,8 +255,6 @@ export default class SpanImp {
         this._tracer._addSpanRecord(this._toThrift());
     }
 
-
-
     // Info log record with an optional payload
     info(msg, payload) {
         this._tracer.log()
@@ -271,6 +264,7 @@ export default class SpanImp {
             .payload(payload)
             .end();
     }
+
     warn(msg, payload) {
         this._tracer.log()
             .span(this._guid)
@@ -279,6 +273,7 @@ export default class SpanImp {
             .payload(payload)
             .end();
     }
+
     error(msg, payload) {
         this._tracer.log()
             .span(this._guid)
@@ -287,6 +282,7 @@ export default class SpanImp {
             .payload(payload)
             .end();
     }
+
     // Special case to format exception information a little bit more nicely
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error
     exception(msg, exception) {
@@ -308,6 +304,7 @@ export default class SpanImp {
             })
             .end();
     }
+
     fatal(msg, payload) {
         this._tracer.log()
             .span(this._guid)
