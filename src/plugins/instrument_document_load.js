@@ -51,7 +51,6 @@ class InstrumentPageLoad {
                 this._addTimingSpans(span, performance.timing);
                 payload['window.performance.timing'] = performance.timing;
             }
-
         }
 
         span.logEvent(`document.readystatechange ${state}`, payload);
@@ -60,7 +59,6 @@ class InstrumentPageLoad {
             Tracer.imp().removeActiveRootSpan(span.imp());
             span.finish();
         }
-
     }
 
     _copyNavigatorProperties(nav) {
@@ -70,19 +68,19 @@ class InstrumentPageLoad {
                 let value = nav[key];
                 switch (key) {
 
-                case "plugins": {
+                case 'plugins': {
                     let p = [];
                     for (let i = 0; i < value.length; i++) {
                         let item = value.item(i);
                         p.push({
-                            name : item.name,
+                            name        : item.name,
                             description : item.description,
                         });
                     }
                     dst[key] = p;
                 } break;
 
-                case "mimeTypes": {
+                case 'mimeTypes': {
                     let p = [];
                     for (let i = 0; i < value.length; i++) {
                         let item = value.item(i);
@@ -111,7 +109,6 @@ class InstrumentPageLoad {
         // NOTE: this currently relies on LightStep-specific APIs
         let parentImp = parent.imp();
         if (!parentImp) {
-            console.error("Could not get span implementation object", parent);
             return;
         }
 
@@ -144,7 +141,7 @@ class InstrumentPageLoad {
             let chromeTimes = window.chrome.loadTimes();
             if (chromeTimes) {
                 parentImp.log({
-                    message          : `window.chrome.loadTimes()`,
+                    message          : 'window.chrome.loadTimes()',
                     timestamp_micros : timing.domComplete * 1000.0,
                     payload          : chromeTimes,
                 });

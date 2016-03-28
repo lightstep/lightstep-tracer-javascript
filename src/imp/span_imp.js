@@ -80,18 +80,18 @@ export default class SpanImp {
     constructor(tracer) {
         console.assert(typeof tracer === 'object', "Invalid runtime");
 
-        this._tracer          = tracer;
-        this._ended           = false;
+        this._tracer = tracer;
+        this._ended  = false;
 
-        this._guid            = tracer._platform.generateUUID();
-        this._traceGUID       = tracer.generateTraceGUIDForRootSpan();
-        this._operation       = '';
-        this._tags            = {};
-        this._baggage         = {};
-        this._joinIDs         = {};
-        this._beginMicros     = tracer._platform.nowMicros();
-        this._endMicros       = 0;
-        this._errorFlag       = false;
+        this._guid        = tracer._platform.generateUUID();
+        this._traceGUID   = tracer.generateTraceGUIDForRootSpan();
+        this._operation   = '';
+        this._tags        = {};
+        this._baggage     = {};
+        this._joinIDs     = {};
+        this._beginMicros = tracer._platform.nowMicros();
+        this._endMicros   = 0;
+        this._errorFlag   = false;
     }
 
     // ---------------------------------------------------------------------- //
