@@ -1,6 +1,3 @@
-import thrift from 'thrift';
-import crouton_thrift from './crouton_thrift';
-
 import https from 'https';
 import http from 'http';
 
@@ -12,17 +9,17 @@ export default class TransportHTTPJSON {
     }
 
     ensureConnection(opts) {
-        this._host = opts.collector_host;
-        this._port = opts.collector_port;
+        this._host       = opts.collector_host;
+        this._port       = opts.collector_port;
         this._encryption = opts.collector_encryption;
     }
 
-    report (detached, auth, reportRequest, done) {
+    report(detached, auth, reportRequest, done) {
         let options = {
             hostname : this._host,
-            port: this._port,
-            method: 'POST',
-            path: '/api/v0/reports',
+            port     : this._port,
+            method   : 'POST',
+            path     : '/api/v0/reports',
         };
 
         let protocol = (this._encryption === 'none') ? http : https;
@@ -35,7 +32,7 @@ export default class TransportHTTPJSON {
                 let err = null;
                 let resp = null;
                 if (res.statusCode !== 200) {
-                    err = new Error('status code = ' + res.statusCode);
+                    err = new Error(`status code = ${res.statusCode}`);
                 } else if (!buffer) {
                     err = new Error('unexpected empty response');
                 } else {

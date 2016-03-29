@@ -1,33 +1,30 @@
-let optionsParser = require('./options_parser.js');
-let util = require('./util');
+import OpenTracing from 'opentracing';
 
-const kRuntimeGUIDCookiePrefix = `lightstep_guid`;
-const kSessionIDCookieKey = `lightstep_session_id`;
+const optionsParser = require('./options_parser.js');
+const util = require('./util');
+
+const kRuntimeGUIDCookiePrefix = 'lightstep_guid';
+const kSessionIDCookieKey = 'lightstep_session_id';
 const kCookieTimeToLiveSeconds = 7 * 24 * 60 * 60;
 
-let nowMicrosImp = (function() {
+let nowMicrosImp = (function () {
     // Is a hi-res timer available?
     if (window.performance &&
         window.performance.now &&
         window.performance.timing &&
         window.performance.timing.navigationStart) {
-
-        var start = performance.timing.navigationStart;
-        return function() {
+        let start = performance.timing.navigationStart;
+        return function () {
             return Math.floor((start + performance.now()) * 1000.0);
         };
-    } else {
-        // The low-res timer is the best we can do
-        return function() {
-            return Date.now() * 1000.0;
-        };
     }
-})();
+    // The low-res timer is the best we can do
+    return function () {
+        return Date.now() * 1000.0;
+    };
+}());
 
 class PlatformBrowser {
-
-    constructor(imp) {
-    }
 
     name() {
         return 'browser';
@@ -66,7 +63,7 @@ class PlatformBrowser {
         let a = Math.floor(Math.random() * 0xFFFFFFFF).toString(16);
         let b = Math.floor(Math.random() * 0xFFFFFFFF).toString(16);
         while (b.length < 8) {
-            b = '0' + b;
+            b = `0${b}`;
         }
         return a + b;
     }
@@ -108,7 +105,7 @@ class PlatformBrowser {
         if (typeof window.Tracer !== 'object') {
             return;
         }
-        Tracer.initGlobalTracer(lib.tracer(opts));
+        OpenTracing.initGlobalTracer(lib.tracer(opts));
     }
 
     tracerTags() {
@@ -140,7 +137,7 @@ class PlatformBrowser {
         }
         try {
             sessionStorage.setItem(`lightstep/${key}`, JSON.stringify(value));
-        } catch (_ignored) {}
+        } catch (_ignored) { /* Ignored */ }
     }
 }
 

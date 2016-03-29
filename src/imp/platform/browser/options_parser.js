@@ -1,16 +1,14 @@
-const util = require('./util');
-
 // Find the HTML element that included the tracing library (if there is one).
 // This relies on the fact that scripts are executed as soon as they are
 // included -- thus 'this' script is the last one in the array at the time
 // this is run.
-let hostScriptElement = (function() {
-    var scripts = document.getElementsByTagName('SCRIPT');
+let hostScriptElement = (function () {
+    let scripts = document.getElementsByTagName('SCRIPT');
     if (!(scripts.length > 0)) {
         return null;
     }
     return scripts[scripts.length - 1];
-})();
+}());
 
 function urlQueryParameters(defaults) {
     let vars = {};
@@ -61,7 +59,7 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
     }
     let collectorPort = dataset.collector_port;
     if (collectorPort) {
-        opts.collector_port = parseInt(collectorPort);
+        opts.collector_port = parseInt(collectorPort, 10);
     }
     let collectorEncryption = dataset.collector_encryption;
     if (collectorEncryption) {
@@ -69,27 +67,27 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
     }
 
     let enable = dataset.enable;
-    if (typeof enable == 'string') {
-        if (enable == 'true') {
+    if (typeof enable === 'string') {
+        if (enable === 'true') {
             opts.enable = true;
-        } else if (enable == 'false') {
+        } else if (enable === 'false') {
             opts.enable = false;
         }
     }
     let debug = dataset.debug;
-    if (typeof debug == 'string' && debug == 'true') {
+    if (typeof debug === 'string' && debug === 'true') {
         opts.debug = true;
     }
     let verbose = dataset.verbose;
     if (typeof verbose === 'string') {
-        opts.verbose = parseInt(verbose);
+        opts.verbose = parseInt(verbose, 10);
     }
 
     let init = dataset.init_global_tracer;
-    if (typeof init == 'string') {
-        if (init == 'true') {
+    if (typeof init === 'string') {
+        if (init === 'true') {
             browserOpts.init_global_tracer = true;
-        } else if (init == 'false') {
+        } else if (init === 'false') {
             browserOpts.init_global_tracer = false;
         }
     }
@@ -102,7 +100,7 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
 // This mechanism is particularly useful for debugging purposes as it does not
 // require any code or configuration changes.
 //
-module.exports.parseURLQueryOptions = function(opts) {
+module.exports.parseURLQueryOptions = function (opts) {
     if (!window) {
         return;
     }
@@ -113,8 +111,8 @@ module.exports.parseURLQueryOptions = function(opts) {
     }
     if (params.lightstep_verbose) {
         try {
-            opts.verbose = parseInt(params.lightstep_verbose);
-        } catch (_ignored) {}
+            opts.verbose = parseInt(params.lightstep_verbose, 10);
+        } catch (_ignored) { /* Ignored */ }
     }
     if (params.lightstep_log_to_console) {
         opts.log_to_console = true;

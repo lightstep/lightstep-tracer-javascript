@@ -1,6 +1,3 @@
-
-import crouton_thrift from './crouton_thrift';
-
 export default class TransportBrowser {
 
     constructor() {
@@ -9,13 +6,13 @@ export default class TransportBrowser {
         this._encryption = '';
     }
 
-    ensureConnection (opts) {
+    ensureConnection(opts) {
         this._host = opts.collector_host;
         this._port = opts.collector_port;
         this._encryption = opts.collector_encryption;
     }
 
-    report (detached, auth, report, done) {
+    report(detached, auth, report, done) {
         try {
             if (!detached) {
                 this._reportAJAX(auth, report, done);
@@ -38,12 +35,12 @@ export default class TransportBrowser {
         xhr.setRequestHeader('LightStep-Access-Token', auth.access_token);
         xhr.setRequestHeader('Content-Type', 'application/json');
         //req.setRequestHeader('Content-Encoding', 'gzip');
-        xhr.onreadystatechange = function() {
+        xhr.onreadystatechange = function () {
             if (this.readyState === 4) {
                 let err = null;
                 let resp = null;
                 if (this.status !== 200) {
-                    err = new Error('status code = ' + this.status);
+                    err = new Error(`status code = ${this.status}`);
                 } else if (!this.responseText) {
                     err = new Error('unexpected empty response');
                 } else {
@@ -67,16 +64,16 @@ export default class TransportBrowser {
         let reportJSON = JSON.stringify(report);
 
         let url = `${this._hostport}/_rpc/v1/reports/uri_encoded` +
-            "?auth=" + encodeURIComponent(authJSON) +
-            "&report=" + encodeURIComponent(reportJSON);
+            `?auth=${encodeURIComponent(authJSON)}` +
+            `&report=${encodeURIComponent(reportJSON)}`;
 
-        let elem = document.createElement("script");
+        let elem = document.createElement('script');
         elem.async = true;
         elem.defer = true;
         elem.src = url;
-        elem.type = "text/javascript";
+        elem.type = 'text/javascript';
 
-        let hostElem = document.getElementsByTagName("head")[0];
+        let hostElem = document.getElementsByTagName('head')[0];
         if (hostElem) {
             hostElem.appendChild(elem);
         }

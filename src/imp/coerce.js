@@ -1,6 +1,6 @@
 
 export function toString(value) {
-    return "" + value;
+    return '' + value;  // eslint-disable-line prefer-template
 }
 
 export function toNumber(value) {

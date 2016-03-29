@@ -1,6 +1,4 @@
-'use strict';
-
-import { crouton_thrift } from '../platform_abstraction_layer';
+import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
 const constants = require('../constants');
 const coerce    = require('./coerce');
 

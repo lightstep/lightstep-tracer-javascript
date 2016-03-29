@@ -30,8 +30,7 @@ publish: test test_all
 	npm whoami
 	npm publish
 
-test: build test_node test_browser
-	echo Running tests
+test: build test_node test_browser lint
 
 test_quick:
 	npm run webpack-node-debug

@@ -4,9 +4,8 @@
 
 import OpenTracing from 'opentracing';
 import EventEmitter from 'eventemitter3';
-import { Platform, Transport, thrift, crouton_thrift } from '../platform_abstraction_layer';
+import { Platform, Transport, crouton_thrift } from '../platform_abstraction_layer';    // eslint-disable-line camelcase
 import SpanImp from './span_imp';
-import * as Constants from '../constants';
 import globals from './globals';
 
 const constants     = require('../constants');
@@ -35,6 +34,73 @@ export default class TracerImp extends EventEmitter {
         this._pluginNames = {};
         this._options = {};
         this._optionDescs = [];
+
+        this._makeOptionsTable();
+
+        let now = this._platform.nowMicros();
+
+        // The thrift authentication and runtime struct are created as soon as
+        // the necessary initialization options are available.
+        this._startMicros = now;
+        this._thriftAuth = null;
+        this._thriftRuntime = null;
+        this._transport = (opts ? opts.override_transport : null) || new Transport();
+
+        this._reportingLoopActive = false;
+        this._reportYoungestMicros = now;
+        this._reportTimer = null;
+        this._reportErrorStreak = 0;    // Number of consecuetive errors
+        this._visibleErrorCount = 0;
+
+        // Set addActiveRootSpan() for detail
+        this._activeRootSpanSet = {};
+        this._activeRootSpan = null;
+
+        // For clock skew adjustment.
+        this._useClockState = true;
+        this._clockState = new ClockState({
+            nowMicros     : () => this._platform.nowMicros(),
+            localStoreGet : () => {
+                let key = `clock_state/${this._options.collector_host}`;
+                return this._platform.localStoreGet(key);
+            },
+            localStoreSet : (value) => {
+                let key = `clock_state/${this._options.collector_host}`;
+                return this._platform.localStoreSet(key, value);
+            },
+        });
+
+        // Report buffers and per-report data
+        // These data are reset on every successful report.
+        this._logRecords = [];
+        this._spanRecords = [];
+        this._counters = {
+            dropped_logs       : 0,
+            dropped_spans      : 0,
+            flush_with_no_data : 0,
+            flush_errors       : 0,
+            flush_exceptions   : 0,
+        };
+
+        // Current runtime state / status
+        this._flushIsActive = false;
+
+        // Built-in plugins
+        this.addPlugin(require('../plugins/log_to_console'));
+
+        // Initialize the platform options after the built-in plugins in
+        // case any of those options affect the built-ins.
+        this.addPlatformPlugins(opts);
+        this.setPlatformOptions(opts);
+
+        // Set constructor arguments
+        if (opts) {
+            this.options(opts);
+        }
+    }
+
+    _makeOptionsTable() {
+        /* eslint-disable key-spacing, no-multi-spaces */
 
         // Core options
         this.addOption('access_token',          { type: 'string',  defaultValue: '' });
@@ -72,66 +138,7 @@ export default class TracerImp extends EventEmitter {
         this.addOption('log_message_length_hard_limit', { type: 'int',     defaultValue: 512 * 1024 });
         this.addOption('log_payload_length_hard_limit', { type: 'int',     defaultValue: 512 * 1024 });
 
-        let now = this._platform.nowMicros();
-
-        // The thrift authentication and runtime struct are created as soon as
-        // the necessary initialization options are available.
-        this._startMicros = now;
-        this._thriftAuth = null;
-        this._thriftRuntime = null;
-        this._transport = (opts ? opts.override_transport : null) || new Transport();
-
-        this._reportingLoopActive = false;
-        this._reportYoungestMicros = now;
-        this._reportTimer = null;
-        this._reportErrorStreak = 0;    // Number of consecuetive errors
-        this._visibleErrorCount = 0;
-
-        // Set addActiveRootSpan() for detail
-        this._activeRootSpanSet = {};
-        this._activeRootSpan = null;
-
-        // For clock skew adjustment.
-        this._useClockState = true;
-        this._clockState = new ClockState({
-            nowMicros : () => this._platform.nowMicros(),
-            localStoreGet : () => {
-                let key = `clock_state/${this._options.collector_host}`;
-                return this._platform.localStoreGet(key);
-            },
-            localStoreSet : (value) => {
-                let key = `clock_state/${this._options.collector_host}`;
-                return this._platform.localStoreSet(key, value);
-            },
-        })
-
-        // Report buffers and per-report data
-        // These data are reset on every successful report.
-        this._logRecords = [];
-        this._spanRecords = [];
-        this._counters = {
-            dropped_logs         : 0,
-            dropped_spans        : 0,
-            flush_with_no_data   : 0,
-            flush_errors         : 0,
-            flush_exceptions     : 0,
-        };
-
-        // Current runtime state / status
-        this._flushIsActive = false;
-
-        // Built-in plugins
-        this.addPlugin(require('../plugins/log_to_console'));
-
-        // Initialize the platform options after the built-in plugins in
-        // case any of those options affect the built-ins.
-        this.addPlatformPlugins(opts);
-        this.setPlatformOptions(opts);
-
-        // Set constructor arguments
-        if (opts) {
-            this.options(opts);
-        }
+        /* eslint-disable key-spacing, no-multi-spaces */
     }
 
     // ---------------------------------------------------------------------- //
@@ -179,15 +186,14 @@ export default class TracerImp extends EventEmitter {
     _injectToTextMap(span, carrier) {
         let baggage = span.getBaggage();
         let traceGUID = span.traceGUID();
-        let parentGUID = span.parentGUID();
 
-        carrier[CARRIER_TRACER_STATE_PREFIX+'spanid'] = span.guid();
+        carrier[`${CARRIER_TRACER_STATE_PREFIX}spanid`] = span.guid();
         if (traceGUID) {
-            carrier[CARRIER_TRACER_STATE_PREFIX+'traceid'] = traceGUID;
+            carrier[`${CARRIER_TRACER_STATE_PREFIX}traceid`] = traceGUID;
         }
-        carrier[CARRIER_TRACER_STATE_PREFIX+'sampled'] = "true";
+        carrier[`${CARRIER_TRACER_STATE_PREFIX}sampled`] = 'true';
         for (let key in baggage) {
-            carrier[CARRIER_BAGGAGE_PREFIX + key] = baggage[key];
+            carrier[`${CARRIER_BAGGAGE_PREFIX}${key}`] = baggage[key];
         }
         return carrier;
     }
@@ -226,7 +232,7 @@ export default class TracerImp extends EventEmitter {
                     span.setFields({ parent_guid : value });
                     break;
                 default:
-                    this._error(`Unrecognized carrier key with recognized prefix. Ignoring.`);
+                    this._error('Unrecognized carrier key with recognized prefix. Ignoring.');
                     break;
                 }
             }
@@ -248,9 +254,9 @@ export default class TracerImp extends EventEmitter {
         return span;
     }
 
-    flush (done) {
+    flush(done) {
         if (arguments.length === 0) {
-            done = function() {};
+            done = function () {};
         }
         this._flushReport(false, done);
     }
@@ -293,11 +299,12 @@ export default class TracerImp extends EventEmitter {
 
     options(opts) {
         if (arguments.length === 0) {
-            console.assert(typeof this._options === "object", "Internal error: _options field incorrect");
+            console.assert(typeof this._options === 'object',   // eslint-disable-line
+                'Internal error: _options field incorrect');
             return this._options;
         }
         if (typeof opts !== 'object') {
-            throw new Error('options() must be called with an object: type was ' + typeof opts);
+            throw new Error(`options() must be called with an object: type was ${typeof opts}`);
         }
 
         // "collector_port" 0 acts as an alias for "use the default".
@@ -341,7 +348,7 @@ export default class TracerImp extends EventEmitter {
             let optionsString = '';
             for (let key in modified) {
                 let val = modified[key];
-                optionsString += "\t" + JSON.stringify(key) + " : " + JSON.stringify(val);
+                optionsString += `\t${JSON.stringify(key)} : ${JSON.stringify(val)}`;
             }
             this._infoV(2, `Options modified:\n${optionsString}`);
         }
@@ -359,45 +366,45 @@ export default class TracerImp extends EventEmitter {
         // Parse the option (and check constraints)
         switch (desc.type) {
 
-        case "any":
+        case 'any':
             break;
 
-        case "bool":
+        case 'bool':
             if (value !== true && value !== false) {
                 this._warnOnce(`Invalid boolean option '${name}' '${value}'`);
                 return;
             }
             break;
 
-        case "int":
-            if (valueType !== "number" || Math.floor(value) != value) {
+        case 'int':
+            if (valueType !== 'number' || Math.floor(value) !== value) {
                 this._warnOnce(`Invalid int option '${name}' '${value}'`);
                 return;
             }
-            if (desc.min !== undefined && desc.max !== undefined ) {
+            if (desc.min !== undefined && desc.max !== undefined) {
                 if (!(value >= desc.min && value <= desc.max)) {
-                    this._warnOnce(`Option '${name}' out of range '${value}' is not between ${min} and ${max}`);
+                    this._warnOnce(`Option '${name}' out of range '${value}' is not between ${desc.min} and ${desc.max}`);  // eslint-disable-line max-len
                     return;
                 }
             }
             break;
 
-        case "string":
+        case 'string':
             switch (valueType) {
-            case "string":
+            case 'string':
                 break;
-            case "number":
+            case 'number':
                 value = coerce.toString(value);
                 break;
             default:
-                this._warnOnce("Invalid string option '%s' '%j'", name, value);
+                this._warnOnce(`Invalid string option ${name} ${value}`);
                 return;
             }
             break;
 
-        case "array":
+        case 'array':
             // Per http://stackoverflow.com/questions/4775722/check-if-object-is-array
-            if (Object.prototype.toString.call(value) !== "[object Array]") {
+            if (Object.prototype.toString.call(value) !== '[object Array]') {
                 this._warnOnce(`Invalid type for array option ${name}: found '${valueType}'`);
                 return;
             }
@@ -435,9 +442,8 @@ export default class TracerImp extends EventEmitter {
     _initReportingDataIfNeeded(modified) {
         // Ignore redundant initialization; complaint on inconsistencies
         if (this._thriftAuth !== null) {
-
             if (!this._thriftRuntime) {
-                return this._error(`Inconsistent state: thrift auth initialized without runtime.`);
+                return this._error('Inconsistent state: thrift auth initialized without runtime.');
             }
             if (modified.access_token) {
                 throw new Error('Cannot change access_token after it has been set.');
@@ -599,7 +605,7 @@ export default class TracerImp extends EventEmitter {
                 this._error('Unexpected character code');
                 return null;
             }
-            view[i] =code;
+            view[i] = code;
         }
         return view;
     }
@@ -682,7 +688,8 @@ export default class TracerImp extends EventEmitter {
     _addLogRecord(record) {
         // Check record content against the hard-limits
         if (record.message && record.message.length > this._options.log_message_length_hard_limit) {
-            record.message = record.message.substr(0, this._options.log_message_length_hard_limit - 1) + "…";
+            let truncated = record.message.substr(0, this._options.log_message_length_hard_limit - 1);
+            record.message = `${truncated}…`;
         }
         if (record.payload_json && record.payload_json.length > this._options.log_payload_length_hard_limit) {
             record.payload_json = '{"error":"payload exceeded maximum size"}';
@@ -692,7 +699,7 @@ export default class TracerImp extends EventEmitter {
         this.emit('log_added', record);
 
         if (record.level === constants.LOG_FATAL) {
-            this._platform.fatal(message);
+            this._platform.fatal(record.message);
         }
     }
 
@@ -723,7 +730,7 @@ export default class TracerImp extends EventEmitter {
 
     _internalAddSpanRecord(record) {
         if (!record) {
-            this._error("Attempt to add null record to buffer");
+            this._error('Attempt to add null record to buffer');
             return;
         }
 
@@ -748,7 +755,7 @@ export default class TracerImp extends EventEmitter {
             if (this._counters[record.Name]) {
                 this._counters[record.Name] += record.Value;
             } else {
-                this._error("Bad counter name: '%s'", record.Name);
+                this._error(`Bad counter name: ${record.Name}`);
             }
         }
     }
@@ -774,11 +781,11 @@ export default class TracerImp extends EventEmitter {
 
     _startReportingLoop() {
         if (this._options.disabled) {
-            this._info("Not starting reporting loop: instrumentation is disabled.");
+            this._info('Not starting reporting loop: instrumentation is disabled.');
             return;
         }
         if (this._options.disable_reporting_loop) {
-            this._info("Not starting reporting loop: reporting loop is disabled.");
+            this._info('Not starting reporting loop: reporting loop is disabled.');
             return;
         }
         if (this._thriftAuth === null) {
@@ -787,11 +794,11 @@ export default class TracerImp extends EventEmitter {
             return;
         }
         if (this._reportingLoopActive) {
-            this._info("Reporting loop already started!");
+            this._info('Reporting loop already started!');
             return;
         }
 
-        this._infoV(1, "Starting reporting loop:", this._thriftRuntime);
+        this._infoV(1, 'Starting reporting loop:', this._thriftRuntime);
         this._reportingLoopActive = true;
 
         // Set up the script exit clean-up: stop the reporting loop (so it does
@@ -801,7 +808,7 @@ export default class TracerImp extends EventEmitter {
         let finalFlushOnce = 0;
         let finalFlush = () => {
             if (finalFlushOnce++ > 0) { return; }
-            this._info("Final flush before exit.");
+            this._info('Final flush before exit.');
             this._flushReport(true);
         };
         let stopReportingOnce = 0;
@@ -813,18 +820,18 @@ export default class TracerImp extends EventEmitter {
         this._platform.onBeforeExit(finalFlush);
 
         // Begin the asynchronous reporting loop
-        let loop = ()=>{
+        let loop = () => {
             this._enqueueNextReport((err) => {
                 if (this._reportingLoopActive) {
                     loop();
                 }
             });
-        }
+        };
         loop();
     }
 
     _stopReportingLoop() {
-        this._infoV(2, "Stopping reporting loop");
+        this._infoV(2, 'Stopping reporting loop');
 
         this._reportingLoopActive = false;
         clearTimeout(this._reportTimer);
@@ -853,20 +860,20 @@ export default class TracerImp extends EventEmitter {
         let delay = Math.floor(Math.max(0, jitter * basis));
 
         this._infoV(3, `Delaying next flush for ${delay}ms`);
-        this._reportTimer = util.detachedTimeout(()=> {
+        this._reportTimer = util.detachedTimeout(() => {
             this._reportTimer = null;
             this._flushReport(false, done);
         }, delay);
     }
 
     _flushReport(detached, done) {
-        done = done || function(err) {};
+        done = done || function (err) {};
 
         let clockReady = this._clockState.isReady();
         let clockOffsetMicros = this._clockState.offsetMicros();
 
         // Diagnostic information on the clock correction
-        this.logStable("cr/time_correction_state", {
+        this.logStable('cr/time_correction_state', {
             offset_micros  : clockOffsetMicros,
             active_samples : this._clockState.activeSampleCount(),
             ready          : clockReady,
@@ -881,15 +888,15 @@ export default class TracerImp extends EventEmitter {
         // A detached flush (i.e. one intended to fire at exit or other "last
         // ditch effort" event) should always use the real data.
         if (this._useClockState && !clockReady && !detached) {
-            this._infoV(2, "Flushing empty report to prime clock state");
+            this._infoV(2, 'Flushing empty report to prime clock state');
             logRecords  = [];
             spanRecords = [];
             counters    = {};
         } else {
             // Early out if we can.
             if (this._buffersAreEmpty()) {
-                this._infoV(2, "Skipping empty report");
-                return done(null);;
+                this._infoV(2, 'Skipping empty report');
+                return done(null);
             }
 
             // Clear the object buffers as the data is now in the local
@@ -902,7 +909,7 @@ export default class TracerImp extends EventEmitter {
 
         // Ensure the runtime GUID is set as it is possible buffer logs and
         // spans before the GUID is necessarily set.
-        console.assert(this._runtimeGUID !== null, "No runtime GUID for Tracer");
+        console.assert(this._runtimeGUID !== null, 'No runtime GUID for Tracer'); // eslint-disable-line no-console
 
         for (let key in logRecords) {
             logRecords[key].runtime_guid = this._runtimeGUID;
@@ -926,21 +933,20 @@ export default class TracerImp extends EventEmitter {
         let timestampOffset = this._useClockState ? clockOffsetMicros : 0;
         let now = this._platform.nowMicros();
         let report = new crouton_thrift.ReportRequest({
-            runtime         : this._thriftRuntime,
-            oldest_micros   : this._reportYoungestMicros,
-            youngest_micros : now,
-            log_records     : logRecords,
-            span_records    : spanRecords,
-            counters        : thriftCounters,
+            runtime                 : this._thriftRuntime,
+            oldest_micros           : this._reportYoungestMicros,
+            youngest_micros         : now,
+            log_records             : logRecords,
+            span_records            : spanRecords,
+            counters                : thriftCounters,
             timestamp_offset_micros : timestampOffset,
         });
         this._infoV(2, `timestamp_offset_micros = ${timestampOffset}`);
 
-        this.emit("prereport", report);
+        this.emit('prereport', report);
         let originMicros = this._platform.nowMicros();
 
-        this._transport.report(detached, this._thriftAuth, report,  (err, res) => {
-
+        this._transport.report(detached, this._thriftAuth, report, (err, res) => {
             let destinationMicros = this._platform.nowMicros();
             if (err) {
                 // How many errors in a row?
@@ -960,9 +966,7 @@ export default class TracerImp extends EventEmitter {
                     streak   : this._reportErrorStreak,
                     detached : detached,
                 });
-
             } else {
-
                 if (this._options.debug) {
                     let reportWindowSeconds = (now - report.oldest_micros) / 1e6;
                     this._infoV(2, `Report flushed for last ${reportWindowSeconds} seconds`);
@@ -982,7 +986,7 @@ export default class TracerImp extends EventEmitter {
                 } else {
                     // The response does not have timing information. Disable
                     // the clock state assuming there'll never be timing data
-                    //to use.
+                    // to use.
                     this._useClockState = false;
                 }
 
@@ -1000,16 +1004,16 @@ export default class TracerImp extends EventEmitter {
         if (v > this._options.verbose) {
             return;
         }
-        this._internalLog(constants.LOG_INFO, '[LS:V'+v+'] ' + msg, payload);
+        this._internalLog(constants.LOG_INFO, `[LS:V${v}] ${msg}`, payload);
     }
     _info(msg, payload) {
-        this._internalLog(constants.LOG_INFO, '[LS:I] ' + msg, payload)
+        this._internalLog(constants.LOG_INFO, `[LS:I] ${msg}`, payload);
     }
     _warn(msg, payload) {
-        this._internalLog(constants.LOG_WARN, '[LS:W] ' + msg, payload);
+        this._internalLog(constants.LOG_WARN, `[LS:W] ${msg}`, payload);
     }
     _error(msg, payload) {
-        this._internalLog(constants.LOG_ERROR, '[LS:E] ' + msg, payload);
+        this._internalLog(constants.LOG_ERROR, `[LS:E] ${msg}`, payload);
     }
     _internalLog(level, msg, payload) {
         if (this._options.debug) {
@@ -1026,7 +1030,7 @@ export default class TracerImp extends EventEmitter {
         this._visibleErrorCount++;
         if (this._visibleErrorCount === 1) {
             if (!this._options.silent) {
-                console.warn(msg, payload);
+                console.warn(msg, payload); // eslint-disable-line no-console
             }
         }
         this._warn(msg, payload);

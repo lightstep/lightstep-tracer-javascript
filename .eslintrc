@@ -11,12 +11,19 @@
       "prefer-const": [0],
       "object-shorthand": [2, "never" ],
       "guard-for-in": [0],
-      "no-param-reassign": [2, {"props": false}],
+      "no-param-reassign": [0],
       "max-len": [2, 120, 4],
       "prefer-rest-params" : [0],
       "no-unused-vars": [2, { "vars": "all", "args" : "none" }],
       "no-console": [1],
       "func-names": [0],
-      "no-multi-spaces": [2, { "exceptions": { "AssignmentExpression": true }} ]
+      "no-multi-spaces": [2, { "exceptions": {
+          "AssignmentExpression": true,
+          "VariableDeclarator": true,
+      }} ],
+      "consistent-return": [0],
+
+      // Disabled as the "exceptions" clause does not seem to currently work
+      "spaced-comment": [0]
   }
 }
