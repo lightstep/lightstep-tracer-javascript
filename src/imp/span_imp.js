@@ -1,6 +1,6 @@
 import * as coerce from './coerce.js';
 import * as constants from '../constants';
-import { crouton_thrift } from  '../platform_abstraction_layer';
+import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
 
 export default class SpanImp {
 
@@ -13,7 +13,7 @@ export default class SpanImp {
     }
 
     setOperationName(name) {
-        return this._operation = name;
+        this._operation = name;
     }
 
     addTags(keyValuePairs) {
@@ -51,7 +51,7 @@ export default class SpanImp {
         if (fields.timestamp !== undefined) {
             // The incoming 'timestamp' field is in milliseconds. The internal
             // timestamp is in microseconds.
-            rec.timestamp(fields.timestamp * 1000)
+            rec.timestamp(fields.timestamp * 1000);
         }
         if (fields.payload !== undefined) {
             rec.payload(fields.payload);
@@ -78,7 +78,7 @@ export default class SpanImp {
     // ---------------------------------------------------------------------- //
 
     constructor(tracer) {
-        console.assert(typeof tracer === 'object', "Invalid runtime");
+        console.assert(typeof tracer === 'object', 'Invalid runtime');  // eslint-disable-line no-console
 
         this._tracer = tracer;
         this._ended  = false;
@@ -112,11 +112,11 @@ export default class SpanImp {
     }
 
     parentGUID() {
-        return this._tags['parent_span_guid'];
+        return this._tags.parent_span_guid;
     }
 
     setParentGUID(guid) {
-        this._tags['parent_span_guid'] = coerce.toString(guid);
+        this._tags.parent_span_guid = coerce.toString(guid);
     }
 
     /**
@@ -135,7 +135,7 @@ export default class SpanImp {
         }
 
         let urlPrefix = constants.LIGHTSTEP_APP_URL_PREFIX;
-        let accessToken = encodeURIComponent(this._tracer.options()['access_token']);
+        let accessToken = encodeURIComponent(this._tracer.options().access_token);
         let guid = encodeURIComponent(this.guid());
         return `${urlPrefix}/${accessToken}/trace?span_guid=${guid}&at_micros=${micros}`;
     }
@@ -286,7 +286,7 @@ export default class SpanImp {
     // Special case to format exception information a little bit more nicely
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error
     exception(msg, exception) {
-        if (exception.message === undefined || exception.stack == undefined) {
+        if (exception.message === undefined || exception.stack === undefined) {
             return this.error(msg, exception);
         }
 
@@ -296,11 +296,11 @@ export default class SpanImp {
             .level(constants.LOG_ERROR)
             .message(msg)
             .payload({
-                name: exception.name,
-                message: exception.message,
-                filename: exception.filename,
-                line_number: exception.lineNumber,
-                stack: stack,
+                name        : exception.name,
+                message     : exception.message,
+                filename    : exception.filename,
+                line_number : exception.lineNumber,
+                stack       : stack,
             })
             .end();
     }

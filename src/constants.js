@@ -11,10 +11,10 @@ export const LOG_LEVEL_TO_STRING = {
     LOG_FATAL : 'F',
 };
 export const LOG_STRING_TO_LEVEL = {
-    'I' : LOG_INFO,
-    'W' : LOG_WARN,
-    'E' : LOG_ERROR,
-    'F' : LOG_FATAL,
+    I : LOG_INFO,
+    W : LOG_WARN,
+    E : LOG_ERROR,
+    F : LOG_FATAL,
 };
 
 // The report interval for empty reports used to sample the clock skew

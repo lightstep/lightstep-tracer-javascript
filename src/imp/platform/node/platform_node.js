@@ -1,5 +1,14 @@
 const os = require('os');
 
+function computeStartMicros() {
+    let startTimeMs = Date.now();
+    let startHrTime = process.hrtime();
+    let baseHrMicros = (startHrTime[0] * 1000000.0 + startHrTime[1] / 1000.0);
+
+    let startTimeMicros = (startTimeMs * 1000.0) - baseHrMicros;
+    return startTimeMicros;
+}
+
 let startTimeMicros = computeStartMicros();
 
 // Local storage for Node is just memory
@@ -26,7 +35,7 @@ export default class PlatformNode {
         }
 
         let packageObject = require('../../../../package.json');
-        let requiredVersionString = packageObject.engines['node'];
+        let requiredVersionString = packageObject.engines.node;
         let requiredMatch = /^>=(\d+)\.(\d+)\.(\d+)$/.exec(requiredVersionString);
         if (!requiredMatch || requiredMatch.length !== 4) {
             throw new Error('Internal error: package.json node requirement malformed');
@@ -35,14 +44,14 @@ export default class PlatformNode {
         let err = `Fatal Error: insufficient node version. Requires node ${requiredVersionString}`;
         try {
             let actual = [
-                parseInt(actualMatch[0]),
-                parseInt(actualMatch[1]),
-                parseInt(actualMatch[2])
+                parseInt(actualMatch[0], 10),
+                parseInt(actualMatch[1], 10),
+                parseInt(actualMatch[2], 10),
             ];
             let required = [
-                parseInt(requiredMatch[0]),
-                parseInt(requiredMatch[1]),
-                parseInt(requiredMatch[2])
+                parseInt(requiredMatch[0], 10),
+                parseInt(requiredMatch[1], 10),
+                parseInt(requiredMatch[2], 10),
             ];
             if (actual[0] > required[0]) {
                 return;
@@ -117,6 +126,9 @@ export default class PlatformNode {
             case '--lightstep-verbose=1':
                 opts.verbosity = 1;
                 break;
+            default:
+                // Ignore
+                break;
             }
         }
         return opts;
@@ -125,10 +137,10 @@ export default class PlatformNode {
     tracerTags() {
         let tags = {
             lightstep_tracer_platform : 'node',
-            node_version      : process.version,
-            node_platform     : process.platform,
-            node_arch         : process.arch,
-            hostname          : os.hostname(),
+            node_version              : process.version,
+            node_platform             : process.platform,
+            node_arch                 : process.arch,
+            hostname                  : os.hostname(),
         };
         if (process.argv) {
             tags.command_line = process.argv.join(' ');
@@ -141,7 +153,7 @@ export default class PlatformNode {
     }
 
     fatal(message) {
-        console.error(message);
+        console.error(message);     // eslint-disable-line no-console
         process.exit(1);
     }
 
@@ -152,13 +164,4 @@ export default class PlatformNode {
     localStoreSet(key, value) {
         gLocalStorage[key] = value;
     }
-}
-
-function computeStartMicros() {
-    let startTimeMs = Date.now();
-    let startHrTime = process.hrtime();
-    let baseHrMicros = (startHrTime[0] * 1000000.0 + startHrTime[1] / 1000.0);
-
-    let startTimeMicros = (startTimeMs * 1000.0) - baseHrMicros;
-    return startTimeMicros;
 }
