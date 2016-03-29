@@ -67,7 +67,10 @@ class InstrumentPageLoad {
         span.logEvent(`document.readystatechange ${state}`, payload);
 
         if (state === 'complete') {
-            OpenTracing.imp().removeActiveRootSpan(span.imp());
+            let tracerImp = OpenTracing.imp();
+            if (tracerImp) {
+                tracerImp.removeActiveRootSpan(span.imp());
+            }
             span.finish();
         }
     }
