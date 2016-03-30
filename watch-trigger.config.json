@@ -1,5 +1,8 @@
 {
-    "command" : "make build --no-print-directory",
+    "commands" : [
+        "make build --no-print-directory",
+        "make lint"
+    ],
     "include" : [
         "src/**/*.js"
     ],

@@ -73,7 +73,7 @@ class InstrumentXHR {
         }
         this._tracer = tracer;
 
-        tracer.addOption('xhr_instrumentation', { type : 'bool', defaultValue : true });
+        tracer.addOption('xhr_instrumentation', { type : 'bool', defaultValue : false });
         tracer.addOption('xhr_url_inclusion_patterns', { type : 'array', defaultValue : [/.*/] });
         tracer.addOption('xhr_url_exclusion_patterns', { type : 'array', defaultValue : [] });
         this._addServiceHostToExclusions(tracer.options());

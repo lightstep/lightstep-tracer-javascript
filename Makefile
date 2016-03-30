@@ -58,7 +58,7 @@ test_all: build
 
 # This is not run by default as currently too many tests fail
 lint:
-	node_modules/eslint/bin/eslint.js --color src
+	node node_modules/eslint/bin/eslint.js --color src
 
 # Dev convenience for automatically rebuilding on file changes
 watch:
