@@ -25,7 +25,7 @@
     "eventemitter3": "^1.1.1",
     "source-map-support": "^0.3.3",
     "thrift": "0.9.2",
-    "opentracing": "^0.9.14"
+    "opentracing": "^0.9.16"
   },
   "devDependencies": {
     "babel-core": "^6.3.26",
@@ -60,7 +60,7 @@
     "shelljs": "^0.5.3",
     "sprintf-js": "^1.0.3",
     "underscore": "^1.8.3",
-    "watch-trigger": "0.0.4",
+    "watch-trigger": "0.0.5",
     "webpack": "^1.12.9"
   }
 }
