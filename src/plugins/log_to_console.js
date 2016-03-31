@@ -3,7 +3,7 @@ const constants = require('../constants');
 class LogToConsole {
     constructor() {
         this._enabled = false;
-        this._runtime = null;
+        this._tracer = null;
         this._optionsCb = this._handleOptions.bind(this);
         this._logAddedCb = this._handleLogAdded.bind(this);
     }
@@ -11,16 +11,16 @@ class LogToConsole {
     name() {
         return 'log_to_console';
     }
-    start(runtime) {
-        this._runtime = runtime;
-        this._runtime.addOption('log_to_console', {
+    start(tracer, tracerImp) {
+        this._tracer = tracer;
+        tracerImp.addOption('log_to_console', {
             type         : 'bool',
             defaultValue : false,
         });
-        this._runtime.on('options', this._optionsCb);
+        tracerImp.on('options', this._optionsCb);
     }
     stop() {
-        this._runtime.removeListener('options', this._optionsCb);
+        this._tracer.imp().removeListener('options', this._optionsCb);
     }
 
     _handleOptions(modified, current) {
@@ -30,9 +30,9 @@ class LogToConsole {
         }
         this._enabled = enabled;
         if (this._enabled) {
-            this._runtime.on('log_added', this._logAddedCb);
+            this._tracer.imp().on('log_added', this._logAddedCb);
         } else {
-            this._runtime.removeListener('log_added', this._logAddedCb);
+            this._tracer.imp().removeListener('log_added', this._logAddedCb);
         }
     }
 

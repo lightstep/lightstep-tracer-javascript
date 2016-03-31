@@ -1,5 +1,6 @@
 .PHONY: build publish \
 	test test_quick test_node test_browser test_all \
+	update_examples \
 	lint \
 	watch thrift
 
@@ -63,6 +64,10 @@ lint:
 # Dev convenience for automatically rebuilding on file changes
 watch:
 	node node_modules/watch-trigger/index.js watch-trigger.config.json
+
+update_examples: node_modules
+	cp node_modules/opentracing/dist/opentracing-browser.min.js examples/browser/opentracing-browser.min.js
+	cp node_modules/opentracing/dist/opentracing-browser.min.js examples/browser-trivial/opentracing-browser.min.js
 
 # LightStep internal target
 thrift:
