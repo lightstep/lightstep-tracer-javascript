@@ -28,10 +28,12 @@ export default class TracerImp extends EventEmitter {
         super();
         opts = opts || {};
 
+        this._interface = null;
+
         // Platform abstraction layer
         this._platform = new Platform(this);
         this._runtimeGUID = opts.guid || this.override_runtime_guid || null;  // Set once the group name is set
-        this._pluginNames = {};
+        this._plugins = {};
         this._options = {};
         this._optionDescs = [];
 
@@ -144,6 +146,11 @@ export default class TracerImp extends EventEmitter {
     // ---------------------------------------------------------------------- //
     // OpenTracing API
     // ---------------------------------------------------------------------- //
+
+    setInterface(tracerInterface) {
+        this._interface = tracerInterface;
+        this.startPlugins();
+    }
 
     newTracer(opts) {
         // Inherit all options of the global tracer unless explicitly specified
@@ -524,12 +531,16 @@ export default class TracerImp extends EventEmitter {
     addPlugin(plugin) {
         // Don't initialize plug-ins twice
         let name = plugin.name();
-        if (this._pluginNames[name]) {
+        if (this._plugins[name]) {
             return;
         }
-        this._pluginNames[name] = true;
+        this._plugins[name] = plugin;
+    }
 
-        plugin.start(this);
+    startPlugins() {
+        for (let key in this._plugins) {
+            this._plugins[key].start(this._interface, this);
+        }
     }
 
     //-----------------------------------------------------------------------//

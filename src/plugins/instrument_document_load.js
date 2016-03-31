@@ -1,7 +1,4 @@
-import OpenTracing from 'opentracing';
-
 class InstrumentPageLoad {
-
     constructor() {
         this._inited = false;
         this._span = null;
@@ -11,7 +8,7 @@ class InstrumentPageLoad {
         return 'instrument_page_load';
     }
 
-    start(tracerImp) {
+    start(tracer, tracerImp) {
         if (this._inited) {
             return;
         }
@@ -20,29 +17,15 @@ class InstrumentPageLoad {
         if (typeof window !== 'object' || typeof document !== 'object') {
             return;
         }
-        if (typeof window.Tracer !== 'object') {
-            return;
-        }
-
-        this._ensureSpanStarted(tracerImp);
+        this._ensureSpanStarted(tracer, tracerImp);
         document.addEventListener('readystatechange', this._handleReadyStateChange.bind(this));
     }
 
     stop() {
     }
 
-    // NOTE: the plug-in initialization could be more elegant here. The core
-    // problem here is that a common usage pattern the below:
-    //
-    //      initGlobalTracer(LightStep.tracer({ ... }))
-    //
-    // The plug-ins are initialized during the tracer() call, *but* the OpenTracing
-    // Tracer is not set until the tracer() call *finishes*; thus, the global
-    // tracer is not yet set for the plug-in initialization and it needs to
-    // create a temporary handle.
-    _ensureSpanStarted(tracerImp) {
+    _ensureSpanStarted(tracer, tracerImp) {
         if (!this._span) {
-            let tracer = OpenTracing.initNewTracer(tracerImp);
             this._span = tracer.startSpan('document/load');
             tracerImp.addActiveRootSpan(this._span.imp());
         }
@@ -67,7 +50,7 @@ class InstrumentPageLoad {
         span.logEvent(`document.readystatechange ${state}`, payload);
 
         if (state === 'complete') {
-            let tracerImp = OpenTracing.imp();
+            let tracerImp = span.tracer().imp();
             if (tracerImp) {
                 tracerImp.removeActiveRootSpan(span.imp());
             }

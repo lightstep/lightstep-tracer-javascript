@@ -1,5 +1,3 @@
-import OpenTracing from 'opentracing';
-
 // Capture the proxied values on script load (i.e. ASAP) in case there are
 // multiple layers of instrumentation.
 let proxied = {};
@@ -67,20 +65,20 @@ class InstrumentXHR {
         return 'instrument_xhr';
     }
 
-    start(tracer) {
+    start(tracer, tracerImp) {
         if (!this._enabled) {
             return;
         }
         this._tracer = tracer;
 
-        tracer.addOption('xhr_instrumentation', { type : 'bool', defaultValue : false });
-        tracer.addOption('xhr_url_inclusion_patterns', { type : 'array', defaultValue : [/.*/] });
-        tracer.addOption('xhr_url_exclusion_patterns', { type : 'array', defaultValue : [] });
-        this._addServiceHostToExclusions(tracer.options());
-        tracer.on('options', this._handleOptions);
+        tracerImp.addOption('xhr_instrumentation', { type : 'bool', defaultValue : false });
+        tracerImp.addOption('xhr_url_inclusion_patterns', { type : 'array', defaultValue : [/.*/] });
+        tracerImp.addOption('xhr_url_exclusion_patterns', { type : 'array', defaultValue : [] });
+        this._addServiceHostToExclusions(tracerImp.options());
+        tracerImp.on('options', this._handleOptions);
     }
 
-    stop(tracer) {
+    stop() {
         if (!this._enabled) {
             return;
         }
@@ -273,9 +271,9 @@ class InstrumentXHR {
 
     _instrumentSend() {
         let self = this;
-        let tracer = this._tracer;
+        let tracerImp = this._tracer.imp();
         return function () {
-            if (!self._shouldTrace(tracer, this, this.__tracer_url)) {
+            if (!self._shouldTrace(tracerImp, this, this.__tracer_url)) {
                 return proxied.send.apply(this, arguments);
             }
 
@@ -303,8 +301,6 @@ class InstrumentXHR {
     }
 
     _getXHRSpan(xhr) {
-        let self = this;
-
         // Check if we've already joined successfully; if so, return early.
         if (xhr.__xhr_span) {
             return xhr.__xhr_span;
@@ -315,7 +311,7 @@ class InstrumentXHR {
         // NOTE: we would like to re-inject `span` into the headers (swapping
         // out the ones we joined with) but CORS restrictions prevent us from
         // doing so.
-        let span = self._tracer.join('XMLHttpRequest', OpenTracing.FORMAT_TEXT_MAP, xhr.__requestHeaders);
+        let span = this._tracer.join('XMLHttpRequest', this._tracer.FORMAT_TEXT_MAP, xhr.__requestHeaders);
         if (span) {
             xhr.__xhr_span = span;
         }
@@ -323,7 +319,7 @@ class InstrumentXHR {
     }
 
     _shouldTrace(tracer, xhr, url) {
-        let opts = tracer.options();
+        let opts = tracer.imp().options();
         if (opts.disabled) {
             return false;
         }
