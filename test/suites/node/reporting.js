@@ -9,25 +9,27 @@ describe("Reporting loop", function() {
         this.timeout(5000);
 
         var transport = new FileTransport(path.join(__dirname, '../../results/report_flush_loop.json'));
-        var runtime = Tracer.initNewTracer(LightStep.tracer({
-            access_token           : "{your_access_token}",
-            group_name             : "api-javascript/unit-test/report_flush_loop",
+        var tracer = LightStep.tracer({
+            access_token                  : "{your_access_token}",
+            group_name                    : "api-javascript/unit-test/report_flush_loop",
             max_reporting_interval_millis : 10,
-            override_transport     : transport,
-            disable_reporting_loop : false,
-        }));
+            override_transport            : transport,
+            disable_reporting_loop        : false,
+        });
 
         var count = 0;
+        console.log("About to call setInterval");
         var timer = setInterval(function() {
-            var span = Tracer.startSpan("test");
-            span.imp().info("Count = " + count);
+            var span = tracer.startSpan("test");
+            span.log("Count = " + count);
+            span.finish();
             count++;
             if (count === 20) {
                 clearInterval(timer);
                 var reqs = transport.readReports();
 
                 // Conservatively check below the theoretical values since this
-                // test inherent has timing issues.
+                // test inherently has timing issues.
                 expect(reqs.logRecordCount()).to.be.at.least(10);
                 expect(reqs.reportCount()).to.be.at.least(2);
                 return done();

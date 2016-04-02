@@ -680,6 +680,8 @@ export default class TracerImp extends EventEmitter {
     }
 
     _buffersAreEmpty() {
+        console.log("_buffersAreEmpty runtimeGUID", this._runtimeGUID);
+
         if (this._logRecords.length > 0) {
             return false;
         }
@@ -744,6 +746,7 @@ export default class TracerImp extends EventEmitter {
             return;
         }
 
+        console.log("_internalAddSpanRecord runtimeGUID", this._runtimeGUID);
         if (this._spanRecords.length >= this._options.max_span_records) {
             let index = Math.floor(this._spanRecords.length * Math.random());
             this._spanRecords[index] = record;
@@ -883,13 +886,11 @@ export default class TracerImp extends EventEmitter {
         let clockOffsetMicros = this._clockState.offsetMicros();
 
         // Diagnostic information on the clock correction
-        if (this._options.debug) {
-            this.logStable('cr/time_correction_state', {
-                offset_micros  : clockOffsetMicros,
-                active_samples : this._clockState.activeSampleCount(),
-                ready          : clockReady,
-            });
-        }
+        this._infoV(1, 'time correction state', {
+            offset_micros  : clockOffsetMicros,
+            active_samples : this._clockState.activeSampleCount(),
+            ready          : clockReady,
+        });
 
         let logRecords = this._logRecords;
         let spanRecords = this._spanRecords;
