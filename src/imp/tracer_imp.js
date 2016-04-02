@@ -883,11 +883,13 @@ export default class TracerImp extends EventEmitter {
         let clockOffsetMicros = this._clockState.offsetMicros();
 
         // Diagnostic information on the clock correction
-        this.logStable('cr/time_correction_state', {
-            offset_micros  : clockOffsetMicros,
-            active_samples : this._clockState.activeSampleCount(),
-            ready          : clockReady,
-        });
+        if (this._options.debug) {
+            this.logStable('cr/time_correction_state', {
+                offset_micros  : clockOffsetMicros,
+                active_samples : this._clockState.activeSampleCount(),
+                ready          : clockReady,
+            });
+        }
 
         let logRecords = this._logRecords;
         let spanRecords = this._spanRecords;
