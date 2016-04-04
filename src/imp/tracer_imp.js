@@ -680,8 +680,6 @@ export default class TracerImp extends EventEmitter {
     }
 
     _buffersAreEmpty() {
-        console.log("_buffersAreEmpty runtimeGUID", this._runtimeGUID);
-
         if (this._logRecords.length > 0) {
             return false;
         }
@@ -746,7 +744,6 @@ export default class TracerImp extends EventEmitter {
             return;
         }
 
-        console.log("_internalAddSpanRecord runtimeGUID", this._runtimeGUID);
         if (this._spanRecords.length >= this._options.max_span_records) {
             let index = Math.floor(this._spanRecords.length * Math.random());
             this._spanRecords[index] = record;
