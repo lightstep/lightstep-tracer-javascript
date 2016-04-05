@@ -31,6 +31,13 @@ Tracer.initGlobalTracer(LightStep.tracer({
 * For more information about using the OpenTracing API, see http://opentracing.io/.
 * See [examples/browser](https://github.com/lightstep/lightstep-tracer-javascript/tree/master/examples/browser) for a JavaScript browser example
 * See [examples/node](https://github.com/lightstep/lightstep-tracer-javascript/tree/master/examples/node) for a Node.js server-side example
+* 
+
+The browser version of the code can be explicitly included using the following, which can be helpful in some [`browserify`](https://github.com/substack/node-browserify) (or similar) setups:
+
+```javascript
+var LightStep = require('lightstep-tracer/browser');
+```
 
 
 ## LightStep Specific API
