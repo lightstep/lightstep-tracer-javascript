@@ -1,5 +1,3 @@
-import OpenTracing from 'opentracing';
-
 const optionsParser = require('./options_parser.js');
 const util = require('./util');
 
@@ -105,7 +103,7 @@ class PlatformBrowser {
         if (typeof window.Tracer !== 'object') {
             return;
         }
-        OpenTracing.initGlobalTracer(lib.tracer(opts));
+        Tracer.initGlobalTracer(lib.tracer(opts));  // eslint-disable-line no-undef
     }
 
     tracerTags() {

@@ -2,7 +2,6 @@
 // Imports
 //============================================================================//
 
-import OpenTracing from 'opentracing';
 import EventEmitter from 'eventemitter3';
 import { Platform, Transport, crouton_thrift } from '../platform_abstraction_layer';    // eslint-disable-line camelcase
 import SpanImp from './span_imp';
@@ -174,13 +173,13 @@ export default class TracerImp extends EventEmitter {
 
     inject(span, format, carrier) {
         switch (format) {
-        case OpenTracing.FORMAT_TEXT_MAP:
+        case this._interface.FORMAT_TEXT_MAP:
             this._injectToTextMap(span, carrier);
             break;
 
         // The binary encoding here is optimized for correctness and uniformity
         // across platforms: it is currently not efficient.
-        case OpenTracing.FORMAT_BINARY:
+        case this._interface.FORMAT_BINARY:
             carrier.buffer = this._objectToUint8Array(this._injectToTextMap(span, {}));
             break;
 
@@ -208,8 +207,8 @@ export default class TracerImp extends EventEmitter {
     join(operationName, format, carrier) {
         // Simplify the logic by converting the binary carrier to a split text
         // carrier.
-        if (format === OpenTracing.FORMAT_BINARY) {
-            format = OpenTracing.FORMAT_TEXT_MAP;
+        if (format === this._interface.FORMAT_BINARY) {
+            format = this._interface.FORMAT_TEXT_MAP;
             carrier = this._uint8ArrayToObject(carrier.buffer);
         }
 
@@ -221,7 +220,7 @@ export default class TracerImp extends EventEmitter {
 
             // Iterate over the contents of the carrier and set the properties
             // accordingly.
-        case OpenTracing.FORMAT_TEXT_MAP:
+        case this._interface.FORMAT_TEXT_MAP:
             for (let key in carrier) {
                 let value = carrier[key];
                 if (key.substr(0, CARRIER_TRACER_STATE_PREFIX.length) !== CARRIER_TRACER_STATE_PREFIX) {
@@ -884,7 +883,7 @@ export default class TracerImp extends EventEmitter {
         let clockOffsetMicros = this._clockState.offsetMicros();
 
         // Diagnostic information on the clock correction
-        this.logStable('cr/time_correction_state', {
+        this._infoV(1, 'time correction state', {
             offset_micros  : clockOffsetMicros,
             active_samples : this._clockState.activeSampleCount(),
             ready          : clockReady,
