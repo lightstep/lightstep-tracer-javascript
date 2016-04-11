@@ -8,6 +8,9 @@ class InstrumentPageLoad {
         return 'instrument_page_load';
     }
 
+    addOptions(tracerImp) {
+    }
+
     start(tracer, tracerImp) {
         if (this._inited) {
             return;

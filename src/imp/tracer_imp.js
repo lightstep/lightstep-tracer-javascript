@@ -35,7 +35,6 @@ export default class TracerImp extends EventEmitter {
         this._plugins = {};
         this._options = {};
         this._optionDescs = [];
-
         this._makeOptionsTable();
 
         let now = this._platform.nowMicros();
@@ -103,6 +102,10 @@ export default class TracerImp extends EventEmitter {
     _makeOptionsTable() {
         /* eslint-disable key-spacing, no-multi-spaces */
 
+        // NOTE: make 'verbose' the first option so it is processed first on
+        // options changes and takes effect as soon as possible.
+        this.addOption('verbose',               { type : 'int', min: 0, max: 9, defaultValue: 0 });
+
         // Core options
         this.addOption('access_token',          { type: 'string',  defaultValue: '' });
         this.addOption('group_name',            { type: 'string',  defaultValue: '' });
@@ -128,8 +131,6 @@ export default class TracerImp extends EventEmitter {
         this.addOption('debug',                         { type: 'bool',    defaultValue: false });
         // I.e. report only on explicit calls to flush()
         this.addOption('disable_reporting_loop',        { type: 'bool',    defaultValue: false });
-        // Log verbosity level
-        this.addOption('verbose',               { type : 'int', min: 0, max: 9, defaultValue: 0 });
 
         // Unit testing options
         this.addOption('override_transport',    { type : 'any',    defaultValue: null });
@@ -149,6 +150,7 @@ export default class TracerImp extends EventEmitter {
     setInterface(tracerInterface) {
         this._interface = tracerInterface;
         this.startPlugins();
+        this._infoV(2, 'Initialization complete', this._options);
     }
 
     newTracer(opts) {
@@ -296,8 +298,6 @@ export default class TracerImp extends EventEmitter {
 
     // Register a new option.  Used by plug-ins.
     addOption(name, desc) {
-        this._infoV(2, `Adding options ${name} with value = ${desc.defaultValue}`);
-
         desc.name = name;
         this._optionDescs.push(desc);
         this._options[desc.name] = desc.defaultValue;
@@ -328,8 +328,8 @@ export default class TracerImp extends EventEmitter {
         // Track what options have been modified
         let modified = {};
         let unchanged = {};
-        for (let key in this._optionDescs) {
-            const desc = this._optionDescs[key];
+        for (let i in this._optionDescs) {
+            const desc = this._optionDescs[i];
             this._setOptionInternal(modified, unchanged, opts, desc);
         }
 
@@ -350,15 +350,19 @@ export default class TracerImp extends EventEmitter {
             this._startReportingLoop();
         }
 
-        if (this._options.debug) {
+        if (this._options.verbose >= 3) {
             let optionsString = '';
+            let count = 0;
             for (let key in modified) {
                 let val = modified[key];
-                optionsString += `\t${JSON.stringify(key)} : ${JSON.stringify(val)}`;
+                optionsString += `\t${JSON.stringify(key)}: ${JSON.stringify(val.newValue)}\n`;
+                count++;
             }
-            this._infoV(2, `Options modified:\n${optionsString}`);
+            if (count > 0) {
+                this._infoV(3, `Options modified:\n${optionsString}`);
+            }
         }
-        this.emit('options', modified, this._options);
+        this.emit('options', modified, this._options, this);
     }
 
     _setOptionInternal(modified, unchanged, opts, desc) {
@@ -528,12 +532,14 @@ export default class TracerImp extends EventEmitter {
     }
 
     addPlugin(plugin) {
-        // Don't initialize plug-ins twice
+        // Don't add plug-ins twice
         let name = plugin.name();
         if (this._plugins[name]) {
             return;
         }
+
         this._plugins[name] = plugin;
+        plugin.addOptions(this);
     }
 
     startPlugins() {
@@ -701,8 +707,13 @@ export default class TracerImp extends EventEmitter {
             let truncated = record.message.substr(0, this._options.log_message_length_hard_limit - 1);
             record.message = `${truncated}…`;
         }
+
         if (record.payload_json && record.payload_json.length > this._options.log_payload_length_hard_limit) {
-            record.payload_json = '{"error":"payload exceeded maximum size"}';
+            this._warn('Payload too large. Dropped', {
+                length : record.payload_json.length,
+                limit  : this._options.log_payload_length_hard_limit,
+            });
+            record.payload_json = undefined;
         }
 
         this._internalAddLogRecord(record);
@@ -723,7 +734,6 @@ export default class TracerImp extends EventEmitter {
             this._error('Attempt to add null record to buffer');
             return;
         }
-
         if (this._logRecords.length >= this._options.max_log_records) {
             let index = Math.floor(this._logRecords.length * Math.random());
             this._logRecords[index] = record;
@@ -1011,7 +1021,11 @@ export default class TracerImp extends EventEmitter {
     //-----------------------------------------------------------------------//
 
     _infoV(v, msg, payload) {
-        if (v > this._options.verbose) {
+        let optsVerbose = this._options.verbose;
+        if (optsVerbose === undefined) {
+            // console.warn('Internal log called before initialization complete!', new Error().stack);
+            return;
+        } else if (v > optsVerbose) {
             return;
         }
         this._internalLog(constants.LOG_INFO, `[LS:V${v}] ${msg}`, payload);
@@ -1026,9 +1040,7 @@ export default class TracerImp extends EventEmitter {
         this._internalLog(constants.LOG_ERROR, `[LS:E] ${msg}`, payload);
     }
     _internalLog(level, msg, payload) {
-        if (this._options.debug) {
-            this.logDetail(level, null, msg, payload);
-        }
+        this.logDetail(level, null, msg, payload);
     }
 
     /**
