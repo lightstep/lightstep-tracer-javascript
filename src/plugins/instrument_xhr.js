@@ -65,15 +65,18 @@ class InstrumentXHR {
         return 'instrument_xhr';
     }
 
+    addOptions(tracerImp) {
+        tracerImp.addOption('xhr_instrumentation', { type : 'bool', defaultValue : false });
+        tracerImp.addOption('xhr_url_inclusion_patterns', { type : 'array', defaultValue : [/.*/] });
+        tracerImp.addOption('xhr_url_exclusion_patterns', { type : 'array', defaultValue : [] });
+    }
+
     start(tracer, tracerImp) {
         if (!this._enabled) {
             return;
         }
         this._tracer = tracer;
 
-        tracerImp.addOption('xhr_instrumentation', { type : 'bool', defaultValue : false });
-        tracerImp.addOption('xhr_url_inclusion_patterns', { type : 'array', defaultValue : [/.*/] });
-        tracerImp.addOption('xhr_url_exclusion_patterns', { type : 'array', defaultValue : [] });
         this._addServiceHostToExclusions(tracerImp.options());
         tracerImp.on('options', this._handleOptions);
     }

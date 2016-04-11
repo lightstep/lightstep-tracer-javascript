@@ -11,28 +11,33 @@ class LogToConsole {
     name() {
         return 'log_to_console';
     }
-    start(tracer, tracerImp) {
-        this._tracer = tracer;
+
+    addOptions(tracerImp) {
         tracerImp.addOption('log_to_console', {
             type         : 'bool',
             defaultValue : false,
         });
         tracerImp.on('options', this._optionsCb);
     }
+
+    start(tracer, tracerImp) {
+        this._tracer = tracer;
+    }
+
     stop() {
         this._tracer.imp().removeListener('options', this._optionsCb);
     }
 
-    _handleOptions(modified, current) {
+    _handleOptions(modified, current, tracerImp) {
         let enabled = current.log_to_console;
         if (this._enabled === enabled) {
             return;
         }
         this._enabled = enabled;
         if (this._enabled) {
-            this._tracer.imp().on('log_added', this._logAddedCb);
+            tracerImp.on('log_added', this._logAddedCb);
         } else {
-            this._tracer.imp().removeListener('log_added', this._logAddedCb);
+            tracerImp.removeListener('log_added', this._logAddedCb);
         }
     }
 
@@ -45,17 +50,36 @@ class LogToConsole {
             return;
         }
 
+        let payload = record.payload_json;
+        if (payload) {
+            try {
+                payload = JSON.parse(payload);
+            } catch (_ignored) { /* ignored */ }
+        }
+
         switch (level) {
         case constants.LOG_ERROR:
         case constants.LOG_FATAL:
-            console.error(message); // eslint-disable-line no-console
+            if (payload !== undefined) {
+                console.error(message, payload); // eslint-disable-line no-console
+            } else {
+                console.error(message); // eslint-disable-line no-console
+            }
             break;
         case constants.LOG_WARN:
-            console.warn(message); // eslint-disable-line no-console
+            if (payload !== undefined) {
+                console.warn(message, payload); // eslint-disable-line no-console
+            } else {
+                console.warn(message); // eslint-disable-line no-console
+            }
             break;
         case constants.LOG_INFO:
         default:
-            console.log(message); // eslint-disable-line no-console
+            if (payload !== undefined) {
+                console.log(message, payload); // eslint-disable-line no-console
+            } else {
+                console.log(message); // eslint-disable-line no-console
+            }
             break;
         }
     }
