@@ -185,6 +185,8 @@ Joining spans from different processes or services by tag in LightStep is easy. 
 
 This is usually a very easy way to create cross-service traces in a system that is already maintaining a request ID or transaction ID.
 
+Join tags will regardless of platform, making this a trivial way to initially connect spans across services without having to modify communication protocols, inter-service APIs, or even the programming language of the platform in question.
+
 *Note: the "join:" prefix is a LightStep-specific feature and is not part of the OpenTracing specification.*
 
 ```javascript
