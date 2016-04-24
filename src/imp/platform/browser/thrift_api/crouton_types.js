@@ -589,6 +589,7 @@ crouton_thrift.TraceJoinId.prototype.write = function(output) {
 
 crouton_thrift.SpanRecord = function(args) {
   this.span_guid = null;
+  this.trace_guid = null;
   this.runtime_guid = null;
   this.span_name = null;
   this.join_ids = null;
@@ -600,6 +601,9 @@ crouton_thrift.SpanRecord = function(args) {
   if (args) {
     if (args.span_guid !== undefined) {
       this.span_guid = args.span_guid;
+    }
+    if (args.trace_guid !== undefined) {
+      this.trace_guid = args.trace_guid;
     }
     if (args.runtime_guid !== undefined) {
       this.runtime_guid = args.runtime_guid;
@@ -644,6 +648,13 @@ crouton_thrift.SpanRecord.prototype.read = function(input) {
       case 1:
       if (ftype == Thrift.Type.STRING) {
         this.span_guid = input.readString().value;
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 11:
+      if (ftype == Thrift.Type.STRING) {
+        this.trace_guid = input.readString().value;
       } else {
         input.skip(ftype);
       }
@@ -760,6 +771,11 @@ crouton_thrift.SpanRecord.prototype.write = function(output) {
   if (this.span_guid !== null && this.span_guid !== undefined) {
     output.writeFieldBegin('span_guid', Thrift.Type.STRING, 1);
     output.writeString(this.span_guid);
+    output.writeFieldEnd();
+  }
+  if (this.trace_guid !== null && this.trace_guid !== undefined) {
+    output.writeFieldBegin('trace_guid', Thrift.Type.STRING, 11);
+    output.writeString(this.trace_guid);
     output.writeFieldEnd();
   }
   if (this.runtime_guid !== null && this.runtime_guid !== undefined) {
