@@ -333,14 +333,6 @@ export default class SpanImp {
         }
         this._addTagAsJoinID(joinIDs, 'end_user_id');
 
-        // Explicitly set the trace GUID as a join ID
-        if (this._traceGUID) {
-            joinIDs.push(new crouton_thrift.TraceJoinId({
-                TraceKey : 'join:trace_guid',
-                Value    : coerce.toString(this._traceGUID),
-            }));
-        }
-
         // Add any runtime global join IDs (give preference to local tags,
         // though).
         let globalJoinIDs = this._tracer._options.join_ids;
@@ -357,6 +349,7 @@ export default class SpanImp {
 
         let record = new crouton_thrift.SpanRecord({
             span_guid       : this._guid,
+            trace_guid      : this._traceGUID,
             runtime_guid    : this._tracer.guid(),
             span_name       : this._operation,
             join_ids        : joinIDs,
