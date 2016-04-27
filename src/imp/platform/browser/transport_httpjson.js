@@ -62,8 +62,8 @@ export default class TransportBrowser {
     _reportAsyncScript(auth, report, done) {
         let authJSON   = JSON.stringify(auth);
         let reportJSON = JSON.stringify(report);
-
-        let url = `${this._hostport}/_rpc/v1/reports/uri_encoded` +
+        let protocol = (this._encryption === 'none') ? 'http' : 'https';
+        let url = `${protocol}://${this._host}:${this._port}/_rpc/v1/reports/uri_encoded` +
             `?auth=${encodeURIComponent(authJSON)}` +
             `&report=${encodeURIComponent(reportJSON)}`;
 
