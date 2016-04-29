@@ -7,7 +7,7 @@ var filename = path.join(__dirname, "../../../results/cmdline_args.json");
 var transport = new FileTransport(filename);
 Tracer.initGlobalTracer(LightStep.tracer({
     access_token           : "{your_access_token}",
-    group_name             : "api-javascript/unit-test/cmdline_args",
+    component_name         : "api-javascript/unit-test/cmdline_args",
     override_transport     : transport,
 }));
 

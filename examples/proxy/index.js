@@ -55,7 +55,7 @@ var server = http.createServer(function (req, res) {
     if (!tracer) {
         tracer = Tracer.initNewTracer(LightStep.tracer({
             access_token   : accessToken,
-            group_name     : 'lightstep-tracer/examples/node_proxy',
+            component_name : 'lightstep-tracer/examples/node_proxy',
         }));
         tracerMap[accessToken] = tracer;
     }
