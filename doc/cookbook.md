@@ -4,6 +4,8 @@ Creating a useful trace in LightStep takes only a few minutes. Once a single tra
 
 The cookbook recipes here assume you've already successfully installed the OpenTracing and LightStep NPM packages.  If not, check out the [README](../README.md).
 
+* Getting started
+    * [Browser quick start](#browser-quick-start)
 * Creating spans
     * [Spans in Promise-based code](#promises)
     * [Spans in callback-based code](#callbacks)
@@ -15,6 +17,25 @@ The cookbook recipes here assume you've already successfully installed the OpenT
 
 *Something missing from the Cookbook? [Log a GitHub issue](https://github.com/opentracing/opentracing-javascript/issues/new) and we'll get on it :)*
 
+<a name='browser-quick-start'></a>
+## Browser quick start
+
+By using CDN hosted scripts and a few auto-instrumentation options, you can generate some traces from the browser almost immediately. This approach is great to just try things out (though you may want more control than this when deploying to production).
+
+1. Ensure you have created a valid project on LightStep and have your access token
+2. Include the following scripts in your HTML and replace `{your_access_token}` with, well, your access token value and replace `{name_to_use_for_your_component}` with a string identifier that'll be used in the LightStep UI to identify this component:
+
+```html
+<script src="http://docs.lightstep.com/dist/opentracing-javascript/current/opentracing-browser.min.js"></script>
+<script src="http://docs.lightstep.com/dist/lightstep-tracer-javascript/current/lightstep-tracer.min.js"
+        data-init_global_tracer="true"
+        data-access_token="{your_access_token}"
+        data-component_name="{name_to_use_for_your_component}"
+        data-xhr_instrumentation="true"
+        ></script>
+```
+
+The above will automatically create and report spans for any `XMLHttpRequests` made by the hosted page as well as spans for the page load.
 
 <a name='promises'></a>
 ## Instrumenting Promise-based code
@@ -23,7 +44,7 @@ Instrumenting code that uses standard [`Promise`](https://developer.mozilla.org/
 
 1. Before initiating the request that returns the `Promise`, create a span
 2. Be sure to assign your span a helpful name that describes the operation it is measuring
-2. In handling the Promise completion, be sure to always call `finish()` on the span
+3. In handling the Promise completion, be sure to always call `finish()` on the span
 
 *Note: if you're using a custom promise library or wrapper, it's easy to make spans part of the promise implementation itself.*
 
