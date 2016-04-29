@@ -300,7 +300,7 @@ class InstrumentXHR {
                 }
             }
             let lenStr = (len === undefined) ? '' : `, data length=${len}`;
-            span.imp().info(`XMLHttpRequest send${lenStr}`, { data : data });
+            span.imp().info(`XMLHttpRequest send${lenStr}`, data ? { data : data } : undefined);
             return proxied.send.apply(this, arguments);
         };
     }

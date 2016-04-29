@@ -75,7 +75,9 @@ class LogBuilder {
         try {
             payloadJSON = JSON.stringify(data);
         } catch (_ignored) {
-            return null;
+            // TODO: this should log an internal warning that a payload could
+            // not be encoded as JSON.
+            return undefined;
         }
         return payloadJSON;
     }
