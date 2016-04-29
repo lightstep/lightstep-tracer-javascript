@@ -77,7 +77,9 @@ class InstrumentXHR {
         }
         this._tracer = tracer;
 
-        this._addServiceHostToExclusions(tracerImp.options());
+        let currentOptions = tracerImp.options();
+        this._addServiceHostToExclusions(currentOptions);
+        this._handleOptions({}, currentOptions);
         tracerImp.on('options', this._handleOptions);
     }
 
@@ -205,13 +207,13 @@ class InstrumentXHR {
                         // Do nothing (the XHR span will not be ready yet)
                     } else if (this.readyState === 2) {
                         let span = self._getXHRSpan(this);
-                        span.info(`XMLHttpRequest: ${method} ${url}`, openPayload);
-                        span.addTags(tags);
-                        span.info('XMLHttpRequest headers received (readyState=2)', {
+                        span.imp().info(`XMLHttpRequest: ${method} ${url}`, openPayload);
+                        span.imp().addTags(tags);
+                        span.imp().info('XMLHttpRequest headers received (readyState=2)', {
                             headers : getResponseHeaders(this),
                         });
                     } else if (this.readyState === 3) {
-                        self._getXHRSpan(this).info('XMLHttpRequest loading (readyState=3)');
+                        self._getXHRSpan(this).imp().info('XMLHttpRequest loading (readyState=3)');
                     } else if (this.readyState === 4) {
                         let responseType = this.responseType;
                         let payload = {
@@ -241,21 +243,21 @@ class InstrumentXHR {
                         let prefix = `XMLHttpRequest ${tags.method} done (readyState=4), status ${this.status}`;
                         let span = self._getXHRSpan(this);
                         if (!(this.status > 99)) {
-                            span.error(`${prefix} (unknown)`, payload);
+                            span.imp().error(`${prefix} (unknown)`, payload);
                         } else if (this.status < 199) {
-                            span.info(`${prefix} (informational)`, payload);
+                            span.imp().info(`${prefix} (informational)`, payload);
                         } else if (this.status < 299) {
-                            span.info(`${prefix} (successful)`, payload);
+                            span.imp().info(`${prefix} (successful)`, payload);
                         } else if (this.status < 399) {
                             span.info(`${prefix} (redirection)`, payload);
                         } else if (this.status < 499) {
-                            span.error(`${prefix} (client error)`, payload);
+                            span.imp().error(`${prefix} (client error)`, payload);
                         } else if (this.status < 599) {
-                            span.error(`${prefix} (server error)`, payload);
+                            span.imp().error(`${prefix} (server error)`, payload);
                         } else {
-                            span.error(`${prefix} (unknown)`, payload);
+                            span.imp().error(`${prefix} (unknown)`, payload);
                         }
-                        span.end();
+                        span.finish();
                     } else {
                         self._getXHRSpan(this).info(`XMLHttpRequest readyState=${this.readyState}`);
                     }
@@ -266,7 +268,7 @@ class InstrumentXHR {
 
             let result = proxied.open.apply(this, arguments);
             if (!async) {
-                syncSpan.end();
+                syncSpan.finish();
             }
             return result;
         };
@@ -274,9 +276,9 @@ class InstrumentXHR {
 
     _instrumentSend() {
         let self = this;
-        let tracerImp = this._tracer.imp();
+        let tracer = this._tracer;
         return function () {
-            if (!self._shouldTrace(tracerImp, this, this.__tracer_url)) {
+            if (!self._shouldTrace(tracer, this, this.__tracer_url)) {
                 return proxied.send.apply(this, arguments);
             }
 
@@ -298,7 +300,7 @@ class InstrumentXHR {
                 }
             }
             let lenStr = (len === undefined) ? '' : `, data length=${len}`;
-            span.info(`XMLHttpRequest send${lenStr}`, { data : data });
+            span.imp().info(`XMLHttpRequest send${lenStr}`, { data : data });
             return proxied.send.apply(this, arguments);
         };
     }

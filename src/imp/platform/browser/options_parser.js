@@ -48,7 +48,10 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
     if (typeof accessToken === 'string' && accessToken.length > 0) {
         opts.access_token = accessToken;
     }
-    let groupName = dataset.group_name;
+
+    // TODO: this should be only 'component_name'. A larger task to completely
+    // replace group_name with component_name needs to be done.
+    let groupName = dataset.component_name || dataset.group_name;
     if (typeof groupName === 'string' && groupName.length > 0) {
         opts.group_name = groupName;
     }
@@ -90,6 +93,13 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
         } else if (init === 'false') {
             browserOpts.init_global_tracer = false;
         }
+    }
+
+    // NOTE: this is a little inelegant as this is hard-coding support for a
+    // "plug-in" option.
+    let xhrInstrumentation = dataset.xhr_instrumentation;
+    if (typeof xhrInstrumentation === 'string' && xhrInstrumentation === 'true') {
+        browserOpts.xhr_instrumentation = true;
     }
 };
 
