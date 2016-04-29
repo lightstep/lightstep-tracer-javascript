@@ -11,7 +11,7 @@ var FileTransport = require("./util/file_transport");
 // Use for "override" options specifically for unit testing
 Tracer.initGlobalTracer(LightStep.tracer({
     override_transport     : new FileTransport(path.join(__dirname, 'results/default_report.json')),
-    group_name             : 'lightstep-tracer/unit-tests',
+    component_name         : 'lightstep-tracer/unit-tests',
     access_token           : '010101010101010101020101010',
     disable_reporting_loop : true,
 }));

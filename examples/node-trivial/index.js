@@ -5,7 +5,7 @@ var LightStep = require('../../dist/lightstep-tracer-node-debug');
 
 Tracer.initGlobalTracer(LightStep.tracer({
     access_token   : '{your_access_token}',
-    group_name     : 'lightstep-tracer/examples/node-trivial',
+    component_name : 'lightstep-tracer/examples/node-trivial',
 }));
 
 var span = Tracer.startSpan('trivial_span');

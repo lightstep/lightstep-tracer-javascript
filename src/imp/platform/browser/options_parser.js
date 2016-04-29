@@ -32,8 +32,8 @@ function urlQueryParameters(defaults) {
 // via the HTML element. Example:
 //
 // <script src='lightstep.min.js'
-//      access_token='{my_access_token}'
-//      group_name='my_group'></script>
+//      data-access_token='{my_access_token}'
+//      data-component_name='my_component'></script>
 //
 // Note: relies on the global hostScriptElement variable defined above.
 //
@@ -49,11 +49,9 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
         opts.access_token = accessToken;
     }
 
-    // TODO: this should be only 'component_name'. A larger task to completely
-    // replace group_name with component_name needs to be done.
-    let groupName = dataset.component_name || dataset.group_name;
-    if (typeof groupName === 'string' && groupName.length > 0) {
-        opts.group_name = groupName;
+    let componentName = dataset.component_name;
+    if (typeof componentName === 'string' && componentName.length > 0) {
+        opts.component_name = componentName;
     }
 
     let collectorHost = dataset.collector_host;

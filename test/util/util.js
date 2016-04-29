@@ -9,7 +9,7 @@ function Util() {
 }
 
 Util.prototype.runtimeReportToFile = function (runtime, filename) {
-    // Testing workaround to allow the runtime to flush without a group_name
+    // Testing workaround to allow the runtime to flush without a component_name
     runtime._runtimeGUID = Math.floor(Math.random() * 1e24);
 
     // Put all output in the "results" directory

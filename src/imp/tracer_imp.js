@@ -108,7 +108,7 @@ export default class TracerImp extends EventEmitter {
 
         // Core options
         this.addOption('access_token',          { type: 'string',  defaultValue: '' });
-        this.addOption('group_name',            { type: 'string',  defaultValue: '' });
+        this.addOption('component_name',        { type: 'string',  defaultValue: '' });
         this.addOption('collector_host',        { type: 'string',  defaultValue: DEFAULT_COLLECTOR_HOSTNAME });
         this.addOption('collector_port',        { type: 'int',     defaultValue: DEFAULT_COLLECTOR_PORT_TLS });
         this.addOption('collector_encryption',  { type: 'string',  defaultValue: 'tls' });
@@ -458,8 +458,8 @@ export default class TracerImp extends EventEmitter {
             if (modified.access_token) {
                 throw new Error('Cannot change access_token after it has been set.');
             }
-            if (modified.group_name) {
-                throw new Error('Cannot change group_name after it has been set.');
+            if (modified.component_name) {
+                throw new Error('Cannot change component_name after it has been set.');
             }
             if (modified.collector_host) {
                 throw new Error('Cannot change collector_host after the connection is established');
@@ -474,10 +474,10 @@ export default class TracerImp extends EventEmitter {
         }
 
         // See if the Thrift data can be initialized
-        if (this._options.access_token.length > 0 && this._options.group_name.length > 0) {
+        if (this._options.access_token.length > 0 && this._options.component_name.length > 0) {
             this._infoV(2, 'Initializing thrift reporting data');
 
-            this._runtimeGUID = this._platform.runtimeGUID(this._options.group_name);
+            this._runtimeGUID = this._platform.runtimeGUID(this._options.component_name);
 
             this._thriftAuth = new crouton_thrift.Auth({
                 access_token : this._options.access_token,
@@ -509,10 +509,13 @@ export default class TracerImp extends EventEmitter {
                     Value : coerce.toString(tags[key]),
                 }));
             }
+
+            // NOTE: for legacy reasons, the Thrift field is called "group_name"
+            // but is semantically equivalen to the "component_name"
             this._thriftRuntime = new crouton_thrift.Runtime({
                 guid         : this._runtimeGUID,
                 start_micros : this._startMicros,
-                group_name   : this._options.group_name,
+                group_name   : this._options.component_name,
                 attrs        : thriftAttrs,
             });
 

@@ -11,7 +11,7 @@ describe("Reporting loop", function() {
         var transport = new FileTransport(path.join(__dirname, '../../results/report_flush_loop.json'));
         var tracer = Tracer.initNewTracer(LightStep.tracer({
             access_token                  : "{your_access_token}",
-            group_name                    : "api-javascript/unit-test/report_flush_loop",
+            component_name                : "api-javascript/unit-test/report_flush_loop",
             max_reporting_interval_millis : 10,
             override_transport            : transport,
             disable_reporting_loop        : false,
