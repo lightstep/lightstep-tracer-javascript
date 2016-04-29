@@ -24,6 +24,9 @@ node_modules:
 # NOTE: `npm version` automatically creates a git commit ang git tag for the
 # incremented version
 publish: test test_all
+	@if [ $(shell git symbolic-ref --short -q HEAD) = "mast2er" ]; then exit 0; else \
+	echo "Current git branch does not appear to be 'master'. Refusing to publish."; exit 1; \
+	fi
 	npm version patch
 	make build # need to rebuild with the new version number
 	git push
