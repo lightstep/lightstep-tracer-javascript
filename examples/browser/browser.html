@@ -2,7 +2,15 @@
 <html>
     <head>
         <title>LightStep - Simple Browser Example</title>
+        <link href='https://fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet' type='text/css'>
         <style>
+            body, button, input, textarea {
+                font-family: 'Inconsolata';
+            }
+            input, button {
+                margin    : 2px 0;
+                font-size : 11pt;
+            }
             .main {
                 max-width : 720px;
                 margin    : 32px auto;
@@ -10,6 +18,9 @@
             textarea {
                 width      : 100%;
                 min-height : 40em;
+                margin     : 12px 0;
+                padding    : 4px 8px;
+                font-size  : 11pt;
             }
         </style>
     </head>
@@ -53,9 +64,6 @@
             access_token   : '{your_access_token}',
             group_name     : 'lightstep-tracer/examples/browser',
             xhr_instrumentation : true,
-            debug : true,
-            log_to_console : true,
-            verbose : 2,
         }));
 
         //
@@ -217,7 +225,6 @@
                 }
             };
         }
-
         -->
         </script>
     </body>

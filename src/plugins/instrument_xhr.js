@@ -178,6 +178,9 @@ class InstrumentXHR {
                 return proxied.open.apply(this, arguments);
             }
 
+            let span = tracer.startSpan('XMLHttpRequest');
+            tracer.imp().addActiveRootSpan(span.imp());
+            this.__tracer_span = span;
             this.__tracer_url = url;
 
             let tags = {
@@ -198,22 +201,20 @@ class InstrumentXHR {
 
             // Note: async defaults to true
             let async = (asyncArg === undefined ? true : asyncArg);
-            let syncSpan = undefined;
             if (async) {
                 this.addEventListener('readystatechange', function () {
                     if (this.readyState === 0) {
-                        // Do nothing (the XHR span will not be ready yet)
+                        span.imp().info('XMLHttpRequest unsent (readyState=0)');
                     } else if (this.readyState === 1) {
-                        // Do nothing (the XHR span will not be ready yet)
+                        span.imp().info('XMLHttpRequest unsent (readyState=1)');
                     } else if (this.readyState === 2) {
-                        let span = self._getXHRSpan(this);
                         span.imp().info(`XMLHttpRequest: ${method} ${url}`, openPayload);
                         span.imp().addTags(tags);
                         span.imp().info('XMLHttpRequest headers received (readyState=2)', {
                             headers : getResponseHeaders(this),
                         });
                     } else if (this.readyState === 3) {
-                        self._getXHRSpan(this).imp().info('XMLHttpRequest loading (readyState=3)');
+                        span.imp().info('XMLHttpRequest loading (readyState=3)');
                     } else if (this.readyState === 4) {
                         let responseType = this.responseType;
                         let payload = {
@@ -241,7 +242,6 @@ class InstrumentXHR {
                         }
 
                         let prefix = `XMLHttpRequest ${tags.method} done (readyState=4), status ${this.status}`;
-                        let span = self._getXHRSpan(this);
                         if (!(this.status > 99)) {
                             span.imp().error(`${prefix} (unknown)`, payload);
                         } else if (this.status < 199) {
@@ -257,18 +257,18 @@ class InstrumentXHR {
                         } else {
                             span.imp().error(`${prefix} (unknown)`, payload);
                         }
+                        tracer.imp().removeActiveRootSpan(span.imp());
                         span.finish();
                     } else {
-                        self._getXHRSpan(this).info(`XMLHttpRequest readyState=${this.readyState}`);
+                        span.imp().info(`XMLHttpRequest readyState=${this.readyState}`);
                     }
                 });
-            } else {
-                syncSpan = self._getXHRSpan(this);
             }
 
             let result = proxied.open.apply(this, arguments);
             if (!async) {
-                syncSpan.finish();
+                tracer.imp().removeActiveRootSpan(span.imp());
+                span.finish();
             }
             return result;
         };
@@ -282,7 +282,7 @@ class InstrumentXHR {
                 return proxied.send.apply(this, arguments);
             }
 
-            let span = self._getXHRSpan(this);
+            let span = this.__tracer_span;
             if (!span) {
                 return proxied.send.apply(this, arguments);
             }
@@ -305,25 +305,12 @@ class InstrumentXHR {
         };
     }
 
-    _getXHRSpan(xhr) {
-        // Check if we've already joined successfully; if so, return early.
-        if (xhr.__xhr_span) {
-            return xhr.__xhr_span;
-        }
-
-        // Join via the recorded request headers.
-        //
-        // NOTE: we would like to re-inject `span` into the headers (swapping
-        // out the ones we joined with) but CORS restrictions prevent us from
-        // doing so.
-        let span = this._tracer.join('XMLHttpRequest', this._tracer.FORMAT_TEXT_MAP, xhr.__requestHeaders);
-        if (span) {
-            xhr.__xhr_span = span;
-        }
-        return span;
-    }
-
     _shouldTrace(tracer, xhr, url) {
+        // This shouldn't be possible, but let's be paranoid
+        if (!tracer.imp()) {
+            return false;
+        }
+
         let opts = tracer.imp().options();
         if (opts.disabled) {
             return false;
