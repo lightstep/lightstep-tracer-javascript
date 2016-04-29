@@ -97,7 +97,7 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
     // "plug-in" option.
     let xhrInstrumentation = dataset.xhr_instrumentation;
     if (typeof xhrInstrumentation === 'string' && xhrInstrumentation === 'true') {
-        browserOpts.xhr_instrumentation = true;
+        opts.xhr_instrumentation = true;
     }
 };
 
