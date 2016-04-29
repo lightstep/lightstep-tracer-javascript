@@ -24,7 +24,7 @@ var LightStep = require('lightstep-tracer');
 
 Tracer.initGlobalTracer(LightStep.tracer({
     access_token   : '{your_access_token}',
-    group_name     : '{your_service_or_app_name}',
+    component_name : '{your_service_or_app_name}',
 }));
 ```
 
@@ -50,7 +50,7 @@ var LightStep = require('lightstep-tracer/browser');
 ### tracer(options)
 
 * `access_token` `string` *required* - the project access token
-* `group_name` `string` *required* - the string identifier for the application, service, or process. (*NOTE:* this parameter is subject to renaming for consistency with other LightStep / OpenTracing libraries and maybe be optional in the future.)
+* `component_name` `string` *required* - the string identifier for the application, service, or process
 
 **Browser-specific initialization options**
 

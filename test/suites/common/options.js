@@ -3,7 +3,7 @@ describe('options()', function() {
     function makeLSTracer(extraOpts) {
         var opts = {
             access_token : 'your_access_token',
-            group_name : 'test_suite',
+            component_name : 'test_suite',
             disable_reporting_loop : true,
             silent : true,
         };
@@ -35,24 +35,24 @@ describe('options()', function() {
         }).to.throw();
     });
 
-    it('should allow the group_name and access_token to be set only once', function() {
+    it('should allow the component_name and access_token to be set only once', function() {
 
         expect(function () {
             var rt = makeLSTracer();
             rt.options({
-                group_name   : 'my_group',
+                component_name  : 'my_group',
                 access_token : '1',
                 disable_reporting_loop : true,
             });
             rt.options({
-                group_name  : 'your_group',
+                component_name  : 'your_group',
             });
         }).to.throw();
 
         expect(function () {
             var rt = makeLSTracer();
             rt.options({
-                group_name   : 'my_group',
+                component_name : 'my_group',
                 access_token : '1',
                 disable_reporting_loop : true,
             });
@@ -93,7 +93,7 @@ describe('options()', function() {
         for (var i = 0; i < testTable.length; i++) {
             var tracer = LightStep.tracer({
                 access_token : '{your_access_token}',
-                group_name   : '{node_test_suite}',
+                component_name : '{node_test_suite}',
                 disable_reporting_loop : true,
                 silent       : true,
                 tags         : testTable[i][0],

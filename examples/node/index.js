@@ -31,12 +31,12 @@ var username = process.argv[2] || 'lightstep';
 // Initialize the OpenTracing APIs to use the LightStep bindings
 //
 // NOTE: the access token will need to be replaced with your project's access
-// token. The group_name can be an identifier you wish to use to identify the
+// token. The component_name can be an identifier you wish to use to identify the
 // service or process.
 //
 Tracer.initGlobalTracer(LightStep.tracer({
     access_token   : '{your_access_token}',
-    group_name     : 'lightstep-tracer/examples/node',
+    component_name : 'lightstep-tracer/examples/node',
 }));
 
 printUserInfo(username);
