@@ -20,10 +20,16 @@ The cookbook recipes here assume you've already successfully installed the OpenT
 <a name='browser-quick-start'></a>
 ## Browser quick start
 
-By using CDN hosted scripts and a few auto-instrumentation options, you can generate some traces from the browser almost immediately. This approach is great to just try things out (though you may want more control than this when deploying to production).
+To try out LightStep in the browser with minimal changes, you can use hosted versions of the LightStep and OpenTracing scripts along with some auto-instrumentation options.
 
-1. Ensure you have created a valid project on LightStep and have your access token
-2. Include the following scripts in your HTML and replace `{your_access_token}` with, well, your access token value and replace `{name_to_use_for_your_component}` with a string identifier that'll be used in the LightStep UI to identify this component:
+The below will generate basic spans for page-load events in the browser as well as `XMLHttpRequest` operations.
+
+While in production, you'll likely want more control than this, this is an easy option to try things out quickly!
+
+**Steps**
+
+1. Ensure you have created a valid project on app.lightstep.com and have your access token
+2. Include the following scripts in your page HTML and replace `{your_access_token}` with, well, your access token value and replace `{name_to_use_for_your_component}` with a string identifier that'll be used in the LightStep UI to identify this component:
 
 ```html
 <script src="http://docs.lightstep.com/dist/opentracing-javascript/current/opentracing-browser.min.js"></script>
