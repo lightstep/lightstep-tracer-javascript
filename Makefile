@@ -33,6 +33,7 @@ publish: test test_all
 	git push --tags
 	npm whoami
 	npm publish
+	bash scripts/update_docs_repo.sh
 
 test: build test_node test_browser lint
 

@@ -28,7 +28,7 @@ Tracer.initGlobalTracer(LightStep.tracer({
 }));
 ```
 
-The **[LightStep JavaScript Tracing Cookbook](doc/cookbook.md)** is a good next stop for information on how to quickly instrument your system.
+The **[LightStep JavaScript Tracing Cookbook](doc/cookbook.md)** is a good next stop for information on how to quickly instrument your system.  If you want to try something out quickly in your browser code, see the **[browser quick start example](doc/cookbook.md#browser-quick-start)**.
 
 * For more information about using the OpenTracing API, see http://opentracing.io/
 * See [examples/browser](https://github.com/lightstep/lightstep-tracer-javascript/tree/master/examples/browser) for a complete JavaScript browser example
