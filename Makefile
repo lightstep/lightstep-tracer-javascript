@@ -21,7 +21,7 @@ $(DST_FILES) : node_modules $(SRC_FILES)
 node_modules:
 	npm install
 
-# NOTE: `npm version` automatically creates a git commit ang git tag for the
+# NOTE: `npm version` automatically creates a git commit and git tag for the
 # incremented version
 publish: test test_all
 	@if [ $(shell git symbolic-ref --short -q HEAD) = "master" ]; then exit 0; else \
