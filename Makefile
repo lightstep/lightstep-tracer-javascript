@@ -1,5 +1,6 @@
 .PHONY: build publish \
 	test test_quick test_node test_browser test_all \
+	benchmark \
 	update_examples \
 	lint \
 	watch thrift
@@ -34,6 +35,9 @@ publish: test test_all
 	npm whoami
 	npm publish
 	bash scripts/update_docs_repo.sh
+
+benchmark:
+	node benchmarks/benchmark.js
 
 test: build test_node test_browser lint
 
