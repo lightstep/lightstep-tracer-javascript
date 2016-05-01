@@ -36,8 +36,14 @@ publish: test test_all
 	npm publish
 	bash scripts/update_docs_repo.sh
 
-benchmark:
+# NOTE: the benchmark package is *not* part of package.json as it relies on a
+# native module -- that does not compile on all systems. Until/unless that is
+# resolved, it gets "manually" installed here when the benchmarks are run
+benchmark: node_modules/sc-benchmark
 	node benchmarks/benchmark.js
+
+node_modules/sc-benchmark:
+	npm install sc-benchmark@0.1.4
 
 test: build test_node test_browser lint
 
