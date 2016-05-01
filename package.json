@@ -57,6 +57,7 @@
     "json-loader": "^0.5.4",
     "mocha": "^2.3.4",
     "opentracing": "^0.9.18",
+    "sc-benchmark": "^0.1.4",
     "shelljs": "^0.5.3",
     "sprintf-js": "^1.0.3",
     "underscore": "^1.8.3",
