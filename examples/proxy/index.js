@@ -37,9 +37,11 @@ var server = http.createServer(function (req, res) {
         // User-Agent is required by the GitHub APIs
         'User-Agent': 'LightStep Example Proxy'
     };
+    var requestHeaders = {};
     for (var i = 0; i + 1 < req.rawHeaders.length; i += 2) {
         var key = req.rawHeaders[i];
         var value = req.rawHeaders[i+1];
+        requestHeaders[key] = value;
         if (key == 'LightStep-Access-Token') {
             accessToken = value;
         }
@@ -58,7 +60,7 @@ var server = http.createServer(function (req, res) {
     // The span "carrier" data is presumed to have been transmitted interleaved
     // among the other HTTP headers.  join() is presumed to ignore unrecognized
     // keys in the map.
-    var span = tracer.join('request_proxy', OpenTracing.FORMAT_TEXT_MAP, req.rawHeaders);
+    var span = tracer.join('request_proxy', OpenTracing.FORMAT_TEXT_MAP, requestHeaders);
     var options = {
         host: 'api.github.com',
         path: req.url + githubAuth,
