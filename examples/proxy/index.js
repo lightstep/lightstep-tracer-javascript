@@ -59,13 +59,6 @@ var server = http.createServer(function (req, res) {
     // among the other HTTP headers.  join() is presumed to ignore unrecognized
     // keys in the map.
     var span = tracer.join('request_proxy', OpenTracing.FORMAT_TEXT_MAP, req.rawHeaders);
-    if (traceGUID) {
-        span.imp().setFields({'trace_guid' : traceGUID });
-    }
-    if (parentGUID) {
-        span.imp().setFields({'parent_guid' : parentGUID });
-    }
-
     var options = {
         host: 'api.github.com',
         path: req.url + githubAuth,
