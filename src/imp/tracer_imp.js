@@ -225,6 +225,7 @@ export default class TracerImp extends EventEmitter {
         case this._interface.FORMAT_TEXT_MAP:
             for (let key in carrier) {
                 let value = carrier[key];
+                key = key.toLowerCase();
                 if (key.substr(0, CARRIER_TRACER_STATE_PREFIX.length) !== CARRIER_TRACER_STATE_PREFIX) {
                     continue;
                 }
@@ -246,6 +247,7 @@ export default class TracerImp extends EventEmitter {
             }
             for (let key in carrier) {
                 let value = carrier[key];
+                key = key.toLowerCase();
                 if (key.substr(0, CARRIER_BAGGAGE_PREFIX.length) !== CARRIER_BAGGAGE_PREFIX) {
                     continue;
                 }
