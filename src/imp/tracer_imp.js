@@ -87,7 +87,7 @@ export default class TracerImp extends EventEmitter {
             'spans.dropped' : 0,
 
             // TODO: these are not yet supported by the collector. Ensure these
-            // names are normalized and i
+            // names are normalized across client libraries.
             'reports.send_errors' : 0,
         };
 
@@ -109,6 +109,8 @@ export default class TracerImp extends EventEmitter {
         if (opts) {
             this.options(opts);
         }
+
+        this._info(`TracerImp created with guid ${this._runtimeGUID}`);
     }
 
     _makeOptionsTable() {
@@ -143,8 +145,8 @@ export default class TracerImp extends EventEmitter {
         this.addOption('disable_reporting_loop',        { type: 'bool',    defaultValue: false });
 
         // Unit testing options
-        this.addOption('override_transport',    { type : 'any',    defaultValue: null });
-        this.addOption('silent',                { type : 'bool',   defaultValue: false });
+        this.addOption('override_transport',            { type : 'any',    defaultValue: null });
+        this.addOption('silent',                        { type : 'bool',   defaultValue: false });
 
         // Hard upper limits to protect against worst-case scenarios
         this.addOption('log_message_length_hard_limit', { type: 'int',     defaultValue: 512 * 1024 });
@@ -492,7 +494,7 @@ export default class TracerImp extends EventEmitter {
 
         // See if the Thrift data can be initialized
         if (this._options.access_token.length > 0 && this._options.component_name.length > 0) {
-            this._infoV(3, 'Initializing thrift reporting data');
+
 
             this._runtimeGUID = this._platform.runtimeGUID(this._options.component_name);
 
@@ -536,6 +538,10 @@ export default class TracerImp extends EventEmitter {
                 attrs        : thriftAttrs,
             });
 
+            this._info('Initializing thrift reporting data', {
+                component_name : this._options.component_name,
+                access_token   : this._thriftAuth.access_token,
+            });
             this.emit('reporting_initialized');
         }
     }
@@ -759,7 +765,6 @@ export default class TracerImp extends EventEmitter {
             let index = Math.floor(this._spanRecords.length * Math.random());
             this._spanRecords[index] = record;
             this._counters['spans.dropped']++;
-            this._error('Spans are being droppped');
         } else {
             this._spanRecords.push(record);
         }
@@ -820,7 +825,7 @@ export default class TracerImp extends EventEmitter {
             return;
         }
 
-        this._infoV(2, 'Starting reporting loop:', this._thriftRuntime);
+        this._info('Starting reporting loop:', this._thriftRuntime);
         this._reportingLoopActive = true;
 
         // Set up the script exit clean-up: stop the reporting loop (so it does
@@ -881,7 +886,7 @@ export default class TracerImp extends EventEmitter {
         let jitter = 1.0 + (Math.random() * 0.2 - 0.1);
         let delay = Math.floor(Math.max(0, jitter * basis));
 
-        this._infoV(4, `Delaying next flush for ${delay}ms`);
+        this._infoV(3, `Delaying next flush for ${delay}ms`);
         this._reportTimer = util.detachedTimeout(() => {
             this._reportTimer = null;
             this._flushReport(false, done);
@@ -946,7 +951,7 @@ export default class TracerImp extends EventEmitter {
             if (value === 0) {
                 continue;
             }
-            thriftCounters.push(new crouton_thrift.MetricsInt64({
+            thriftCounters.push(new crouton_thrift.MetricsSample({
                 name  : coerce.toString(key),
                 value : coerce.toNumber(value),
             }));

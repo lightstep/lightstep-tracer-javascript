@@ -35,6 +35,9 @@ publish: test test_all
 	npm whoami
 	npm publish
 	bash scripts/update_docs_repo.sh
+	@echo
+	@echo "Publish complete. Don't forget to update CHANGELOG.md if not done already."
+	@echo
 
 # NOTE: the benchmark package is *not* part of package.json as it relies on a
 # native module -- that does not compile on all systems. Until/unless that is
