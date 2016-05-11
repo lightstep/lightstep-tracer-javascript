@@ -84,11 +84,14 @@ export default class TracerImp extends EventEmitter {
         // These are internal counters only.
         this._counters = {
             'logs.dropped'  : 0,
+            'logs.payloads.over_limit' : 0,
             'spans.dropped' : 0,
 
             // TODO: these are not yet supported by the collector. Ensure these
             // names are normalized across client libraries.
             'reports.send_errors' : 0,
+            'internal.errors'     : 0,
+            'internal.warnings'   : 0,
         };
 
         // For internal (not client) logs reported to the collector
@@ -719,6 +722,7 @@ export default class TracerImp extends EventEmitter {
         }
 
         if (record.payload_json && record.payload_json.length > this._options.log_payload_length_hard_limit) {
+            this._counters['logs.payloads.over_limit']++;
             this._warn('Payload too large. Dropped', {
                 length : record.payload_json.length,
                 limit  : this._options.log_payload_length_hard_limit,
@@ -1096,6 +1100,8 @@ export default class TracerImp extends EventEmitter {
     }
 
     _warn(msg, payload) {
+        this._counters['internal.warnings']++;
+
         if (this.verbosity() < 2) {
             return;
         }
@@ -1103,6 +1109,8 @@ export default class TracerImp extends EventEmitter {
     }
 
     _error(msg, payload) {
+        this._counters['internal.errors']++;
+
         // Internal errors are always reported to the collector
         let record = this.log()
             .level(constants.LOG_ERROR)

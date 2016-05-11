@@ -15,7 +15,7 @@ Tracer.initGlobalTracer(LightStep.tracer({
 var parent = Tracer.startSpan('parent');
 for (var i = 0; i < 20000; i++) {
     var child = Tracer.startSpan('child', { parent: parent });
-    child.logEvent('log_event');
+    child.logEvent('log_event', largePayload);
     child.finish();
 }
 parent.finish();
