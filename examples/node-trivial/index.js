@@ -9,7 +9,7 @@ Tracer.initGlobalTracer(LightStep.tracer({
     collector_host : 'localhost',
     collector_port : 9998,
     collector_encryption : 'none',
-    disable_reporting_loop : true,
+    //disable_reporting_loop : true,
 }));
 
 var parent = Tracer.startSpan('parent');

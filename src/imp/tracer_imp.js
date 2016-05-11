@@ -495,7 +495,6 @@ export default class TracerImp extends EventEmitter {
         // See if the Thrift data can be initialized
         if (this._options.access_token.length > 0 && this._options.component_name.length > 0) {
 
-
             this._runtimeGUID = this._platform.runtimeGUID(this._options.component_name);
 
             this._thriftAuth = new crouton_thrift.Auth({
@@ -686,6 +685,7 @@ export default class TracerImp extends EventEmitter {
     _clearBuffers() {
         this._logRecords = [];
         this._spanRecords = [];
+        this._internalLogs = [];
 
         for (let key in this._counters) {
             this._counters[key] = 0;
@@ -697,6 +697,9 @@ export default class TracerImp extends EventEmitter {
             return false;
         }
         if (this._spanRecords.length > 0) {
+            return false;
+        }
+        if (this._internalLogs.length > 0) {
             return false;
         }
         for (let key in this._counters) {
@@ -770,13 +773,21 @@ export default class TracerImp extends EventEmitter {
         }
     }
 
-    _restoreRecords(logs, spans, counters) {
-        for (let key in logs) {
-            this._internalAddLogRecord(logs[key]);
+    _restoreRecords(logs, spans, internalLogs, counters) {
+        for (let i in logs) {
+            this._internalAddLogRecord(logs[i]);
         }
-        for (let key in spans) {
-            this._internalAddSpanRecord(spans[key]);
+        for (let i in spans) {
+            this._internalAddSpanRecord(spans[i]);
         }
+
+        let currentInternalLogs = this._internalLogs;
+        this._internalLogs = [];
+        let toAdd = internalLogs.concat(currentInternalLogs);
+        for (let i in toAdd) {
+            this._pushInternalLog(internalLogs[i]);
+        }
+
         for (let key in counters) {
             const record = counters[key];
             if (this._counters[record.Name]) {
@@ -909,6 +920,7 @@ export default class TracerImp extends EventEmitter {
         let logRecords = this._logRecords;
         let spanRecords = this._spanRecords;
         let counters = this._counters;
+        let internalLogs = this._internalLogs;
 
         // If the clock is not ready, do an "empty" flush to build more clock
         // samples before the real data is reported.
@@ -919,6 +931,7 @@ export default class TracerImp extends EventEmitter {
             logRecords  = [];
             spanRecords = [];
             counters    = {};
+            internalLogs = [];
         } else {
             // Early out if we can.
             if (this._buffersAreEmpty()) {
@@ -965,9 +978,11 @@ export default class TracerImp extends EventEmitter {
             youngest_micros         : now,
             log_records             : logRecords,
             span_records            : spanRecords,
+            internal_logs           : internalLogs,
             internal_metrics        : new crouton_thrift.Metrics({
                 counts              : thriftCounters,
             }),
+
             timestamp_offset_micros : timestampOffset,
         });
         this._infoV(3, `timestamp_offset_micros = ${timestampOffset}`);
@@ -988,7 +1003,11 @@ export default class TracerImp extends EventEmitter {
                 } else {
                     this._error(`Error in report: ${err}`, err);
                 }
-                this._restoreRecords(report.log_records, report.span_records, report.counters);
+                this._restoreRecords(
+                    report.log_records,
+                    report.span_records,
+                    report.internal_logs,
+                    report.counters);
 
                 // Increment the counter *after* the counters are restored
                 this._counters['reports.send_errors']++;
@@ -1001,7 +1020,10 @@ export default class TracerImp extends EventEmitter {
             } else {
                 if (this.verbosity() >= 3) {
                     let reportWindowSeconds = (now - report.oldest_micros) / 1e6;
-                    this._infoV(4, `Report flushed for last ${reportWindowSeconds} seconds`);
+                    this._infoV(4, `Report flushed for last ${reportWindowSeconds} seconds`, {
+                        spans_reported : report.span_records.length,
+                        logs_reported  : report.log_records.length,
+                    });
                 }
 
                 // Update internal data after the successful report
@@ -1009,17 +1031,23 @@ export default class TracerImp extends EventEmitter {
                 this._reportYoungestMicros = now;
 
                 // Update the clock state if there's info from the report
-                if (res && res.timing && res.timing.receive_micros && res.timing.transmit_micros) {
-                    this._clockState.addSample(
-                        originMicros,
-                        res.timing.receive_micros,
-                        res.timing.transmit_micros,
-                        destinationMicros);
-                } else {
-                    // The response does not have timing information. Disable
-                    // the clock state assuming there'll never be timing data
-                    // to use.
-                    this._useClockState = false;
+                if (res) {
+                    if (res.timing && res.timing.receive_micros && res.timing.transmit_micros) {
+                        this._clockState.addSample(
+                            originMicros,
+                            res.timing.receive_micros,
+                            res.timing.transmit_micros,
+                            destinationMicros);
+                    } else {
+                        // The response does not have timing information. Disable
+                        // the clock state assuming there'll never be timing data
+                        // to use.
+                        this._useClockState = false;
+                    }
+
+                    if (res.errors && res.errors.length > 0) {
+                        this._error('Errors in report', res.errors);
+                    }
                 }
 
                 this.emit('report', report, res);
@@ -1079,14 +1107,9 @@ export default class TracerImp extends EventEmitter {
         let record = this.log()
             .level(constants.LOG_ERROR)
             .message(msg)
-            .payload(payload);
-
-        if (this._internalLogs.length >= MAX_INTERNAL_LOGS) {
-            record.message(`MAX_INTERNAL_LOGS limit hit. Last error: ${msg}`);
-            this._internalLogs[this._internalLogs.length - 1] = record;
-        } else {
-            this._internalLogs.push(record);
-        }
+            .payload(payload)
+            .record();
+        this._pushInternalLog(record);
 
         // Internal errors are reported to the host console conditionally based
         // on the verbosity level.
@@ -1112,6 +1135,15 @@ export default class TracerImp extends EventEmitter {
             console[type](msg, payload); // eslint-disable-line no-console
         }  else {
             console[type](msg); // eslint-disable-line no-console
+        }
+    }
+
+    _pushInternalLog(record) {
+        if (this._internalLogs.length >= MAX_INTERNAL_LOGS) {
+            record.message(`MAX_INTERNAL_LOGS limit hit. Last error: ${msg}`);
+            this._internalLogs[this._internalLogs.length - 1] = record;
+        } else {
+            this._internalLogs.push(record);
         }
     }
 }

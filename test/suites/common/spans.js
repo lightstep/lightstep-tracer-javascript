@@ -68,3 +68,12 @@ it("should handle inject / join to carriers correctly" , function() {
     expect(naps.getBaggageItem('footwear')).to.equal('sandals');
     expect(naps.getBaggageItem('creditcard')).to.equal('visa');
 });
+
+it('should gracefully handle a large number of spans', function() {
+    Tracer.imp().flush();
+    for (var i = 0; i < 10000; i++) {
+        var span = Tracer.startSpan('microspan');
+        span.finish();
+    }
+    Tracer.imp().flush();
+});
