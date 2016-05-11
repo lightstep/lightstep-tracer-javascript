@@ -163,6 +163,9 @@ function httpGet(parentSpan, urlString, callback) {
     };
 
     try {
+        var carrier = {};
+        Tracer.inject(span, Tracer.FORMAT_TEXT_MAP, carrier);
+
         var dest = url.parse(urlString);
         var options = {
             host : PROXY_HOST,
@@ -171,12 +174,11 @@ function httpGet(parentSpan, urlString, callback) {
             headers: {
                 // User-Agent is required by the GitHub APIs
                 'User-Agent': 'LightStep Example',
-
-                // Optional: convey the trace context to the proxy server
-                'LightStep-Trace-GUID': span.imp().traceGUID(),
-                'LightStep-Parent-GUID': span.imp().guid(),
             }
         };
+        for (var key in carrier) {
+            options.headers[key] = carrier[key];
+        }
 
         // Create a span representing the https request
         span.setTag('url', urlString);

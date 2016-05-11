@@ -3,11 +3,11 @@
 //
 // Dependencies
 //
-var http      = require('http');
-var https     = require('https');
-var url       = require('url');
-var Tracer    = require('opentracing');
-var LightStep = require('lightstep-tracer');
+var http        = require('http');
+var https       = require('https');
+var url         = require('url');
+var OpenTracing = require('opentracing');
+var LightStep   = require('lightstep-tracer');
 
 var PROXY_PORT = process.env.LIGHTSTEP_PROXY_PORT || 80;
 
@@ -33,27 +33,23 @@ var server = http.createServer(function (req, res) {
     }
 
     var accessToken = '{your_access_token}';
-    var traceGUID = null;
-    var parentGUID = null;
     var headers = {
         // User-Agent is required by the GitHub APIs
         'User-Agent': 'LightStep Example Proxy'
     };
+    var requestHeaders = {};
     for (var i = 0; i + 1 < req.rawHeaders.length; i += 2) {
         var key = req.rawHeaders[i];
         var value = req.rawHeaders[i+1];
-        if (key == 'LightStep-Trace-GUID') {
-            traceGUID = value;
-        } else if (key == 'LightStep-Parent-GUID') {
-            parentGUID = value;
-        } else if (key == 'LightStep-Access-Token') {
+        requestHeaders[key] = value;
+        if (key == 'LightStep-Access-Token') {
             accessToken = value;
         }
     }
 
     var tracer = tracerMap[accessToken];
     if (!tracer) {
-        tracer = Tracer.initNewTracer(LightStep.tracer({
+        tracer = OpenTracing.initNewTracer(LightStep.tracer({
             access_token   : accessToken,
             component_name : 'lightstep-tracer/examples/node_proxy',
         }));
@@ -61,14 +57,10 @@ var server = http.createServer(function (req, res) {
     }
 
     // Create a span representing the https request
-    var span = tracer.startSpan('request_proxy');
-    if (traceGUID) {
-        span.imp().setFields({'trace_guid' : traceGUID });
-    }
-    if (parentGUID) {
-        span.imp().setFields({'parent_guid' : parentGUID });
-    }
-
+    // The span "carrier" data is presumed to have been transmitted interleaved
+    // among the other HTTP headers.  join() is presumed to ignore unrecognized
+    // keys in the map.
+    var span = tracer.join('request_proxy', OpenTracing.FORMAT_TEXT_MAP, requestHeaders);
     var options = {
         host: 'api.github.com',
         path: req.url + githubAuth,
