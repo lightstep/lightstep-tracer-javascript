@@ -83,9 +83,9 @@ export default class TracerImp extends EventEmitter {
         // The counter names need to match those accepted by the collector.
         // These are internal counters only.
         this._counters = {
-            'logs.dropped'  : 0,
+            'logs.dropped'             : 0,
             'logs.payloads.over_limit' : 0,
-            'spans.dropped' : 0,
+            'spans.dropped'            : 0,
 
             // TODO: these are not yet supported by the collector. Ensure these
             // names are normalized across client libraries.
@@ -497,7 +497,6 @@ export default class TracerImp extends EventEmitter {
 
         // See if the Thrift data can be initialized
         if (this._options.access_token.length > 0 && this._options.component_name.length > 0) {
-
             this._runtimeGUID = this._platform.runtimeGUID(this._options.component_name);
 
             this._thriftAuth = new crouton_thrift.Auth({
@@ -1148,7 +1147,7 @@ export default class TracerImp extends EventEmitter {
 
     _pushInternalLog(record) {
         if (this._internalLogs.length >= MAX_INTERNAL_LOGS) {
-            record.message(`MAX_INTERNAL_LOGS limit hit. Last error: ${msg}`);
+            record.message(`MAX_INTERNAL_LOGS limit hit. Last error: ${record.message}`);
             this._internalLogs[this._internalLogs.length - 1] = record;
         } else {
             this._internalLogs.push(record);
