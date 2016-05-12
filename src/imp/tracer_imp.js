@@ -87,8 +87,8 @@ export default class TracerImp extends EventEmitter {
             'internal.warnings'        : 0,
             'spans.dropped'            : 0,
             'logs.dropped'             : 0,
-            'logs.payloads.over_limit' : 0,            
-            'reports.send_errors'      : 0,
+            'logs.payloads.over_limit' : 0,
+            'reports.errors.send'      : 0,
         };
 
         // For internal (not client) logs reported to the collector
@@ -1012,7 +1012,7 @@ export default class TracerImp extends EventEmitter {
                     report.counters);
 
                 // Increment the counter *after* the counters are restored
-                this._counters['reports.send_errors']++;
+                this._counters['reports.errors.send']++;
 
                 this.emit('report_error', err, {
                     error    : err,
