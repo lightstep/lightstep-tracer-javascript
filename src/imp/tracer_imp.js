@@ -83,15 +83,12 @@ export default class TracerImp extends EventEmitter {
         // The counter names need to match those accepted by the collector.
         // These are internal counters only.
         this._counters = {
-            'logs.dropped'             : 0,
-            'logs.payloads.over_limit' : 0,
+            'internal.errors'          : 0,
+            'internal.warnings'        : 0,
             'spans.dropped'            : 0,
-
-            // TODO: these are not yet supported by the collector. Ensure these
-            // names are normalized across client libraries.
-            'reports.send_errors' : 0,
-            'internal.errors'     : 0,
-            'internal.warnings'   : 0,
+            'logs.dropped'             : 0,
+            'logs.payloads.over_limit' : 0,            
+            'reports.send_errors'      : 0,
         };
 
         // For internal (not client) logs reported to the collector
