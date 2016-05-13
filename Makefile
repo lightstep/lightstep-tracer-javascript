@@ -88,8 +88,10 @@ update_examples: node_modules
 
 # LightStep internal target
 thrift:
-	thrift -r -gen js:node -out src/imp/platform/node/thrift_api $(LIGHTSTEP_HOME)/go/src/crouton/crouton.thrift
-	thrift -r -gen js -out src/imp/platform/browser/thrift_api $(LIGHTSTEP_HOME)/go/src/crouton/crouton.thrift
+	docker run -v "$(LIGHTSTEP_HOME)/go/src/crouton/:/data" -v "$(PWD):/out" --rm thrift:0.9.2 \
+		thrift -r -gen js:node -out /out/src/imp/platform/node/thrift_api /data/crouton.thrift
+	docker run -v "$(LIGHTSTEP_HOME)/go/src/crouton/:/data" -v "$(PWD):/out" --rm thrift:0.9.2 \
+		thrift -r -gen js -out /out/src/imp/platform/browser/thrift_api /data/crouton.thrift
 	rm src/imp/platform/browser/thrift_api/ReportingService.js
 	rm src/imp/platform/node/thrift_api/ReportingService.js
 	npm run thrift-browser
