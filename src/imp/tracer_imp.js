@@ -1050,6 +1050,8 @@ export default class TracerImp extends EventEmitter {
                     if (res.errors && res.errors.length > 0) {
                         this._error('Errors in report', res.errors);
                     }
+                } else {
+                    this._useClockState = false;
                 }
 
                 this.emit('report', report, res);
