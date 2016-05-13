@@ -688,9 +688,13 @@ export default class TracerImp extends EventEmitter {
         this._spanRecords = [];
         this._internalLogs = [];
 
+        // Create a new object to avoid overwriting the values in any references
+        // to the old object
+        let counters = {};
         for (let key in this._counters) {
-            this._counters[key] = 0;
+            counters[key] = 0;
         }
+        this._counters = counters;
     }
 
     _buffersAreEmpty() {
@@ -967,8 +971,8 @@ export default class TracerImp extends EventEmitter {
                 continue;
             }
             thriftCounters.push(new crouton_thrift.MetricsSample({
-                name  : coerce.toString(key),
-                value : coerce.toNumber(value),
+                name         : coerce.toString(key),
+                double_value : coerce.toNumber(value),
             }));
         }
 
