@@ -24,6 +24,10 @@ class LogBuilder {
         });
     }
 
+    record() {
+        return this._record;
+    }
+
     end() {
         this._runtime._addLogRecord(this._record);
     }

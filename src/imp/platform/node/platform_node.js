@@ -103,27 +103,28 @@ export default class PlatformNode {
         if (!(process && process.argv)) {
             return;
         }
-
         let opts = {};
         for (let key in process.argv) {
             const value = process.argv[key];
+
+            // Keep the argument "parsing" simple.  These are primarily debug
+            // options regardless.
             switch (value.toLowerCase()) {
             case '--lightstep-log_to_console':
             case '--lightstep-log_to_console=true':
             case '--lightstep-log_to_console=1':
                 opts.log_to_console = true;
                 break;
-
-            case '--lightstep-debug':
-            case '--lightstep-debug=true':
-            case '--lightstep-debug=1':
-                opts.debug = true;
+            case '--lightstep-verbosity=4':
+                opts.verbosity = 4;
                 break;
-
-            case '--lightstep-verbose=2':
+            case '--lightstep-verbosity=3':
+                opts.verbosity = 3;
+                break;
+            case '--lightstep-verbosity=2':
                 opts.verbosity = 2;
                 break;
-            case '--lightstep-verbose=1':
+            case '--lightstep-verbosity=1':
                 opts.verbosity = 1;
                 break;
             default:

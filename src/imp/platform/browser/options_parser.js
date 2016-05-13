@@ -75,13 +75,9 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
             opts.enable = false;
         }
     }
-    let debug = dataset.debug;
-    if (typeof debug === 'string' && debug === 'true') {
-        opts.debug = true;
-    }
-    let verbose = dataset.verbose;
-    if (typeof verbose === 'string') {
-        opts.verbose = parseInt(verbose, 10);
+    let verbosity = dataset.verbosity;
+    if (typeof verbosity === 'string') {
+        opts.verbosity = parseInt(verbosity, 10);
     }
 
     let init = dataset.init_global_tracer;
@@ -114,12 +110,9 @@ module.exports.parseURLQueryOptions = function (opts) {
     }
 
     let params = urlQueryParameters();
-    if (params.lightstep_debug) {
-        opts.debug = true;
-    }
-    if (params.lightstep_verbose) {
+    if (params.lightstep_verbosity) {
         try {
-            opts.verbose = parseInt(params.lightstep_verbose, 10);
+            opts.verbosity = parseInt(params.lightstep_verbosity, 10);
         } catch (_ignored) { /* Ignored */ }
     }
     if (params.lightstep_log_to_console) {

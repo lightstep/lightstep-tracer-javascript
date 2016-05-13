@@ -45,6 +45,7 @@ FileTransport.prototype.report = function(detached, auth, report, done) {
     fs.writeFileSync(this._filename, JSON.stringify({
         requests : this._requests,
     }, null, 4));
+
     done();
 };
 
