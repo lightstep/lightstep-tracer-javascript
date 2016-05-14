@@ -15,6 +15,12 @@ var parent = Tracer.startSpan('parent');
 for (var i = 0; i < 20000; i++) {
     var child = Tracer.startSpan('child', { parent: parent });
     child.logEvent('log_event');
+
+    // Intentional internal error
+    if (i % 20 === 0) {
+        Tracer.inject(child, "custom_format", []);
+    }
+
     child.finish();
 }
 parent.finish();
