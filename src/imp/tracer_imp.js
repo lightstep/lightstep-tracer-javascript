@@ -204,6 +204,15 @@ export default class TracerImp extends EventEmitter {
     }
 
     _injectToTextMap(span, carrier) {
+        if (!carrier) {
+            this._error('Unexpected null FORMAT_TEXT_MAP carrier in call to inject');
+            return;
+        }
+        if (typeof carrier !== 'object') {
+            this._error(`Unexpected '${typeof carrier}' FORMAT_TEXT_MAP carrier in call to inject`);
+            return;
+        }
+
         let baggage = span.getBaggage();
         let traceGUID = span.traceGUID();
 
@@ -1148,7 +1157,7 @@ export default class TracerImp extends EventEmitter {
 
     _pushInternalLog(record) {
         if (this._internalLogs.length >= MAX_INTERNAL_LOGS) {
-            record.message(`MAX_INTERNAL_LOGS limit hit. Last error: ${record.message}`);
+            record.message = `MAX_INTERNAL_LOGS limit hit. Last error: ${record.message}`;
             this._internalLogs[this._internalLogs.length - 1] = record;
         } else {
             this._internalLogs.push(record);
