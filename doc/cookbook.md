@@ -83,7 +83,7 @@ yourApp.makeRemoteRequest(req)
     .catch((err) => {
         // The 'error' tag is a special tag letting LightStep know an error
         // occurred during this span        
-        span.setTag('error', 'true');
+        span.setTag('error', true);
         span.logEvent('remote request failed', {
             error   : err,
             request : req,
@@ -123,7 +123,7 @@ yourApp.makeRemoteRequest(req, function (err, response) {
     if (err) {
         // The 'error' tag is a special tag letting LightStep know an error
         // occurred during this span
-        span.setTag('error', 'true');
+        span.setTag('error', true);
         span.logEvent('remote request failed', {
             error   : err,
             request : req,
