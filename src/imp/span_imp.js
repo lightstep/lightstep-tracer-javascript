@@ -18,7 +18,8 @@ export default class SpanImp {
 
     addTags(keyValuePairs) {
         for (let key in keyValuePairs) {
-            if (key.startsWith(constants.JOIN_ID_PREFIX)) {
+            // NB: Older versions of IE don't support `String.prototype.startsWith()`
+            if (key.substr(0, constants.JOIN_ID_PREFIX.length) === constants.JOIN_ID_PREFIX) {
                 this.setJoinID(key, keyValuePairs[key]);
             } else {
                 this._tags[key] = keyValuePairs[key];

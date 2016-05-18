@@ -51,7 +51,6 @@ var LightStep = require('lightstep-tracer/browser');
 
 * `access_token` `string` *required* - the project access token
 * `component_name` `string` *required* - the string identifier for the application, service, or process
-* `default_span_tags` `string` *optional* - an associative array of tags to add to every span started by the tracer (e.g., the active user id in a browser client)
 
 **Browser-specific initialization options**
 
@@ -60,6 +59,10 @@ var LightStep = require('lightstep-tracer/browser');
 * `xhr_url_inclusion_patterns` `RegExp[]` - an array of regular expressions used to whitelist URLs for `XMLHttpRequest` auto-instrumentation. The default value is wildcard matching all strings. For a given URL to be instrumented, it must match at least one regular expression in `xhr_url_inclusion_patterns` and not match any regular expressions in `xhr_url_exclusion_patterns`.
 
 * `xhr_url_exclusion_patterns` `RegExp[]` - an array of regular expressions used to exclude URLs from `XMLHttpRequest` auto-instrumentation. The default value is an empty array. For a given URL to be instrumented, it must match at least one regular expression in `xhr_url_inclusion_patterns` and not match any regular expressions in `xhr_url_exclusion_patterns`.
+
+**Non-standard options without no forwards-compatibility implications**
+
+* `default_span_tags` `string` *optional* - an associative array of tags to add to every span started by the tracer (e.g., the active user id in a browser client)
 
 ### SpanImp
 
