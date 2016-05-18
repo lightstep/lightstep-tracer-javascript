@@ -54,7 +54,7 @@ export default class TracerImp extends EventEmitter {
         this._reportingLoopActive = false;
         this._reportYoungestMicros = now;
         this._reportTimer = null;
-        this._reportErrorStreak = 0;    // Number of consecuetive errors
+        this._reportErrorStreak = 0;    // Number of consecutive errors
         this._visibleErrorCount = 0;
 
         // Set addActiveRootSpan() for detail
@@ -800,7 +800,7 @@ export default class TracerImp extends EventEmitter {
         this._internalLogs = [];
         let toAdd = internalLogs.concat(currentInternalLogs);
         for (let i in toAdd) {
-            this._pushInternalLog(internalLogs[i]);
+            this._pushInternalLog(toAdd[i]);
         }
 
         for (let key in counters) {
@@ -1160,6 +1160,9 @@ export default class TracerImp extends EventEmitter {
     }
 
     _pushInternalLog(record) {
+        if (!record) {
+            return;
+        }
         if (this._internalLogs.length >= MAX_INTERNAL_LOGS) {
             record.message = `MAX_INTERNAL_LOGS limit hit. Last error: ${record.message}`;
             this._internalLogs[this._internalLogs.length - 1] = record;

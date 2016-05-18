@@ -11,24 +11,27 @@ Tracer.initGlobalTracer(LightStep.tracer({
     //disable_reporting_loop : true,
 }));
 
-var parent = Tracer.startSpan('parent');
-for (var i = 0; i < 20000; i++) {
-    var child = Tracer.startSpan('child', { parent: parent });
-    child.logEvent('log_event');
+function loop() {
+    var parent = Tracer.startSpan('parent');
+    for (var i = 0; i < 20000; i++) {
+        var child = Tracer.startSpan('child', { parent: parent });
+        child.logEvent('log_event');
 
-    // Intentional internal error
-    if (i % 20 === 0) {
-        Tracer.inject(child, "custom_format", []);
+        // Intentional internal error
+        if (Math.random() < 0.01) {
+            Tracer.inject(child, "custom_format", []);
+        }
+        child.finish();
     }
+    parent.finish();
 
-    child.finish();
-}
-parent.finish();
-
-Tracer.imp().flush(function() {
-    var url = parent.imp().generateTraceURL();
-    console.log();
-    console.log(url);
-    console.log();
     console.log(Tracer.imp().stats());
-});
+    Tracer.imp().flush(function() {
+        var url = parent.imp().generateTraceURL();
+        console.log();
+        console.log(url);
+        console.log();
+        setTimeout(loop, 3000 * Math.random());
+    });
+}
+loop();
