@@ -123,6 +123,7 @@ export default class TracerImp extends EventEmitter {
         // Core options
         this.addOption('access_token',          { type: 'string',  defaultValue: '' });
         this.addOption('component_name',        { type: 'string',  defaultValue: '' });
+        this.addOption('user_id',               { type: 'string',  defaultValue: '' });
         this.addOption('collector_host',        { type: 'string',  defaultValue: DEFAULT_COLLECTOR_HOSTNAME });
         this.addOption('collector_port',        { type: 'int',     defaultValue: DEFAULT_COLLECTOR_PORT_TLS });
         this.addOption('collector_encryption',  { type: 'string',  defaultValue: 'tls' });
@@ -133,7 +134,7 @@ export default class TracerImp extends EventEmitter {
         this.addOption('disabled',              { type: 'bool',    defaultValue: false });
         this.addOption('max_log_records',       { type: 'int',     defaultValue: 4096 });
         this.addOption('max_span_records',      { type: 'int',     defaultValue: 4096 });
-        this.addOption('join_ids',              { type: 'any',     defaultValue: {} });
+        this.addOption('default_span_tags',     { type: 'any',     defaultValue: {} });
 
         // Debugging options
         //
@@ -180,6 +181,9 @@ export default class TracerImp extends EventEmitter {
     startSpan(fields) {
         let spanImp = new SpanImp(this);
         spanImp.setFields(fields);
+        for (let key in this._options.default_span_tags) {
+            spanImp.addTags({[key]: this._options.default_span_tags[key]});
+        }
 
         this.emit('start_trace', spanImp);
         return spanImp;
