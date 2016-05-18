@@ -179,10 +179,8 @@ export default class TracerImp extends EventEmitter {
 
     startSpan(fields) {
         let spanImp = new SpanImp(this);
+        spanImp.addTags(this._options.default_span_tags);
         spanImp.setFields(fields);
-        for (let key in this._options.default_span_tags) {
-            spanImp.addTags({[key]: this._options.default_span_tags[key]});
-        }
 
         this.emit('start_trace', spanImp);
         return spanImp;
