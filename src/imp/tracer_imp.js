@@ -123,7 +123,6 @@ export default class TracerImp extends EventEmitter {
         // Core options
         this.addOption('access_token',          { type: 'string',  defaultValue: '' });
         this.addOption('component_name',        { type: 'string',  defaultValue: '' });
-        this.addOption('user_id',               { type: 'string',  defaultValue: '' });
         this.addOption('collector_host',        { type: 'string',  defaultValue: DEFAULT_COLLECTOR_HOSTNAME });
         this.addOption('collector_port',        { type: 'int',     defaultValue: DEFAULT_COLLECTOR_PORT_TLS });
         this.addOption('collector_encryption',  { type: 'string',  defaultValue: 'tls' });

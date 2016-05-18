@@ -54,11 +54,6 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
         opts.component_name = componentName;
     }
 
-    let userId = dataset.user_id;
-    if (userId) {
-        opts.default_span_tags = {'join:user_id': userId};
-    }
-
     let collectorHost = dataset.collector_host;
     if (typeof collectorHost === 'string' && collectorHost.length > 0) {
         opts.collector_host = collectorHost;
