@@ -51,6 +51,7 @@ var LightStep = require('lightstep-tracer/browser');
 
 * `access_token` `string` *required* - the project access token
 * `component_name` `string` *required* - the string identifier for the application, service, or process
+* `default_span_tags` `string` *optional* - an associative array of tags to add to every span started by the tracer (e.g., the active user id in a browser client)
 
 **Browser-specific initialization options**
 
