@@ -21,3 +21,5 @@ export const LOG_STRING_TO_LEVEL = {
 export const CLOCK_STATE_REFRESH_INTERVAL_MS = 350;
 
 export const LIGHTSTEP_APP_URL_PREFIX = 'https://app.lightstep.com';
+
+export const JOIN_ID_PREFIX = "join:";

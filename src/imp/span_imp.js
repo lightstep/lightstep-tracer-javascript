@@ -18,7 +18,12 @@ export default class SpanImp {
 
     addTags(keyValuePairs) {
         for (let key in keyValuePairs) {
-            this._tags[key] = keyValuePairs[key];
+            // NB: Older versions of IE don't support `String.prototype.startsWith()`
+            if (key.substr(0, constants.JOIN_ID_PREFIX.length) === constants.JOIN_ID_PREFIX) {
+                this.setJoinID(key, keyValuePairs[key]);
+            } else {
+                this._tags[key] = keyValuePairs[key];
+            }
         }
     }
 
@@ -330,21 +335,6 @@ export default class SpanImp {
                     Value : coerce.toString(this._tags[key]),
                 }));
             }
-        }
-        this._addTagAsJoinID(joinIDs, 'end_user_id');
-
-        // Add any runtime global join IDs (give preference to local tags,
-        // though).
-        let globalJoinIDs = this._tracer._options.join_ids;
-        for (let key in globalJoinIDs) {
-            if (this._tags[key] !== undefined) {
-                continue;
-            }
-            let value = globalJoinIDs[key];
-            joinIDs.push(new crouton_thrift.TraceJoinId({
-                TraceKey : coerce.toString(key),
-                Value    : coerce.toString(value),
-            }));
         }
 
         let record = new crouton_thrift.SpanRecord({

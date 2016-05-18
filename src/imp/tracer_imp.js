@@ -133,7 +133,7 @@ export default class TracerImp extends EventEmitter {
         this.addOption('disabled',              { type: 'bool',    defaultValue: false });
         this.addOption('max_log_records',       { type: 'int',     defaultValue: 4096 });
         this.addOption('max_span_records',      { type: 'int',     defaultValue: 4096 });
-        this.addOption('join_ids',              { type: 'any',     defaultValue: {} });
+        this.addOption('default_span_tags',     { type: 'any',     defaultValue: {} });
 
         // Debugging options
         //
@@ -179,6 +179,7 @@ export default class TracerImp extends EventEmitter {
 
     startSpan(fields) {
         let spanImp = new SpanImp(this);
+        spanImp.addTags(this._options.default_span_tags);
         spanImp.setFields(fields);
 
         this.emit('start_trace', spanImp);
