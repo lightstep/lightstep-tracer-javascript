@@ -41,6 +41,9 @@ While in production, you'll likely want more control than this, this is an easy 
         ></script>
 ```
 
+3. Run ```make build```  (this will generate the 'dist' folder)
+4. start an [http-server](https://www.npmjs.com/package/http-server)
+
 The above will automatically create and report spans for any `XMLHttpRequests` made by the hosted page as well as spans for the page load.
 
 <a name='promises'></a>
