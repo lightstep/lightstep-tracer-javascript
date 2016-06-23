@@ -6,12 +6,14 @@ export default class TransportHTTPJSON {
         this._host = '';
         this._port = 0;
         this._encryption = '';
+        this._timeoutMs = 0;
     }
 
     ensureConnection(opts) {
         this._host       = opts.collector_host;
         this._port       = opts.collector_port;
         this._encryption = opts.collector_encryption;
+        this._timeoutMs  = opts.report_timeout_millis;
     }
 
     report(detached, auth, reportRequest, done) {
@@ -21,7 +23,6 @@ export default class TransportHTTPJSON {
             method   : 'POST',
             path     : '/api/v0/reports',
         };
-
         let protocol = (this._encryption === 'none') ? http : https;
         let req = protocol.request(options, (res) => {
             let buffer = '';
@@ -45,6 +46,14 @@ export default class TransportHTTPJSON {
                 return done(err, resp);
             });
         });
+        req.on('socket', (socket, head) => {
+            socket.setTimeout(this._timeoutMs);
+            socket.on('timeout', () => {
+                // abort() will generate an error, so done() is called as a
+                // result.
+                req.abort();
+            });
+        });
         req.on('error', (err) => {
             done(err, null);
         });
@@ -57,7 +66,9 @@ export default class TransportHTTPJSON {
         req.setHeader('Content-Type', 'application/json');
         req.setHeader('Content-Length', payload.length);
         //req.setHeader('Content-Encoding', 'gzip');
-        req.setHeader('Connection', 'keep-alive');
+        if (!detached) {
+            req.setHeader('Connection', 'keep-alive');
+        }
         req.write(payload);
         req.end();
     }
