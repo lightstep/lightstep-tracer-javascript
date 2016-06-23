@@ -134,6 +134,7 @@ export default class TracerImp extends EventEmitter {
         this.addOption('max_log_records',       { type: 'int',     defaultValue: 4096 });
         this.addOption('max_span_records',      { type: 'int',     defaultValue: 4096 });
         this.addOption('default_span_tags',     { type: 'any',     defaultValue: {} });
+        this.addOption('report_timeout_millis', { type: 'int',     defaultValue: 5000 });
 
         // Debugging options
         //
