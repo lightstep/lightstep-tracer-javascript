@@ -17,7 +17,6 @@ function errorFromResponse(res, buffer) {
     return new Error(`status code=${res.statusCode}, message='${res.statusMessage}', body='${buffer}'`);
 }
 
-
 export default class TransportHTTPJSON {
     constructor(logger) {
         this._host = '';
