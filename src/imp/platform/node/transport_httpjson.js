@@ -4,11 +4,6 @@ import http from 'http';
 const kMaxDetailedErrorFrequencyMs = 30000;
 const kMaxStringLength = 2048;
 
-function errorFromResponse(res, buffer) {
-    buffer = `${buffer}`.replace(/\s+$/, '');
-    return new Error(`status code=${res.statusCode}, message='${res.statusMessage}', body='${buffer}'`);
-}
-
 function truncatedString(s) {
     if (s.length <= kMaxStringLength) {
         return s;
@@ -16,6 +11,12 @@ function truncatedString(s) {
     let half = Math.floor(kMaxStringLength / 2);
     return `${s.substr(0, half)}...${s.substr(-half)}`;
 }
+
+function errorFromResponse(res, buffer) {
+    buffer = truncatedString(`${buffer}`.replace(/\s+$/, ''));
+    return new Error(`status code=${res.statusCode}, message='${res.statusMessage}', body='${buffer}'`);
+}
+
 
 export default class TransportHTTPJSON {
     constructor(logger) {
