@@ -79,7 +79,7 @@ lint:
 	node node_modules/eslint/bin/eslint.js --color src
 
 # Dev convenience for automatically rebuilding on file changes
-watch:
+watch: build
 	node node_modules/watch-trigger/index.js watch-trigger.config.json
 
 update_examples: node_modules
