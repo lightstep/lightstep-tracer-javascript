@@ -49,7 +49,11 @@ export default class TracerImp extends EventEmitter {
         this._startMicros = now;
         this._thriftAuth = null;
         this._thriftRuntime = null;
-        this._transport = (opts ? opts.override_transport : null) || new Transport();
+
+        let logger = {
+            error : (err, payload) => { this._error(err, payload); },
+        };
+        this._transport = (opts ? opts.override_transport : null) || new Transport(logger);
 
         this._reportingLoopActive = false;
         this._reportYoungestMicros = now;
@@ -163,7 +167,7 @@ export default class TracerImp extends EventEmitter {
     setInterface(tracerInterface) {
         this._interface = tracerInterface;
         this.startPlugins();
-        this._infoV(3, 'Initialization complete', this._options);
+        this._infoV(4, 'Initialization complete', this._options);
     }
 
     newTracer(opts) {
@@ -391,7 +395,7 @@ export default class TracerImp extends EventEmitter {
                 count++;
             }
             if (count > 0) {
-                this._infoV(3, `Options modified:\n${optionsString}`);
+                this._infoV(4, `Options modified:\n${optionsString}`);
             }
         }
         this.emit('options', modified, this._options, this);
@@ -886,7 +890,7 @@ export default class TracerImp extends EventEmitter {
     }
 
     _stopReportingLoop() {
-        this._infoV(3, 'Stopping reporting loop');
+        this._infoV(4, 'Stopping reporting loop');
 
         this._reportingLoopActive = false;
         clearTimeout(this._reportTimer);
@@ -914,7 +918,7 @@ export default class TracerImp extends EventEmitter {
         let jitter = 1.0 + (Math.random() * 0.2 - 0.1);
         let delay = Math.floor(Math.max(0, jitter * basis));
 
-        this._infoV(3, `Delaying next flush for ${delay}ms`);
+        this._infoV(4, `Delaying next flush for ${delay}ms`);
         this._reportTimer = util.detachedTimeout(() => {
             this._reportTimer = null;
             this._flushReport(false, done);
@@ -928,7 +932,7 @@ export default class TracerImp extends EventEmitter {
         let clockOffsetMicros = this._clockState.offsetMicros();
 
         // Diagnostic information on the clock correction
-        this._infoV(3, 'time correction state', {
+        this._infoV(4, 'time correction state', {
             offset_micros  : clockOffsetMicros,
             active_samples : this._clockState.activeSampleCount(),
             ready          : clockReady,
@@ -944,7 +948,7 @@ export default class TracerImp extends EventEmitter {
         // A detached flush (i.e. one intended to fire at exit or other "last
         // ditch effort" event) should always use the real data.
         if (this._useClockState && !clockReady && !detached) {
-            this._infoV(3, 'Flushing empty report to prime clock state');
+            this._infoV(4, 'Flushing empty report to prime clock state');
             logRecords  = [];
             spanRecords = [];
             counters    = {};
@@ -952,14 +956,14 @@ export default class TracerImp extends EventEmitter {
         } else {
             // Early out if we can.
             if (this._buffersAreEmpty()) {
-                this._infoV(3, 'Skipping empty report');
+                this._infoV(4, 'Skipping empty report');
                 return done(null);
             }
 
             // Clear the object buffers as the data is now in the local
             // variables
             this._clearBuffers();
-            this._infoV(3, `Flushing report (${logRecords.length} logs, ${spanRecords.length} spans)`);
+            this._infoV(4, `Flushing report (${logRecords.length} logs, ${spanRecords.length} spans)`);
         }
 
         this._transport.ensureConnection(this._options);
@@ -1002,24 +1006,32 @@ export default class TracerImp extends EventEmitter {
 
             timestamp_offset_micros : timestampOffset,
         });
-        this._infoV(3, `timestamp_offset_micros = ${timestampOffset}`);
+        this._infoV(5, `timestamp_offset_micros = ${timestampOffset}`);
 
         this.emit('prereport', report);
         let originMicros = this._platform.nowMicros();
 
         this._transport.report(detached, this._thriftAuth, report, (err, res) => {
             let destinationMicros = this._platform.nowMicros();
+            let reportWindowSeconds = (now - report.oldest_micros) / 1e6;
+
             if (err) {
                 // How many errors in a row? Influences the report backoff.
                 this._reportErrorStreak++;
 
                 // On a failed report, re-enqueue the data that was going to be
                 // sent.
+                let errString;
                 if (err.message) {
-                    this._error(`Error in report: ${err.message}`, err);
+                    errString = `${err.message}`;
                 } else {
-                    this._error(`Error in report: ${err}`, err);
+                    errString = `${err}`;
                 }
+                this._error(`Error in report: ${errString}`, {
+                    last_report_seconds_ago : reportWindowSeconds,
+                });
+                this._infoV(5, 'Failed report content:', report);
+
                 this._restoreRecords(
                     report.log_records,
                     report.span_records,
@@ -1035,9 +1047,8 @@ export default class TracerImp extends EventEmitter {
                     detached : detached,
                 });
             } else {
-                if (this.verbosity() >= 3) {
-                    let reportWindowSeconds = (now - report.oldest_micros) / 1e6;
-                    this._infoV(4, `Report flushed for last ${reportWindowSeconds} seconds`, {
+                if (this.verbosity() >= 4) {
+                    this._infoV(5, `Report flushed for last ${reportWindowSeconds} seconds`, {
                         spans_reported : report.span_records.length,
                         logs_reported  : report.log_records.length,
                     });
@@ -1097,12 +1108,8 @@ export default class TracerImp extends EventEmitter {
     //      - Always send errors logs along with the reports
     //      - Never include any other logs
     // * Internal logs that are echoed to the host application:
-    //      - If verbosity == 0, echo nothing
-    //      - If verbosity == 1, echo the first error only
-    //      - If verbosity > 1, always echo errors, warnings, info, and any info
-    //        log where v >= the log's verbosity level
+    //      - See the README.md :)
     //
-
     _infoV(v, msg, payload) {
         if (this.verbosity() < v) {
             return;
@@ -1111,13 +1118,13 @@ export default class TracerImp extends EventEmitter {
     }
 
     _info(msg, payload) {
-        this._infoV(2, msg, payload);
+        this._infoV(3, msg, payload);
     }
 
     _warn(msg, payload) {
         this._counters['internal.warnings']++;
 
-        if (this.verbosity() < 2) {
+        if (this.verbosity() < 3) {
             return;
         }
         this._printToConsole('warn', `[LightStep:WARN ${new Date()}] ${msg}`, payload);

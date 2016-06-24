@@ -1,12 +1,32 @@
 import https from 'https';
 import http from 'http';
 
+const kMaxDetailedErrorFrequencyMs = 30000;
+const kMaxStringLength = 2048;
+
+function truncatedString(s) {
+    if (s.length <= kMaxStringLength) {
+        return s;
+    }
+    let half = Math.floor(kMaxStringLength / 2);
+    return `${s.substr(0, half)}...${s.substr(-half)}`;
+}
+
+function errorFromResponse(res, buffer) {
+    buffer = truncatedString(`${buffer}`.replace(/\s+$/, ''));
+    return new Error(`status code=${res.statusCode}, message='${res.statusMessage}', body='${buffer}'`);
+}
+
+
 export default class TransportHTTPJSON {
-    constructor() {
+    constructor(logger) {
         this._host = '';
         this._port = 0;
         this._encryption = '';
         this._timeoutMs = 0;
+
+        this._logger = logger;
+        this._lastErrorMs = 0;
     }
 
     ensureConnection(opts) {
@@ -24,6 +44,17 @@ export default class TransportHTTPJSON {
             path     : '/api/v0/reports',
         };
         let protocol = (this._encryption === 'none') ? http : https;
+
+        let payload;
+        try {
+            payload = JSON.stringify(reportRequest);
+        } catch (exception) {
+            // This should never happen. The library should always be constructing
+            // valid reports.
+            this._error('Could not JSON.stringify report!');
+            return;
+        }
+
         let req = protocol.request(options, (res) => {
             let buffer = '';
             res.on('data', (chunk) => {
@@ -32,8 +63,18 @@ export default class TransportHTTPJSON {
             res.on('end', () => {
                 let err = null;
                 let resp = null;
-                if (res.statusCode !== 200) {
-                    err = new Error(`status code = ${res.statusCode}`);
+                if (res.statusCode === 400) {
+                    this._throttleError(() => {
+                        this._error('transport status code = 400', {
+                            code    : res.statusCode,
+                            message : res.statusMessage,
+                            body    : buffer,
+                            report  : truncatedString(payload),
+                        });
+                    });
+                    err = errorFromResponse(res, buffer);
+                } else if (res.statusCode !== 200) {
+                    err = errorFromResponse(res, buffer);
                 } else if (!buffer) {
                     err = new Error('unexpected empty response');
                 } else {
@@ -55,10 +96,11 @@ export default class TransportHTTPJSON {
             });
         });
         req.on('error', (err) => {
+            this._detailedError('HTTP request error', {
+                report : truncatedString(payload),
+            });
             done(err, null);
         });
-
-        let payload = JSON.stringify(reportRequest);
 
         req.setHeader('Host', this._host);
         req.setHeader('User-Agent', 'LightStep-JavaScript-Node');
@@ -71,5 +113,17 @@ export default class TransportHTTPJSON {
         }
         req.write(payload);
         req.end();
+    }
+
+    _throttleError(f) {
+        let now = Date.now();
+        if (now - this._lastErrorMs < kMaxDetailedErrorFrequencyMs) {
+            return;
+        }
+        this._lastErrorMs = now;
+        f();
+    }
+    _error(msg, payload) {
+        this._logger.error(msg, payload);
     }
 }

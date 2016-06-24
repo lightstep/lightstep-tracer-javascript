@@ -49,8 +49,24 @@ var LightStep = require('lightstep-tracer/browser');
 
 ### tracer(options)
 
+**Required options**
+
 * `access_token` `string` *required* - the project access token
 * `component_name` `string` *required* - the string identifier for the application, service, or process
+
+**Standard options**
+
+* `verbosity` `number` *optional, default=1* - controls the level of logging to the console
+    - `0` - the client library will *never* log to the console
+    - `1` - only the first error encountered will be logged to the console
+    - `2` - all errors are logged to the console
+    - `3` - all errors, warnings, and info statements are logged to the console
+    - `4` - all log statements, including debugging details
+* `collector_host` `string` *optional* - custom collector hostname
+* `collector_port` `number` *optional* - custom collector port
+* `collector_encryption` `string` *optional, default='tls'*
+    - `tls` - use HTTPS encrypted connections
+    - `none` - use HTTP plain-text connections
 
 **Browser-specific initialization options**
 
@@ -60,7 +76,9 @@ var LightStep = require('lightstep-tracer/browser');
 
 * `xhr_url_exclusion_patterns` `RegExp[]` - an array of regular expressions used to exclude URLs from `XMLHttpRequest` auto-instrumentation. The default value is an empty array. For a given URL to be instrumented, it must match at least one regular expression in `xhr_url_inclusion_patterns` and not match any regular expressions in `xhr_url_exclusion_patterns`.
 
-**Non-standard options without no forwards-compatibility implications**
+**Non-standard options**
+
+*NOTE: Future API compatibility on non-standard options is not guaranteed.*
 
 * `default_span_tags` `string` *optional* - an associative array of tags to add to every span started by the tracer (e.g., the active user id in a browser client)
 

@@ -115,6 +115,9 @@ export default class PlatformNode {
             case '--lightstep-log_to_console=1':
                 opts.log_to_console = true;
                 break;
+            case '--lightstep-verbosity=5':
+                opts.verbosity = 5;
+                break;
             case '--lightstep-verbosity=4':
                 opts.verbosity = 4;
                 break;
