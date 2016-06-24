@@ -267,8 +267,12 @@ export default class TracerImp extends EventEmitter {
                     // new span
                     span.setFields({ parent_guid : value });
                     break;
+                case 'sampled':
+                    // Ignored. The carrier may be coming from a different client
+                    // library that sends this (even though it's not used).
+                    break;
                 default:
-                    this._error('Unrecognized carrier key with recognized prefix. Ignoring.');
+                    this._error(`Unrecognized carrier key '${key}' with recognized prefix. Ignoring.`);
                     break;
                 }
             }

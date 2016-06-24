@@ -14,6 +14,7 @@ Tracer.initGlobalTracer(LightStep.tracer({
     component_name         : 'lightstep-tracer/unit-tests',
     access_token           : '010101010101010101020101010',
     disable_reporting_loop : true,
+    verbosity              : 0,
 }));
 
 describe('LightStep Tracer', function() {
