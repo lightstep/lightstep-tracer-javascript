@@ -96,7 +96,7 @@ export default class TransportHTTPJSON {
         });
         req.on('error', (err) => {
             this._detailedError('HTTP request error', {
-                report : reportRequest,
+                report : truncatedString(payload),
             });
             done(err, null);
         });
