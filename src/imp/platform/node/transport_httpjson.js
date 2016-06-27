@@ -95,8 +95,10 @@ export default class TransportHTTPJSON {
             });
         });
         req.on('error', (err) => {
-            this._detailedError('HTTP request error', {
-                report : truncatedString(payload),
+            this._throttleError(() => {
+                this._error('HTTP request error', {
+                    report : truncatedString(payload),
+                });
             });
             done(err, null);
         });

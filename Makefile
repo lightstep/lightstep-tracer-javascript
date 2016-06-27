@@ -67,9 +67,9 @@ test_browser:
 # different behavior that does not work with the current implementation.
 test_all: build
 	scripts/docker_test.sh latest
+	scripts/docker_test.sh 6.2
 	scripts/docker_test.sh 5.8
 	scripts/docker_test.sh 5.1
-	scripts/docker_test.sh 5.0
 	scripts/docker_test.sh 4.4
 	scripts/docker_test.sh 4.0
 	scripts/docker_test.sh 0.12
