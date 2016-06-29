@@ -54,6 +54,7 @@ export default class TransportHTTPJSON {
             return;
         }
 
+        let extraErrorData = [];
         let req = protocol.request(options, (res) => {
             let buffer = '';
             res.on('data', (chunk) => {
@@ -68,6 +69,7 @@ export default class TransportHTTPJSON {
                             code    : res.statusCode,
                             message : res.statusMessage,
                             body    : buffer,
+                            extra   : extraErrorData,
                             report  : truncatedString(payload),
                         });
                     });
@@ -92,11 +94,14 @@ export default class TransportHTTPJSON {
                 // abort() will generate an error, so done() is called as a
                 // result.
                 req.abort();
+                extraErrorData.push(`Request timed out (${this._timeoutMs} ms)`);
             });
         });
         req.on('error', (err) => {
             this._throttleError(() => {
                 this._error('HTTP request error', {
+                    error  : err,
+                    extra  : extraErrorData,
                     report : truncatedString(payload),
                 });
             });
@@ -124,6 +129,7 @@ export default class TransportHTTPJSON {
         this._lastErrorMs = now;
         f();
     }
+
     _error(msg, payload) {
         this._logger.error(msg, payload);
     }
