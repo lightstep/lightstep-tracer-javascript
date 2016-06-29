@@ -1007,7 +1007,6 @@ export default class TracerImp extends EventEmitter {
             internal_metrics        : new crouton_thrift.Metrics({
                 counts              : thriftCounters,
             }),
-
             timestamp_offset_micros : timestampOffset,
         });
         this._infoV(5, `timestamp_offset_micros = ${timestampOffset}`);
