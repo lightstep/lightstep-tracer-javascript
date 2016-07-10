@@ -267,7 +267,7 @@ export default class TracerImp extends EventEmitter {
 
     extract(format, carrier) {
         // Begin with the empty SpanContextImp
-        let spanContext = new SpanContextImp(this);
+        let spanContext = new SpanContextImp(null, null);
 
         switch (format) {
 
