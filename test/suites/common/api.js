@@ -1,6 +1,6 @@
 describe("LightStep Tracer has the expected methods", function () {
     describe("OpenTracing 1.0", function() {
-        expectToBeFunctions(Tracer, "startSpan");
+        expectToBeFunctions(Tracer, "startSpan inject extract");
     });
     describe("Implementation-specific", function() {
         expectToBeFunctions(Tracer.imp(), "options");
@@ -13,15 +13,16 @@ describe("LightStep Span has the expected methods", function() {
     describe("OpenTracing 1.0", function() {
         var span = Tracer.startSpan('test');
         expectToBeFunctions(span, "setTag addTags");
-        expectToBeFunctions(span, "setBaggageItem getBaggageItem");
         expectToBeFunctions(span, "log logEvent");
         expectToBeFunctions(span, "finish");
+        expectToBeFunctions(span.context(), "setBaggageItem getBaggageItem");
         span.finish();
     });
     describe("Implementation-specific", function() {
         var span = Tracer.startSpan('test');
         expectToBeFunctions(span.imp(), "guid parentGUID");
         expectToBeFunctions(span.imp(), "warn fatal");
+        expectToBeFunctions(span.context().imp(), "foreachBaggageItem");
         span.finish();
     });
 });

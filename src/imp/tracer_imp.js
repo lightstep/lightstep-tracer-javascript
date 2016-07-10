@@ -3,7 +3,9 @@
 //============================================================================//
 
 import EventEmitter from 'eventemitter3';
+import OpenTracing from 'opentracing';
 import { Platform, Transport, crouton_thrift } from '../platform_abstraction_layer';    // eslint-disable-line camelcase
+import SpanContextImp from './span_context_imp';
 import SpanImp from './span_imp';
 import globals from './globals';
 
@@ -184,24 +186,57 @@ export default class TracerImp extends EventEmitter {
     }
 
     startSpan(fields) {
-        let spanImp = new SpanImp(this);
+        // First, assemble the SpanContextImp for our SpanImp.
+        //
+        // Normalize `fields.reference` and `fields.references` (at most one
+        // will be defined).
+        let refs = fields.references;
+        if (fields.reference) {
+            refs = [fields.reference];
+        }
+        let parCtxImp = null;
+        if (refs) {
+            for (let i = 0; i < refs.length; i++) {
+                let ref = refs[i];
+                if (ref.type() === OpenTracing.REFERENCE_CHILD_OF ||
+                        ref.type() === OpenTracing.REFERENCE_FOLLOWS_FROM) {
+                    parCtxImp = ref.spanContext().imp();
+                    break;
+                }
+            }
+        }
+        let newCtx = null;
+        if (parCtxImp === null) {
+            // Root SpanContext case:
+            newCtx = new SpanContextImp(
+                    this._platform.generateUUID(),
+                    this.generateTraceGUIDForRootSpan());
+        } else {
+            // Child SpanContextImp case:
+            newCtx = new SpanContextImp(
+                    this._platform.generateUUID(),
+                    parCtxImp._traceGUID);
+        }
+
+        let spanImp = new SpanImp(this, newCtx);
         spanImp.addTags(this._options.default_span_tags);
         spanImp.setFields(fields);
+        if (parCtxImp !== null) {
+            spanImp.setParentGUID(parCtxImp._guid);
+        }
 
         this.emit('start_trace', spanImp);
         return spanImp;
     }
 
-    inject(span, format, carrier) {
+    inject(spanContext, format, carrier) {
         switch (format) {
         case this._interface.FORMAT_TEXT_MAP:
-            this._injectToTextMap(span, carrier);
+            this._injectToTextMap(spanContext, carrier);
             break;
 
-        // The binary encoding here is optimized for correctness and uniformity
-        // across platforms: it is currently not efficient.
         case this._interface.FORMAT_BINARY:
-            carrier.buffer = this._objectToUint8Array(this._injectToTextMap(span, {}));
+            this._error(`Unsupported format: ${format}`);
             break;
 
         default:
@@ -210,7 +245,7 @@ export default class TracerImp extends EventEmitter {
         }
     }
 
-    _injectToTextMap(span, carrier) {
+    _injectToTextMap(spanContext, carrier) {
         if (!carrier) {
             this._error('Unexpected null FORMAT_TEXT_MAP carrier in call to inject');
             return;
@@ -220,36 +255,24 @@ export default class TracerImp extends EventEmitter {
             return;
         }
 
-        let baggage = span.getBaggage();
-        let traceGUID = span.traceGUID();
-
-        carrier[`${CARRIER_TRACER_STATE_PREFIX}spanid`] = span.guid();
-        if (traceGUID) {
-            carrier[`${CARRIER_TRACER_STATE_PREFIX}traceid`] = traceGUID;
-        }
+        carrier[`${CARRIER_TRACER_STATE_PREFIX}spanid`] = spanContext._guid;
+        carrier[`${CARRIER_TRACER_STATE_PREFIX}traceid`] = spanContext._traceGUID;
+        spanContext.foreachBaggageItem((key, value) => {
+            carrier[`${CARRIER_BAGGAGE_PREFIX}${key}`] = value;
+            return true;
+        });
         carrier[`${CARRIER_TRACER_STATE_PREFIX}sampled`] = 'true';
-        for (let key in baggage) {
-            carrier[`${CARRIER_BAGGAGE_PREFIX}${key}`] = baggage[key];
-        }
         return carrier;
     }
 
-    join(operationName, format, carrier) {
-        // Simplify the logic by converting the binary carrier to a split text
-        // carrier.
-        if (format === this._interface.FORMAT_BINARY) {
-            format = this._interface.FORMAT_TEXT_MAP;
-            carrier = this._uint8ArrayToObject(carrier.buffer);
-        }
-
-        // Create the empty, raw span
-        let span = new SpanImp(this);
-        span.setOperationName(operationName);
+    extract(format, carrier) {
+        // Begin with the empty SpanContextImp
+        let spanContext = new SpanContextImp(this);
 
         switch (format) {
 
-            // Iterate over the contents of the carrier and set the properties
-            // accordingly.
+        // Iterate over the contents of the carrier and set the properties
+        // accordingly.
         case this._interface.FORMAT_TEXT_MAP:
             for (let key in carrier) {
                 let value = carrier[key];
@@ -261,12 +284,10 @@ export default class TracerImp extends EventEmitter {
 
                 switch (suffix) {
                 case 'traceid':
-                    span.setFields({ trace_guid : value });
+                    spanContext._traceGUID = value;
                     break;
                 case 'spanid':
-                    // Transfer the carrier's "span_guid" to be the parent of this
-                    // new span
-                    span.setFields({ parent_guid : value });
+                    spanContext._guid = value;
                     break;
                 case 'sampled':
                     // Ignored. The carrier may be coming from a different client
@@ -284,16 +305,20 @@ export default class TracerImp extends EventEmitter {
                     continue;
                 }
                 let suffix = key.substr(CARRIER_BAGGAGE_PREFIX.length);
-                span.setBaggageItem(suffix, value);
+                spanContext.setBaggageItem(suffix, value);
             }
             break;
 
+        case this._interface.FORMAT_BINARY:
+            this._error(`Unsupported format: ${format}`);
+            break;
+
         default:
-            this._error(`Unknown format: ${format}`);
+            this._error(`Unsupported format: ${format}`);
             break;
         }
 
-        return span;
+        return spanContext;
     }
 
     flush(done) {
@@ -598,10 +623,10 @@ export default class TracerImp extends EventEmitter {
     // Spans
     //-----------------------------------------------------------------------//
 
-    // This is a LightStep-specific feature that should be sparingly. It sets
-    // a "global" root span such that spans that would *otherwise* be root span
-    // instead inherit the trace GUID of the active root span. This is best
-    // clarified by example:
+    // This is a LightStep-specific feature that should be used sparingly. It
+    // sets a "global" root span such that spans that would *otherwise* be root
+    // span instead inherit the trace GUID of the active root span. This is
+    // best clarified by example:
     //
     // On document load in the browser, an "active root span" is created for
     // the page load process. Any spans started without an explicit parent
