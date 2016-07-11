@@ -2,6 +2,14 @@
 
 *Log of significant changes, especially those affecting the supported API.*
 
+## 0.10.6
+
+* Enable gzip compression of Node.js reports from the client by default (this is controlled by a non-standard option `gzip_json_requests`)
+
+## 0.10.5
+
+* Fix defect in error handling of failed requests
+
 ## 0.10.4
 
 * **MINOR API CHANGE**: `verbosity` level semantics updated
