@@ -833,13 +833,13 @@ export default class TracerImp extends EventEmitter {
     //      to exit or otherwise wants the report to be sent as quickly and
     //      low-overhead as possible.
     //
-    _flush(detached) {
+    _flush(detached, callback) {
         detached = detached || false;
 
         if (this._options.disabled) {
             return;
         }
-        this._flushReport(detached, (err) => {});
+        this._flushReport(detached, callback);
     }
 
     _startReportingLoop() {
@@ -872,7 +872,16 @@ export default class TracerImp extends EventEmitter {
         let finalFlush = () => {
             if (finalFlushOnce++ > 0) { return; }
             this._info('Final flush before exit.');
-            this._flushReport(true);
+            this._flushReport(true, (err) => {
+                if (err) {
+                    this._error('Final report before exit failed', {
+                        error                  : err,
+                        unflushed_spans        : this._spanRecords.length,
+                        unflushed_logs         : this._logRecords.length,
+                        buffer_youngest_micros : this._reportYoungestMicros,
+                    });
+                }
+            });
         };
         let stopReportingOnce = 0;
         let stopReporting = () => {
