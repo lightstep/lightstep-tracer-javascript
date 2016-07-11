@@ -1,5 +1,6 @@
 import https from 'https';
 import http from 'http';
+import zlib from 'zlib';
 
 const kMaxDetailedErrorFrequencyMs = 30000;
 const kMaxStringLength = 2048;
@@ -33,6 +34,24 @@ export default class TransportHTTPJSON {
         this._port       = opts.collector_port;
         this._encryption = opts.collector_encryption;
         this._timeoutMs  = opts.report_timeout_millis;
+        this._gzipJSON   = opts.gzip_json_requests;
+    }
+
+    _preparePayload(useGzip, reportRequest, cb) {
+        let payload;
+        try {
+            payload = JSON.stringify(reportRequest);
+        } catch (exception) {
+            // This should never happen. The library should always be constructing
+            // valid reports.
+            this._error('Could not JSON.stringify report!');
+            return cb(exception);
+        }
+
+        if (useGzip) {
+            return zlib.gzip(payload, cb);
+        }
+        return cb(null, payload);
     }
 
     report(detached, auth, reportRequest, done) {
@@ -43,82 +62,82 @@ export default class TransportHTTPJSON {
             path     : '/api/v0/reports',
         };
         let protocol = (this._encryption === 'none') ? http : https;
+        let useGzip = this._gzipJSON;
 
-        let payload;
-        try {
-            payload = JSON.stringify(reportRequest);
-        } catch (exception) {
-            // This should never happen. The library should always be constructing
-            // valid reports.
-            this._error('Could not JSON.stringify report!');
-            return;
-        }
+        this._preparePayload(useGzip, reportRequest, (payloadErr, payload) => {
+            if (payloadErr) {
+                this._error('Error compressing payload');
+                return done(payloadErr);
+            }
 
-        let extraErrorData = [];
-        let req = protocol.request(options, (res) => {
-            let buffer = '';
-            res.on('data', (chunk) => {
-                buffer += chunk;
-            });
-            res.on('end', () => {
-                let err = null;
-                let resp = null;
-                if (res.statusCode === 400) {
-                    this._throttleError(() => {
-                        this._error('transport status code = 400', {
-                            code    : res.statusCode,
-                            message : res.statusMessage,
-                            body    : buffer,
-                            extra   : extraErrorData,
-                            report  : truncatedString(payload),
+            let extraErrorData = [];
+            let req = protocol.request(options, (res) => {
+                let buffer = '';
+                res.on('data', (chunk) => {
+                    buffer += chunk;
+                });
+                res.on('end', () => {
+                    let err = null;
+                    let resp = null;
+                    if (res.statusCode === 400) {
+                        this._throttleError(() => {
+                            this._error('transport status code = 400', {
+                                code    : res.statusCode,
+                                message : res.statusMessage,
+                                body    : buffer,
+                                extra   : extraErrorData,
+                                report  : truncatedString(payload),
+                            });
                         });
-                    });
-                    err = errorFromResponse(res, buffer);
-                } else if (res.statusCode !== 200) {
-                    err = errorFromResponse(res, buffer);
-                } else if (!buffer) {
-                    err = new Error('unexpected empty response');
-                } else {
-                    try {
-                        resp = JSON.parse(buffer);
-                    } catch (exception) {
-                        err = exception;
+                        err = errorFromResponse(res, buffer);
+                    } else if (res.statusCode !== 200) {
+                        err = errorFromResponse(res, buffer);
+                    } else if (!buffer) {
+                        err = new Error('unexpected empty response');
+                    } else {
+                        try {
+                            resp = JSON.parse(buffer);
+                        } catch (exception) {
+                            err = exception;
+                        }
                     }
-                }
-                return done(err, resp);
-            });
-        });
-        req.on('socket', (socket, head) => {
-            socket.setTimeout(this._timeoutMs);
-            socket.on('timeout', () => {
-                // abort() will generate an error, so done() is called as a
-                // result.
-                req.abort();
-                extraErrorData.push(`Request timed out (${this._timeoutMs} ms)`);
-            });
-        });
-        req.on('error', (err) => {
-            this._throttleError(() => {
-                this._error('HTTP request error', {
-                    error  : err,
-                    extra  : extraErrorData,
-                    report : truncatedString(payload),
+                    return done(err, resp);
                 });
             });
-            done(err, null);
-        });
+            req.on('socket', (socket, head) => {
+                socket.setTimeout(this._timeoutMs);
+                socket.on('timeout', () => {
+                    // abort() will generate an error, so done() is called as a
+                    // result.
+                    req.abort();
+                    extraErrorData.push(`Request timed out (${this._timeoutMs} ms)`);
+                });
+            });
+            req.on('error', (err) => {
+                this._throttleError(() => {
+                    this._error('HTTP request error', {
+                        error  : err,
+                        extra  : extraErrorData,
+                        report : truncatedString(payload),
+                    });
+                });
+                done(err, null);
+            });
 
-        req.setHeader('Host', this._host);
-        req.setHeader('User-Agent', 'LightStep-JavaScript-Node');
-        req.setHeader('LightStep-Access-Token', auth.access_token);
-        req.setHeader('Content-Type', 'application/json');
-        req.setHeader('Content-Length', payload.length);
-        //req.setHeader('Content-Encoding', 'gzip');
-        if (!detached) {
-            req.setHeader('Connection', 'keep-alive');
-        }
-        req.write(payload);
-        req.end();
+            req.setHeader('Host', this._host);
+            req.setHeader('User-Agent', 'LightStep-JavaScript-Node');
+            req.setHeader('LightStep-Access-Token', auth.access_token);
+            req.setHeader('Content-Type', 'application/json');
+            req.setHeader('Content-Length', payload.length);
+            if (useGzip) {
+                req.setHeader('Content-Encoding', 'gzip');
+            }
+            if (!detached) {
+                req.setHeader('Connection', 'keep-alive');
+            }
+            req.write(payload);
+            req.end();
+        });
     }
 
     _throttleError(f) {
