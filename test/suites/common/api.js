@@ -22,7 +22,7 @@ describe("LightStep Span has the expected methods", function() {
         var span = Tracer.startSpan('test');
         expectToBeFunctions(span.imp(), "guid parentGUID");
         expectToBeFunctions(span.imp(), "warn fatal");
-        expectToBeFunctions(span.context().imp(), "foreachBaggageItem");
+        expectToBeFunctions(span.context().imp(), "forEachBaggageItem");
         span.finish();
     });
 });

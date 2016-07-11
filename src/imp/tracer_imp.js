@@ -186,42 +186,24 @@ export default class TracerImp extends EventEmitter {
 
     startSpan(fields) {
         // First, assemble the SpanContextImp for our SpanImp.
-        //
-        // Normalize `fields.reference` and `fields.references` (at most one
-        // will be defined).
-        let refs = fields.references;
-        if (fields.reference) {
-            refs = [fields.reference];
-        }
-        let parCtxImp = null;
-        if (refs) {
-            for (let i = 0; i < refs.length; i++) {
-                let ref = refs[i];
+        let parentCtxImp = null;
+        if (fields.references) {
+            for (let i = 0; i < fields.references.length; i++) {
+                let ref = fields.references[i];
                 if (ref.type() === this._interface.REFERENCE_CHILD_OF ||
                         ref.type() === this._interface.REFERENCE_FOLLOWS_FROM) {
-                    parCtxImp = ref.spanContext().imp();
+                    parentCtxImp = ref.spanContext().imp();
                     break;
                 }
             }
         }
-        let newCtx = null;
-        if (parCtxImp === null) {
-            // Root SpanContext case:
-            newCtx = new SpanContextImp(
-                    this._platform.generateUUID(),
-                    this.generateTraceGUIDForRootSpan());
-        } else {
-            // Child SpanContextImp case:
-            newCtx = new SpanContextImp(
-                    this._platform.generateUUID(),
-                    parCtxImp._traceGUID);
-        }
 
-        let spanImp = new SpanImp(this, newCtx);
+        let traceGUID = parentCtxImp ? parentCtxImp._traceGUID : this.generateTraceGUIDForRootSpan();
+        let spanImp = new SpanImp(this, new SpanContextImp(this._platform.generateUUID(), traceGUID));
         spanImp.addTags(this._options.default_span_tags);
         spanImp.setFields(fields);
-        if (parCtxImp !== null) {
-            spanImp.setParentGUID(parCtxImp._guid);
+        if (parentCtxImp !== null) {
+            spanImp.setParentGUID(parentCtxImp._guid);
         }
 
         this.emit('start_trace', spanImp);
@@ -256,9 +238,8 @@ export default class TracerImp extends EventEmitter {
 
         carrier[`${CARRIER_TRACER_STATE_PREFIX}spanid`] = spanContext._guid;
         carrier[`${CARRIER_TRACER_STATE_PREFIX}traceid`] = spanContext._traceGUID;
-        spanContext.foreachBaggageItem((key, value) => {
+        spanContext.forEachBaggageItem((key, value) => {
             carrier[`${CARRIER_BAGGAGE_PREFIX}${key}`] = value;
-            return true;
         });
         carrier[`${CARRIER_TRACER_STATE_PREFIX}sampled`] = 'true';
         return carrier;

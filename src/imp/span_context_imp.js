@@ -20,11 +20,9 @@ export default class SpanContextImp {
     // across platforms.
     //
     // https://github.com/opentracing/opentracing.github.io/issues/103
-    foreachBaggageItem(f) {
+    forEachBaggageItem(f) {
         for (let key in this._baggage) {
-            if (!f(key, this._baggage[key])) {
-                return;
-            }
+            f(key, this._baggage[key]);
         }
     }
 
