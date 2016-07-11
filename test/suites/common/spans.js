@@ -58,6 +58,12 @@ it("should handle inject / extract to text map carriers correctly" , function() 
     expect(extractedContext.getBaggageItem('creditcard')).to.equal('visa');
 });
 
+it("should handle extract from an empty text map carrier correctly" , function() {
+    var carrier = {};
+    var extractedContext = Tracer.extract(Tracer.FORMAT_TEXT_MAP, carrier);
+    expect(extractedContext).to.be.null;
+});
+
 it('should gracefully handle a large number of spans', function() {
     Tracer.imp().flush();
     for (var i = 0; i < 10000; i++) {

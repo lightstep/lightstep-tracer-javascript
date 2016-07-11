@@ -3,7 +3,6 @@
 //============================================================================//
 
 import EventEmitter from 'eventemitter3';
-import OpenTracing from 'opentracing';
 import { Platform, Transport, crouton_thrift } from '../platform_abstraction_layer';    // eslint-disable-line camelcase
 import SpanContextImp from './span_context_imp';
 import SpanImp from './span_imp';
@@ -198,8 +197,8 @@ export default class TracerImp extends EventEmitter {
         if (refs) {
             for (let i = 0; i < refs.length; i++) {
                 let ref = refs[i];
-                if (ref.type() === OpenTracing.REFERENCE_CHILD_OF ||
-                        ref.type() === OpenTracing.REFERENCE_FOLLOWS_FROM) {
+                if (ref.type() === this._interface.REFERENCE_CHILD_OF ||
+                        ref.type() === this._interface.REFERENCE_FOLLOWS_FROM) {
                     parCtxImp = ref.spanContext().imp();
                     break;
                 }
@@ -271,9 +270,10 @@ export default class TracerImp extends EventEmitter {
 
         switch (format) {
 
-        // Iterate over the contents of the carrier and set the properties
-        // accordingly.
-        case this._interface.FORMAT_TEXT_MAP:
+        case this._interface.FORMAT_TEXT_MAP: {
+            // Iterate over the contents of the carrier and set the properties
+            // accordingly.
+            let foundFields = 0;
             for (let key in carrier) {
                 let value = carrier[key];
                 key = key.toLowerCase();
@@ -284,9 +284,11 @@ export default class TracerImp extends EventEmitter {
 
                 switch (suffix) {
                 case 'traceid':
+                    foundFields++;
                     spanContext._traceGUID = value;
                     break;
                 case 'spanid':
+                    foundFields++;
                     spanContext._guid = value;
                     break;
                 case 'sampled':
@@ -298,6 +300,16 @@ export default class TracerImp extends EventEmitter {
                     break;
                 }
             }
+            if (foundFields === 0) {
+                // This is not an error per se, there was simply no SpanContext
+                // in the carrier.
+                return null;
+            }
+            if (foundFields < 2) {
+                // A partial SpanContext suggests some sort of data corruption.
+                this._error(`Only found a partial SpanContext: ${format}, ${carrier}`);
+                return null;
+            }
             for (let key in carrier) {
                 let value = carrier[key];
                 key = key.toLowerCase();
@@ -308,15 +320,19 @@ export default class TracerImp extends EventEmitter {
                 spanContext.setBaggageItem(suffix, value);
             }
             break;
+        }
 
-        case this._interface.FORMAT_BINARY:
-            this._error(`Unsupported format: ${format}`);
-            break;
-
-        default:
+        case this._interface.FORMAT_BINARY: {
             this._error(`Unsupported format: ${format}`);
             break;
         }
+
+        default: {
+            this._error(`Unsupported format: ${format}`);
+            break;
+        }
+
+        }  // switch
 
         return spanContext;
     }
