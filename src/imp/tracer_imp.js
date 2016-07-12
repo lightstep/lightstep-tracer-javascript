@@ -192,7 +192,7 @@ export default class TracerImp extends EventEmitter {
                 let ref = fields.references[i];
                 if (ref.type() === this._interface.REFERENCE_CHILD_OF ||
                         ref.type() === this._interface.REFERENCE_FOLLOWS_FROM) {
-                    parentCtxImp = ref.spanContext().imp();
+                    parentCtxImp = ref.referee().imp();
                     break;
                 }
             }

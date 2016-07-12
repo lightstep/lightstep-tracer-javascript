@@ -4,7 +4,7 @@ it("should capture parent span guids", function () {
 
     var parent = Tracer.startSpan("A");
     var child = Tracer.startSpan("B", {
-        childOf : Tracer.childOf(parent.context()),
+        childOf : parent.context(),
     });
     child.finish();
     parent.finish();
