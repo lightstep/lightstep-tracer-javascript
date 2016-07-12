@@ -41,6 +41,6 @@ it('should generate correct URLs for both finished and unfinished spans', functi
 
 it('should fail gracefully on invalid inject format', function() {
     var span = Tracer.startSpan('test');
-    Tracer.inject(span, "unknown_custom_format", {});
+    Tracer.inject(span.context(), "unknown_custom_format", {});
     span.finish();
 });

@@ -12,6 +12,10 @@ export default class SpanImp {
         return this._tracer;
     }
 
+    context() {
+        return this._context;
+    }
+
     setOperationName(name) {
         this._operation = name;
     }
@@ -27,14 +31,6 @@ export default class SpanImp {
         }
     }
 
-    setBaggageItem(key, value) {
-        this._baggage[key] = value;
-    }
-
-    getBaggageItem(key) {
-        return this._baggage[key];
-    }
-
     /**
      * The set of OpenTracing fields is:
      * - 'event'
@@ -44,7 +40,7 @@ export default class SpanImp {
     // Log record specified by fields
     log(fields) {
         let rec = this._tracer.log()
-            .span(this._guid)
+            .span(this.guid())
             .level(constants.LOG_STRING_TO_LEVEL[fields.level] || constants.LOG_INFO);
 
         //
@@ -82,17 +78,15 @@ export default class SpanImp {
     // Private methods
     // ---------------------------------------------------------------------- //
 
-    constructor(tracer) {
+    constructor(tracer, spanContext) {
         console.assert(typeof tracer === 'object', 'Invalid runtime');  // eslint-disable-line no-console
 
         this._tracer = tracer;
+        this._context = spanContext;
         this._ended  = false;
 
-        this._guid        = tracer._platform.generateUUID();
-        this._traceGUID   = tracer.generateTraceGUIDForRootSpan();
         this._operation   = '';
         this._tags        = {};
-        this._baggage     = {};
         this._joinIDs     = {};
         this._beginMicros = tracer._platform.nowMicros();
         this._endMicros   = 0;
@@ -109,11 +103,11 @@ export default class SpanImp {
 
     // Getter only. The GUID is immutable once set internally.
     guid() {
-        return this._guid;
+        return this._context._guid;
     }
 
     traceGUID() {
-        return this._traceGUID;
+        return this._context._traceGUID;
     }
 
     parentGUID() {
@@ -149,10 +143,6 @@ export default class SpanImp {
         return this._tags;
     }
 
-    getBaggage() {
-        return this._baggage;
-    }
-
     setFields(fields) {
         for (let key in fields) {
             let value = fields[key];
@@ -166,20 +156,6 @@ export default class SpanImp {
                 break;
             case 'tags':
                 this.addTags(value);
-                break;
-            case 'span_guid':
-                this._guid = coerce.toString(value);
-                break;
-            case 'trace_guid':
-                this._traceGUID = coerce.toString(value);
-                break;
-            case 'parent':
-                if (value) {
-                    this.parent(value.imp());
-                }
-                break;
-            case 'parent_guid':
-                this.setParentGUID(value);
                 break;
             default:
                 this._tracer._warn(`Ignoring unknown field ${key}`);
@@ -205,31 +181,6 @@ export default class SpanImp {
     setJoinID(key, value) {
         this._tags[key] = value;
         this._joinIDs[key] = true;
-    }
-
-    parent(parentSpan) {
-        if (!parentSpan) {
-            return;
-        }
-        this.setParentGUID(parentSpan.guid());
-        this._traceGUID = parentSpan.traceGUID();
-    }
-
-    span(operation) {
-        let child = new SpanImp(this._tracer);
-        child.operation(operation);
-
-        // TODO: what is the expected behavior on OpenTracing tags on
-        // child spans? The legacy Traceguide behavior relies (?) on the
-        // child spans inheriting the join IDs of the parent.
-        for (let key in this._tags) {
-            child._tags[key] = this._tags[key];
-            if (this._joinIDs[key]) {
-                child._joinIDs[key] = true;
-            }
-        }
-        child.parent(this);
-        return child;
     }
 
     /**
@@ -263,7 +214,7 @@ export default class SpanImp {
     // Info log record with an optional payload
     info(msg, payload) {
         this._tracer.log()
-            .span(this._guid)
+            .span(this.guid())
             .level(constants.LOG_INFO)
             .message(msg)
             .payload(payload)
@@ -272,7 +223,7 @@ export default class SpanImp {
 
     warn(msg, payload) {
         this._tracer.log()
-            .span(this._guid)
+            .span(this.guid())
             .level(constants.LOG_WARN)
             .message(msg)
             .payload(payload)
@@ -281,7 +232,7 @@ export default class SpanImp {
 
     error(msg, payload) {
         this._tracer.log()
-            .span(this._guid)
+            .span(this.guid())
             .level(constants.LOG_ERROR)
             .message(msg)
             .payload(payload)
@@ -297,7 +248,7 @@ export default class SpanImp {
 
         let stack = exception.stack.split('\n');
         this._tracer.log()
-            .span(this._guid)
+            .span(this.guid())
             .level(constants.LOG_ERROR)
             .message(msg)
             .payload({
@@ -312,7 +263,7 @@ export default class SpanImp {
 
     fatal(msg, payload) {
         this._tracer.log()
-            .span(this._guid)
+            .span(this.guid())
             .level(constants.LOG_FATAL)
             .message(msg)
             .payload(payload)
@@ -338,8 +289,8 @@ export default class SpanImp {
         }
 
         let record = new crouton_thrift.SpanRecord({
-            span_guid       : this._guid,
-            trace_guid      : this._traceGUID,
+            span_guid       : this.guid(),
+            trace_guid      : this.traceGUID(),
             runtime_guid    : this._tracer.guid(),
             span_name       : this._operation,
             join_ids        : joinIDs,
