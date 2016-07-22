@@ -74,9 +74,8 @@ test_all: build
 	scripts/docker_test.sh 4.0
 	scripts/docker_test.sh 0.12
 
-# This is not run by default as currently too many tests fail
 lint:
-	node node_modules/eslint/bin/eslint.js --color src
+	node node_modules/eslint/bin/eslint.js --color --fix src
 
 # Dev convenience for automatically rebuilding on file changes
 watch: build
@@ -85,6 +84,10 @@ watch: build
 update_examples: node_modules
 	cp node_modules/opentracing/dist/opentracing-browser.min.js examples/browser/opentracing-browser.min.js
 	cp node_modules/opentracing/dist/opentracing-browser.min.js examples/browser-trivial/opentracing-browser.min.js
+
+.PHONY: example-browser
+example-browser: build
+	cd examples/browser && bash run.sh
 
 # LightStep internal target
 thrift:

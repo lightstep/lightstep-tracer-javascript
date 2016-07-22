@@ -156,7 +156,7 @@ function queryUserInfo(parentSpan, username, callback) {
  * Helper function to make a GET request and return parsed JSON data.
  */
 function httpGet(parentSpan, urlString, callback) {
-    var span = Tracer.startSpan('http.get', { parent : parentSpan });
+    var span = Tracer.startSpan('http.get', { childOf : parentSpan });
     var callbackWrapper = function (err, data) {
         span.finish();
         callback(err, data);

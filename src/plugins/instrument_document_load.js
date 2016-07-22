@@ -148,21 +148,21 @@ class InstrumentPageLoad {
             }
         }
 
-        parentImp.modify({
-            begin_micros : timing.navigationStart * 1000.0,
-        });
-        parent.tracer().startSpan('document/time_to_first_byte', { parent : parent }).imp().modify({
-            begin_micros : timing.requestStart * 1000.0,
-            end_micros   : timing.responseStart * 1000.0,
-        }).finish();
-        parent.tracer().startSpan('document/response_transfer', { parent : parent }).imp().modify({
-            begin_micros : timing.responseStart * 1000.0,
-            end_micros   : timing.responseEnd * 1000.0,
-        }).finish();
-        parent.tracer().startSpan('document/dom_load', { parent : parent }).imp().modify({
-            begin_micros : timing.domLoading * 1000.0,
-            end_micros   : timing.domInteractive * 1000.0,
-        }).finish();
+        parentImp.setBeginMicros(timing.navigationStart * 1000.0);
+
+        parent.tracer().startSpan('document/time_to_first_byte', { childOf : parent }).imp()
+            .setBeginMicros(timing.requestStart * 1000.0)
+            .setEndMicros(timing.responseStart * 1000.0)
+            .finish();
+        parent.tracer()
+            .startSpan('document/response_transfer', { childOf : parent }).imp()
+            .setBeginMicros(timing.responseStart * 1000.0)
+            .setEndMicros(timing.responseEnd * 1000.0)
+            .finish();
+        parent.tracer().startSpan('document/dom_load', { childOf : parent }).imp()
+            .setBeginMicros(timing.domLoading * 1000.0)
+            .setEndMicros(timing.domInteractive * 1000.0)
+            .finish();
     }
 }
 
