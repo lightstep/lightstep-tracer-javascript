@@ -184,7 +184,7 @@
 
         function httpGet(parentSpan, urlString, callback) {
             // Create a span representing the https request
-            var span = Tracer.startSpan('https.get', { parent : parentSpan });
+            var span = Tracer.startSpan('https.get', { childOf : parentSpan });
             span.setTag('url', urlString);
 
             var xhr = new XMLHttpRequest();

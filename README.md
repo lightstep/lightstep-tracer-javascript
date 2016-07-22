@@ -41,13 +41,15 @@ var LightStep = require('lightstep-tracer/browser');
 ```
 
 
-## LightStep Specific API
+## LightStep-specific API
+
+The OpenTracing standard JavaScript API is [documented here](https://doc.esdoc.org/github.com/opentracing/opentracing-javascript/). The following describes LightStep-specific options and methods.
 
 ### LightStep
 
 ---
 
-### tracer(options)
+#### tracer(options)
 
 **Required options**
 
@@ -80,13 +82,36 @@ var LightStep = require('lightstep-tracer/browser');
 
 *NOTE: Future API compatibility on non-standard options is not guaranteed.*
 
+* `disable_reporting_loop` `bool` *optional*, *default=false* - if true, the timer that automatically sends reports to the collector will be disabled. This option is independent of `disable_report_on_exit`.
+* `disable_report_on_exit` `bool` *optional*, *default=false* - if true, the final report that is automatically sent at process exit in Node or page unload in the browser will not be sent.
 * `default_span_tags` `string` *optional* - an associative array of tags to add to every span started by the tracer (e.g., the active user id in a browser client)
+
+
+### TracerImp
+
+---
+
+#### flush(done)
+
+Causes a manual report of any buffered data.
+
+* `done` `function(err)` *optional* - callback to invoke when the report finishes.
+
+Example:
+
+```
+// Note: flush() is currently exposed by the OpenTracing JavaScript API. This
+// may be subject to change and is not part of the API in all languages.
+tracer.flush(function (err) {
+    // ...
+});
+```
 
 ### SpanImp
 
 ---
 
-### generateTraceURL()
+#### generateTraceURL()
 
 Returns an absolute URL to the LightStep application for the trace containing this span. It is safe to call this method after `finish()`.
 
