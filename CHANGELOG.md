@@ -10,7 +10,6 @@
 * Fixes the examples to use the newer OpenTracing APIs
 * Internal logging methods renamed (no external impact)
 
-
 ## 0.11.1
 
 * [Full changes](https://github.com/lightstep/lightstep-tracer-javascript/compare/v0.10.6...v0.11.1)
