@@ -39,6 +39,18 @@ it("should emit a 'span_added' event when each span ends", function() {
     expect(count).to.equal(2);
 });
 
+it("should allow for tags at startSpan time", function() {
+    // Verify that we can add tags at startSpan time.
+    var span = Tracer.startSpan("test", {
+        tags: {
+            tag_a: 1,
+            tag_b: "b",
+            tag_c: true,
+        }
+    });
+    span.finish();
+});
+
 it("should handle inject / extract to text map carriers correctly" , function() {
     var span = Tracer.startSpan('my_span');
     var spanContext = span.context();
