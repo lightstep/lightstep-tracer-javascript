@@ -57,7 +57,7 @@
     "istanbul": "^0.4.4",
     "json-loader": "^0.5.4",
     "mocha": "^2.3.4",
-    "opentracing": "^0.10.6",
+    "opentracing": "^0.10.7",
     "shelljs": "^0.5.3",
     "sprintf-js": "^1.0.3",
     "underscore": "^1.8.3",
