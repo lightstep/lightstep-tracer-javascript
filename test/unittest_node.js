@@ -21,13 +21,11 @@ Tracer.initGlobalTracer(LightStep.tracer({
     verbosity              : 0,
 }));
 
-describe('LightStep Tracer', function() {
-    describe('Common', function() {
-        require('./suites/common.js');
-    });
-    describe('Node-specific', function() {
-        require('./suites/node.js');
-    });
+describe('Common tests', function() {
+    require('./suites/common.js');
+});
+describe('Node-specific', function() {
+    require('./suites/node.js');
 });
 
 // Dynamically transform a ES6 file

@@ -6,11 +6,9 @@ Tracer.initGlobalTracer(LightStep.tracer({
     override_transport : new LocalStorageTransport('lightstep_report'),
 }));
 
-describe("LightStep Tracer", function() {
-    describe("Common", function() {
-        require("./suites/common.js");
-    });
-    describe("Browser-specific", function() {
-        require("./suites/browser.js");
-    });
+describe("Common", function() {
+    require("./suites/common.js");
+});
+describe("Browser-specific", function() {
+    require("./suites/browser.js");
 });
