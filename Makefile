@@ -48,7 +48,7 @@ benchmark: node_modules/sc-benchmark
 node_modules/sc-benchmark:
 	npm install sc-benchmark@0.1.4
 
-test: build test_node test_browser lint coverage
+test: build test_node test_browser lint
 
 # The "_mocha" in the below is important:
 # https://github.com/gotwarlost/istanbul/issues/262
