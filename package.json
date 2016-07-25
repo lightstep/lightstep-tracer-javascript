@@ -13,7 +13,7 @@
     "webpack-node-prod": "BUILD_PLATFORM=node BUILD_CONFIG=prod webpack --display-error-details",
     "webpack-browser-debug": "BUILD_PLATFORM=browser BUILD_CONFIG=debug webpack --display-error-details",
     "webpack-browser-prod": "BUILD_PLATFORM=browser BUILD_CONFIG=prod webpack --display-error-details",
-    "test": "rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js"
+    "test": "rm -f test/results/*.json && node node_modules/.bin/istanbul cover node_modules/mocha/bin/mocha -- -c test/unittest_node.js"
   },
   "license": "MIT",
   "repository": {
@@ -54,6 +54,7 @@
     "eslint": "^2.4.0",
     "eslint-config-airbnb": "^6.2.0",
     "eslint-plugin-react": "^4.2.3",
+    "istanbul": "^0.4.4",
     "json-loader": "^0.5.4",
     "mocha": "^2.3.4",
     "opentracing": "^0.10.6",

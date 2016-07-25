@@ -4,3 +4,4 @@ tmp-publish
 npm-debug.log
 npm-debug.log.*
 /temp
+/coverage

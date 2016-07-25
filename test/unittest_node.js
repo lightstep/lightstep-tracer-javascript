@@ -8,6 +8,10 @@ global.LightStep = require('../dist/lightstep-tracer-node-debug');
 var path = require('path');
 var FileTransport = require("./util/file_transport");
 
+// For the unit tests, set a high event listener count since lots of
+// temporary tracers are created
+process.setMaxListeners(256);
+
 // Use for "override" options specifically for unit testing
 Tracer.initGlobalTracer(LightStep.tracer({
     override_transport     : new FileTransport(path.join(__dirname, 'results/default_report.json')),

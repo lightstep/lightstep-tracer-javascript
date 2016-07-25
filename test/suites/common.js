@@ -1,15 +1,13 @@
 describe("API", function() {
-    require("./common/api.js");
+    require("./common/tracer.js");
+    require("./common/span.js");
+    require("./common/span_context.js");
 });
-describe("Options", function() {
-    require("./common/options.js");
+describe("Implementation-specific", function() {
+    require("./common/tracer_imp.js");
+    require("./common/span_imp.js");
+    require("./common/span_context_imp.js");
 });
-describe("Spans", function() {
-    require("./common/spans.js");
-});
-describe("Logging", function() {
-    require("./common/logging.js");
-});
-describe("Regression Testing", function() {
+describe("Regression Tests", function() {
     require("./common/regress.js");
 });
