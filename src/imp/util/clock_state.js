@@ -39,7 +39,7 @@ class ClockState {
               transmitMicros,
               destinationMicros
     ) {
-        let latestDelayMicros = Number.MAX_NUMBER;
+        let latestDelayMicros = Number.MAX_VALUE;
         let latestOffsetMicros = 0;
         // Ensure that all of the data are valid before using them. If
         // not, we'll push a {0, MAX} record into the queue.

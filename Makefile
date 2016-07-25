@@ -48,7 +48,17 @@ benchmark: node_modules/sc-benchmark
 node_modules/sc-benchmark:
 	npm install sc-benchmark@0.1.4
 
-test: build test_node test_browser lint
+test: build test_node test_browser lint coverage
+
+# The "_mocha" in the below is important:
+# https://github.com/gotwarlost/istanbul/issues/262
+.PHONY: coverage
+coverage: build
+	rm -f test/results/*.json
+	node node_modules/.bin/istanbul cover node_modules/mocha/bin/_mocha -- -c test/unittest_node.js
+	@echo
+	@echo "Coverage is currently run against the compiled code. Numbers are not fully accurate."
+	@echo "Open coverage/lcov-report/index.html for details."
 
 test_quick:
 	npm run webpack-node-debug
