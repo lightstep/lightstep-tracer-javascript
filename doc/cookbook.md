@@ -187,14 +187,14 @@ Context.prototype.end = function() {
 In a single process, creating parent-child relationships between spans is trivial:
 
 1. Be sure to pass the parent span object into the code creating the child
-2. Call `startSpan()` with the additional `parent` option
+2. Call `startSpan()` with the additional `childOf` option
 
 The additional parameter will let LightStep know about the relationship so traces are constructed and displayed accurately.
 
 ```javascript
 function startSubOperation(parentSpan, param1, param2, param3) {
 
-    let childSpan = Tracer.startSpan('my_child', { parent : parentSpan });
+    let childSpan = Tracer.startSpan('my_child', { childOf : parentSpan });
 
     //
     // Do normal work here...

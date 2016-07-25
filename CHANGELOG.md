@@ -2,6 +2,19 @@
 
 *Log of significant changes, especially those affecting the supported API.*
 
+## 0.11.2
+
+* Fixes defects where the XHR instrumentation was still using the old `parent` option
+* Add documentation for the non-standard option `disable_reporting_loop`
+* Add documentation and implementation for the non-standard option `disable_report_on_exit`
+* Fixes the examples to use the newer OpenTracing APIs
+* Internal logging methods renamed (no external impact)
+
+## 0.11.1
+
+* [Full changes](https://github.com/lightstep/lightstep-tracer-javascript/compare/v0.10.6...v0.11.1)
+* **API CHANGE**: migrates to the latest OpenTracing API which introduces `SpanContext` and changes from `inject/join` to `inject/extract`. See [the OpenTracing migration docs](https://github.com/opentracing/opentracing-javascript#v09x-to-v010x) for details.
+
 ## 0.10.6
 
 * Enable gzip compression of Node.js reports from the client by default (this is controlled by a non-standard option `gzip_json_requests`)

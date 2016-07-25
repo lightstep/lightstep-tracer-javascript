@@ -115,6 +115,9 @@ export default class TracerImp extends EventEmitter {
             this.options(opts);
         }
 
+        // This relies on the options being set: call this last.
+        this._setupReportOnExit();
+
         this._info(`TracerImp created with guid ${this._runtimeGUID}`);
     }
 
@@ -141,6 +144,8 @@ export default class TracerImp extends EventEmitter {
         this.addOption('default_span_tags',     { type: 'any',     defaultValue: {} });
         this.addOption('report_timeout_millis', { type: 'int',     defaultValue: 30000 });
         this.addOption('gzip_json_requests',    { type: 'bool',    defaultValue: true });
+        this.addOption('disable_reporting_loop', { type: 'bool',    defaultValue: false });
+        this.addOption('disable_report_on_exit', { type: 'bool',    defaultValue: false });
 
         // Debugging options
         //
@@ -149,7 +154,6 @@ export default class TracerImp extends EventEmitter {
         // If false, SSL certificate verification is skipped. Useful for testing.
         this.addOption('certificate_verification',      { type: 'bool',    defaultValue: true });
         // I.e. report only on explicit calls to flush()
-        this.addOption('disable_reporting_loop',        { type: 'bool',    defaultValue: false });
 
         // Unit testing options
         this.addOption('override_transport',            { type : 'any',    defaultValue: null });
@@ -169,7 +173,7 @@ export default class TracerImp extends EventEmitter {
     setInterface(tracerInterface) {
         this._interface = tracerInterface;
         this.startPlugins();
-        this._infoV(4, 'Initialization complete', this._options);
+        this._debug('Initialization complete', this._options);
     }
 
     newTracer(opts) {
@@ -201,12 +205,34 @@ export default class TracerImp extends EventEmitter {
         let traceGUID = parentCtxImp ? parentCtxImp._traceGUID : this.generateTraceGUIDForRootSpan();
         let spanImp = new SpanImp(this, new SpanContextImp(this._platform.generateUUID(), traceGUID));
         spanImp.addTags(this._options.default_span_tags);
-        spanImp.setFields(fields);
+
+        for (let key in fields) {
+            let value = fields[key];
+            switch (key) {
+            case 'references':
+                // Ignore: handled before constructing the span
+                break;
+            case 'operationName':
+                spanImp.setOperationName(value);
+                break;
+            case 'startTime':
+                // startTime is in milliseconds
+                spanImp.setBeginMicros(value * 1000);
+                break;
+            case 'tags':
+                this.addTags(value);
+                break;
+            default:
+                this._warn(`Ignoring unknown field '${key}'`);
+                break;
+            }
+        }
+
         if (parentCtxImp !== null) {
             spanImp.setParentGUID(parentCtxImp._guid);
         }
 
-        this.emit('start_trace', spanImp);
+        this.emit('start_span', spanImp);
         return spanImp;
     }
 
@@ -318,11 +344,21 @@ export default class TracerImp extends EventEmitter {
         return spanContext;
     }
 
+    /**
+     * Manually sends a report of all buffered data.
+     *
+     * @param  {Function} done - callback function invoked when the report
+     *         either succeeds or fails.
+     */
     flush(done) {
-        if (arguments.length === 0) {
+        if (!done) {
             done = function () {};
         }
-        this._flushReport(false, done);
+        if (this._options.disabled) {
+            this._warn('Manual flush() called in disabled state.');
+            return done(null);
+        }
+        this._flushReport(true, false, done);
     }
 
     //-----------------------------------------------------------------------//
@@ -422,7 +458,7 @@ export default class TracerImp extends EventEmitter {
                 count++;
             }
             if (count > 0) {
-                this._infoV(4, `Options modified:\n${optionsString}`);
+                this._debug(`Options modified:\n${optionsString}`);
             }
         }
         this.emit('options', modified, this._options, this);
@@ -850,19 +886,31 @@ export default class TracerImp extends EventEmitter {
     // Reporting loop
     //-----------------------------------------------------------------------//
 
-    // flush()
-    //
-    // detached bool - indicates the report should assume the script is about
-    //      to exit or otherwise wants the report to be sent as quickly and
-    //      low-overhead as possible.
-    //
-    _flush(detached, callback) {
-        detached = detached || false;
-
-        if (this._options.disabled) {
+    _setupReportOnExit() {
+        if (this._options.disable_report_on_exit) {
+            this._debug('report-on-exit is disabled.');
             return;
         }
-        this._flushReport(detached, callback);
+
+        // Do a final explicit flush. Note that the final flush may enqueue
+        // asynchronous callbacks that cause the 'beforeExit' event to be
+        // re-emitted when those callbacks finish.
+        let finalFlushOnce = 0;
+        let finalFlush = () => {
+            if (finalFlushOnce++ > 0) { return; }
+            this._info('Final flush before exit.');
+            this._flushReport(false, true, (err) => {
+                if (err) {
+                    this._error('Final report before exit failed', {
+                        error                  : err,
+                        unflushed_spans        : this._spanRecords.length,
+                        unflushed_logs         : this._logRecords.length,
+                        buffer_youngest_micros : this._reportYoungestMicros,
+                    });
+                }
+            });
+        };
+        this._platform.onBeforeExit(finalFlush);
     }
 
     _startReportingLoop() {
@@ -887,32 +935,14 @@ export default class TracerImp extends EventEmitter {
         this._info('Starting reporting loop:', this._thriftRuntime);
         this._reportingLoopActive = true;
 
-        // Set up the script exit clean-up: stop the reporting loop (so it does
-        // not turn a Node process into a zombie) and do a final explicit flush.
-        // Note that the final flush may enqueue asynchronous callbacks that cause
-        // the 'beforeExit' event to be re-emitted when those callbacks finish.
-        let finalFlushOnce = 0;
-        let finalFlush = () => {
-            if (finalFlushOnce++ > 0) { return; }
-            this._info('Final flush before exit.');
-            this._flushReport(true, (err) => {
-                if (err) {
-                    this._error('Final report before exit failed', {
-                        error                  : err,
-                        unflushed_spans        : this._spanRecords.length,
-                        unflushed_logs         : this._logRecords.length,
-                        buffer_youngest_micros : this._reportYoungestMicros,
-                    });
-                }
-            });
-        };
+        // Stop the reporting loop so the Node.js process does not become a
+        // zombie waiting for the timers.
         let stopReportingOnce = 0;
         let stopReporting = () => {
             if (stopReportingOnce++ > 0) { return; }
             this._stopReportingLoop();
         };
         this._platform.onBeforeExit(stopReporting);
-        this._platform.onBeforeExit(finalFlush);
 
         // Begin the asynchronous reporting loop
         let loop = () => {
@@ -926,7 +956,7 @@ export default class TracerImp extends EventEmitter {
     }
 
     _stopReportingLoop() {
-        this._infoV(4, 'Stopping reporting loop');
+        this._debug('Stopping reporting loop');
 
         this._reportingLoopActive = false;
         clearTimeout(this._reportTimer);
@@ -954,21 +984,34 @@ export default class TracerImp extends EventEmitter {
         let jitter = 1.0 + (Math.random() * 0.2 - 0.1);
         let delay = Math.floor(Math.max(0, jitter * basis));
 
-        this._infoV(4, `Delaying next flush for ${delay}ms`);
+        this._debug(`Delaying next flush for ${delay}ms`);
         this._reportTimer = util.detachedTimeout(() => {
             this._reportTimer = null;
-            this._flushReport(false, done);
+            this._flushReport(false, false, done);
         }, delay);
     }
 
-    _flushReport(detached, done) {
+    /**
+     * Internal worker for a flush of buffered data into a report.
+     *
+     * @param  {bool} manual - this is a manually invoked flush request. Don't
+     *         override this call with a clock state syncing flush, for example.
+     * @param  {bool} detached - this is an "at exit" flush that should not block
+     *         the calling process in any manner. This is specifically called
+     *         "detached" due to the browser use case where the report is done,
+     *         not just asynchronously, but as a script request that continues
+     *         to run even if the page is navigated away from mid-request.
+     * @param  {function} done - standard callback function called on success
+     *         or error.
+     */
+    _flushReport(manual, detached, done) {
         done = done || function (err) {};
 
         let clockReady = this._clockState.isReady();
         let clockOffsetMicros = this._clockState.offsetMicros();
 
         // Diagnostic information on the clock correction
-        this._infoV(4, 'time correction state', {
+        this._debug('time correction state', {
             offset_micros  : clockOffsetMicros,
             active_samples : this._clockState.activeSampleCount(),
             ready          : clockReady,
@@ -983,8 +1026,8 @@ export default class TracerImp extends EventEmitter {
         // samples before the real data is reported.
         // A detached flush (i.e. one intended to fire at exit or other "last
         // ditch effort" event) should always use the real data.
-        if (this._useClockState && !clockReady && !detached) {
-            this._infoV(4, 'Flushing empty report to prime clock state');
+        if (this._useClockState && !manual && !clockReady && !detached) {
+            this._debug('Flushing empty report to prime clock state');
             logRecords  = [];
             spanRecords = [];
             counters    = {};
@@ -992,14 +1035,14 @@ export default class TracerImp extends EventEmitter {
         } else {
             // Early out if we can.
             if (this._buffersAreEmpty()) {
-                this._infoV(4, 'Skipping empty report');
+                this._debug('Skipping empty report');
                 return done(null);
             }
 
             // Clear the object buffers as the data is now in the local
             // variables
             this._clearBuffers();
-            this._infoV(4, `Flushing report (${logRecords.length} logs, ${spanRecords.length} spans)`);
+            this._debug(`Flushing report (${logRecords.length} logs, ${spanRecords.length} spans)`);
         }
 
         this._transport.ensureConnection(this._options);
@@ -1041,7 +1084,6 @@ export default class TracerImp extends EventEmitter {
             }),
             timestamp_offset_micros : timestampOffset,
         });
-        this._infoV(5, `timestamp_offset_micros = ${timestampOffset}`);
 
         this.emit('prereport', report);
         let originMicros = this._platform.nowMicros();
@@ -1065,7 +1107,6 @@ export default class TracerImp extends EventEmitter {
                 this._error(`Error in report: ${errString}`, {
                     last_report_seconds_ago : reportWindowSeconds,
                 });
-                this._infoV(5, 'Failed report content:', report);
 
                 this._restoreRecords(
                     report.log_records,
@@ -1083,7 +1124,7 @@ export default class TracerImp extends EventEmitter {
                 });
             } else {
                 if (this.verbosity() >= 4) {
-                    this._infoV(5, `Report flushed for last ${reportWindowSeconds} seconds`, {
+                    this._debug(`Report flushed for last ${reportWindowSeconds} seconds`, {
                         spans_reported : report.span_records.length,
                         logs_reported  : report.log_records.length,
                     });
@@ -1145,15 +1186,18 @@ export default class TracerImp extends EventEmitter {
     // * Internal logs that are echoed to the host application:
     //      - See the README.md :)
     //
-    _infoV(v, msg, payload) {
-        if (this.verbosity() < v) {
+    _debug(msg, payload) {
+        if (this.verbosity() < 4) {
             return;
         }
-        this._printToConsole('log', `[LightStep:INFO${v} ${new Date()}] ${msg}`, payload);
+        this._printToConsole('log', `[LightStep:DEBUG ${new Date()}] ${msg}`, payload);
     }
 
     _info(msg, payload) {
-        this._infoV(3, msg, payload);
+        if (this.verbosity() < 3) {
+            return;
+        }
+        this._printToConsole('log', `[LightStep:INFO ${new Date()}] ${msg}`, payload);
     }
 
     _warn(msg, payload) {

@@ -32,9 +32,9 @@ pushd node_modules/opentracing
 VERSION=`node -e "p=require('./package.json'); console.log(p.version)"`
 popd
 OUTDIR=$BASEDIR/opentracing-javascript/$VERSION
-mkdir -p $OUTDIR && cp node_modules/opentracing/dist/* $OUTDIR
+mkdir -p $OUTDIR && cp -R node_modules/opentracing/dist/* $OUTDIR
 OUTDIR=$BASEDIR/opentracing-javascript/current
-mkdir -p $OUTDIR && cp node_modules/opentracing/dist/* $OUTDIR
+mkdir -p $OUTDIR && cp -R node_modules/opentracing/dist/* $OUTDIR
 
 #
 # Publish the files via a git push

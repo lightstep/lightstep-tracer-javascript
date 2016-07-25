@@ -116,6 +116,17 @@ export default class SpanImp {
 
     setParentGUID(guid) {
         this._tags.parent_span_guid = coerce.toString(guid);
+        return this;
+    }
+
+    setBeginMicros(micros) {
+        this._beginMicros = micros;
+        return this;
+    }
+
+    setEndMicros(micros) {
+        this._endMicros = micros;
+        return this;
     }
 
     /**
@@ -143,44 +154,10 @@ export default class SpanImp {
         return this._tags;
     }
 
-    setFields(fields) {
-        for (let key in fields) {
-            let value = fields[key];
-            switch (key) {
-            case 'operationName':
-                this._operation = value;
-                break;
-            case 'startTime':
-                // startTime is in milliseconds
-                this._beginMicros = value * 1000;
-                break;
-            case 'tags':
-                this.addTags(value);
-                break;
-            default:
-                this._tracer._warn(`Ignoring unknown field ${key}`);
-                break;
-            }
-        }
-    }
-
-    // TODO: deprecate this and combine with setFields
-    modify(fields) {
-        if (!fields) {
-            return this;
-        }
-        if (fields.begin_micros) {
-            this._beginMicros = fields.begin_micros;
-        }
-        if (fields.end_micros) {
-            this._endMicros = fields.end_micros;
-        }
-        return this;
-    }
-
     setJoinID(key, value) {
         this._tags[key] = value;
         this._joinIDs[key] = true;
+        return this;
     }
 
     /**
