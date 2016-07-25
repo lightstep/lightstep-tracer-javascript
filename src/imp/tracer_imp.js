@@ -220,7 +220,7 @@ export default class TracerImp extends EventEmitter {
                 spanImp.setBeginMicros(value * 1000);
                 break;
             case 'tags':
-                this.addTags(value);
+                spanImp.addTags(value);
                 break;
             default:
                 this._warn(`Ignoring unknown field '${key}'`);
