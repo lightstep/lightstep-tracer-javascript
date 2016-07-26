@@ -51,14 +51,10 @@ it('should coerce non-string operation names to strings', function() {
     ];
     var i;
     for (i = 0; i < cases.length; i++) {
-        var span = Tracer.startSpan(cases[i]);
-        var name = span.imp().getOperationName();
-        expect(name).to.be.a('string');
-        span.finish();
-    }
-    for (i = 0; i < cases.length; i++) {
         var span = Tracer.startSpan('valid_name');
-        span.setOperationName(cases[i]);
+        // Call the imp() object directly. The OpenTracing API checks will
+        // complain about non-string operation names
+        span.imp().setOperationName(cases[i]);
         var name = span.imp().getOperationName();
         expect(name).to.be.a('string');
         span.finish();
