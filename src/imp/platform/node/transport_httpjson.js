@@ -13,6 +13,14 @@ function truncatedString(s) {
     return `${s.substr(0, half)}...${s.substr(-half)}`;
 }
 
+function encodeAndTruncate(obj) {
+    try {
+        return truncatedString(JSON.stringify(obj));
+    } catch (exception) {
+        return exception;
+    }
+}
+
 function errorFromResponse(res, buffer) {
     buffer = truncatedString(`${buffer}`.replace(/\s+$/, ''));
     return new Error(`status code=${res.statusCode}, message='${res.statusMessage}', body='${buffer}'`);
@@ -86,7 +94,7 @@ export default class TransportHTTPJSON {
                                 message : res.statusMessage,
                                 body    : buffer,
                                 extra   : extraErrorData,
-                                report  : truncatedString(payload),
+                                report  : encodeAndTruncate(reportRequest),
                             });
                         });
                         err = errorFromResponse(res, buffer);

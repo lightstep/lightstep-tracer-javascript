@@ -44,3 +44,23 @@ it('should fail gracefully on invalid inject format', function() {
     Tracer.inject(span.context(), "unknown_custom_format", {});
     span.finish();
 });
+
+it('should coerce non-string operation names to strings', function() {
+    var cases = [
+        'test', 42, true
+    ];
+    var i;
+    for (i = 0; i < cases.length; i++) {
+        var span = Tracer.startSpan(cases[i]);
+        var name = span.imp().getOperationName();
+        expect(name).to.be.a('string');
+        span.finish();
+    }
+    for (i = 0; i < cases.length; i++) {
+        var span = Tracer.startSpan('valid_name');
+        span.setOperationName(cases[i]);
+        var name = span.imp().getOperationName();
+        expect(name).to.be.a('string');
+        span.finish();
+    }
+});

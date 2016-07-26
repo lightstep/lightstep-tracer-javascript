@@ -17,7 +17,7 @@ export default class SpanImp {
     }
 
     setOperationName(name) {
-        this._operation = name;
+        this._operation = `${name}`;
     }
 
     addTags(keyValuePairs) {
