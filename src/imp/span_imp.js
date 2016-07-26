@@ -39,6 +39,12 @@ export default class SpanImp {
      */
     // Log record specified by fields
     log(fields) {
+        const argumentType = typeof fields;
+        if (argumentType !== 'string') {
+            this._tracer._error('Span.log() expects an object as its argument');
+            return;
+        }
+
         let rec = this._tracer.log()
             .span(this.guid())
             .level(constants.LOG_STRING_TO_LEVEL[fields.level] || constants.LOG_INFO);
