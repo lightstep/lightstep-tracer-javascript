@@ -16,11 +16,27 @@ describe("SpanImp", function() {
         });
     });
 
+    describe("SpanImp#beginMicros", function() {
+        it("returns a number", function() {
+            var span = Tracer.startSpan('test');
+            expect(span.imp().beginMicros()).to.be.a("number");
+            span.finish();
+        });
+    });
+
     // Used by the browser to create spans retroactively
     describe("SpanImp#setEndMicros", function() {
         it("is a method", function() {
             var span = Tracer.startSpan('test');
             expect(span.imp().setEndMicros).to.be.a("function");
+            span.finish();
+        });
+    });
+
+    describe("SpanImp#endMicros", function() {
+        it("returns a number", function() {
+            var span = Tracer.startSpan('test');
+            expect(span.imp().endMicros()).to.be.a("number");
             span.finish();
         });
     });
