@@ -238,6 +238,7 @@ export default class TracerImp extends EventEmitter {
 
     inject(spanContext, format, carrier) {
         switch (format) {
+        case this._interface.FORMAT_HTTP_HEADERS:
         case this._interface.FORMAT_TEXT_MAP:
             this._injectToTextMap(spanContext, carrier);
             break;
@@ -277,6 +278,7 @@ export default class TracerImp extends EventEmitter {
 
         switch (format) {
 
+        case this._interface.FORMAT_HTTP_HEADERS:
         case this._interface.FORMAT_TEXT_MAP: {
             // Iterate over the contents of the carrier and set the properties
             // accordingly.
