@@ -40,7 +40,7 @@ export default class SpanImp {
     // Log record specified by fields
     log(fields) {
         const argumentType = typeof fields;
-        if (argumentType !== 'string') {
+        if (argumentType !== 'object') {
             this._tracer._error('Span.log() expects an object as its argument');
             return;
         }
