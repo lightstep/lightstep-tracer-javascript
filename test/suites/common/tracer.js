@@ -93,7 +93,25 @@ describe("Tracer", function() {
             expect(extractedContext.getBaggageItem('creditcard')).to.equal('visa');
         });
 
-        it("should propagate http header carriers");
+        it("should propagate http header carriers", function() {
+            var span = Tracer.startSpan('my_span');
+            var spanContext = span.context();
+            spanContext.setBaggageItem('footwear', 'sandals');
+            spanContext.setBaggageItem('creditcard', 'visa');
+
+            var carrier = {};
+            Tracer.inject(spanContext, Tracer.FORMAT_HTTP_HEADERS, carrier);
+            expect(carrier['ot-tracer-traceid']).to.equal(spanContext.imp()._traceGUID);
+            expect(carrier['ot-tracer-spanid']).to.equal(spanContext.imp()._guid);
+            expect(carrier['ot-baggage-footwear']).to.equal('sandals');
+            expect(carrier['ot-baggage-creditcard']).to.equal('visa');
+
+            var extractedContext = Tracer.extract(Tracer.FORMAT_HTTP_HEADERS, carrier);
+            expect(extractedContext.imp()._guid).to.equal(spanContext.imp()._guid);
+            expect(extractedContext.getBaggageItem('footwear')).to.equal('sandals');
+            expect(extractedContext.getBaggageItem('creditcard')).to.equal('visa');
+        });
+
         it("should propagate binary carriers");
     });
 
