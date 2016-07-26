@@ -119,9 +119,17 @@ export default class SpanImp {
         return this;
     }
 
+    beginMicros() {
+        return this._beginMicros;
+    }
+
     setBeginMicros(micros) {
         this._beginMicros = micros;
         return this;
+    }
+
+    endMicros() {
+        return this._endMicros;
     }
 
     setEndMicros(micros) {
