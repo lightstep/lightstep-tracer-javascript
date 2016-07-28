@@ -88,8 +88,8 @@ export default class PlatformNode {
     }
 
     generateUUID() {
-        let p0 = `00000000${((Math.random() * 0xFFFFFFFF)|0).toString(16)}`.substr(-8);
-        let p1 = `00000000${((Math.random() * 0xFFFFFFFF)|0).toString(16)}`.substr(-8);
+        let p0 = `00000000${((Math.random() * 0xFFFFFFFF) | 0).toString(16)}`.substr(-8);
+        let p1 = `00000000${((Math.random() * 0xFFFFFFFF) | 0).toString(16)}`.substr(-8);
         return `${p0}${p1}`;
     }
 
