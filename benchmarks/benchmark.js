@@ -13,6 +13,8 @@ function createNonReportingTracer() {
         component_name         : 'lightstep-tracer/benchmarks',
         access_token           : 'unused',
         disable_reporting_loop : true,
+        disable_report_on_exit : true,
+        collector_host         : 'example.com',
     }));
 }
 function createNestedObject(n) {
@@ -39,6 +41,26 @@ let s = new Suite();
 s.bench('sanity check (10ms)', (N, t) => {
     for (let i = 0; i < N; i++) {
         busyWait(10.0);
+    }
+});
+
+s.bench('uuid w/ crypto.randomBytes', (N, t) => {
+    for (let i = 0; i < N; i++) {
+        let a = new Array(1000);
+        for (let j = 0; j < a.length; j++) {
+            a[j] = require('crypto').randomBytes(8).toString('hex');
+        }
+    }
+});
+
+s.bench('uuid w/ Math.random()', (N, t) => {
+    for (let i = 0; i < N; i++) {
+        let a = new Array(1000);
+        for (let j = 0; j < a.length; j++) {
+            let p0 = `00000000${((Math.random() * 0xFFFFFFFF)|0).toString(16)}`.substr(-8);
+            let p1 = `00000000${((Math.random() * 0xFFFFFFFF)|0).toString(16)}`.substr(-8);
+            a[j] = `${p0}${p1}`;
+        }
     }
 });
 
