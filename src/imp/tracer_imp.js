@@ -194,9 +194,15 @@ export default class TracerImp extends EventEmitter {
         if (fields.references) {
             for (let i = 0; i < fields.references.length; i++) {
                 let ref = fields.references[i];
-                if (ref.type() === this._interface.REFERENCE_CHILD_OF ||
-                        ref.type() === this._interface.REFERENCE_FOLLOWS_FROM) {
-                    parentCtxImp = ref.referencedContext().imp();
+                let type = ref.type();
+                if (type === this._interface.REFERENCE_CHILD_OF ||
+                    type === this._interface.REFERENCE_FOLLOWS_FROM) {
+                    let context = ref.referencedContext();
+                    if (!context) {
+                        this._error('Span reference has an invalid context', context);
+                        continue;
+                    }
+                    parentCtxImp = context.imp();
                     break;
                 }
             }
