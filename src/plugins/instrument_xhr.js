@@ -1,3 +1,5 @@
+import _each from '../_each';
+
 // Capture the proxied values on script load (i.e. ASAP) in case there are
 // multiple layers of instrumentation.
 let proxied = {};
@@ -38,7 +40,7 @@ function getCookies() {
 function getResponseHeaders(xhr) {
     let raw = xhr.getAllResponseHeaders();
     let parts = raw.replace(/\s+$/, '').split(/\n/);
-    for (let i in parts) {
+    for (let i = 0; i < parts.length; i++) {
         parts[i] = parts[i].replace(/\r/g, '').replace(/^\s+/, '').replace(/\s+$/, '');
     }
     return parts;
@@ -194,9 +196,9 @@ class InstrumentXHR {
             }
 
             let openPayload = {};
-            for (let key in tags) {
-                openPayload[key] = tags[key];
-            }
+            _each(tags, (val, key) => {
+                openPayload[key] = val;
+            });
             openPayload.cookies = getCookies();
 
             // Note: async defaults to true
@@ -319,6 +321,9 @@ class InstrumentXHR {
             return false;
         }
         for (let key in this._internalExclusions) {
+            if (!opts._internalExclusions.hasOwnProperty(key)) {
+                continue;
+            }
             const ex = this._internalExclusions[key];
             if (ex.test(url)) {
                 return false;
@@ -326,6 +331,9 @@ class InstrumentXHR {
         }
         let include = false;
         for (let key in opts.xhr_url_inclusion_patterns) {
+            if (!opts.xhr_url_inclusion_patterns.hasOwnProperty(key)) {
+                continue;
+            }
             const inc = opts.xhr_url_inclusion_patterns[key];
             if (inc.test(url)) {
                 include = true;
@@ -336,6 +344,9 @@ class InstrumentXHR {
             return false;
         }
         for (let key in opts.xhr_url_exclusion_patterns) {
+            if (!opts.xhr_url_exclusion_patterns.hasOwnProperty(key)) {
+                continue;
+            }
             const ex = opts.xhr_url_exclusion_patterns[key];
             if (ex.test(url)) {
                 return false;

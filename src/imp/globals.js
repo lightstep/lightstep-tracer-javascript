@@ -1,12 +1,14 @@
+import _each from '../_each';
+
 class PackageGlobals {
     constructor() {
         this.options = {};
     }
 
     setOptions(opts) {
-        for (let key in opts) {
-            this.options[key] = opts[key];
-        }
+        _each(opts, (val, key) => {
+            this.options[key] = val;
+        });
     }
 }
 

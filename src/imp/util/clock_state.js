@@ -1,3 +1,5 @@
+import _each from '../../_each';
+
 // How many updates before a sample is considered old. This happens to
 // be one less than the number of samples in our buffer but that's
 // somewhat arbitrary.
@@ -94,13 +96,12 @@ class ClockState {
         // offset is the "best" one.
         let minDelayMicros = Number.MAX_VALUE;
         let bestOffsetMicros = 0;
-        for (let key in this._samples) {
-            const sample = this._samples[key];
+        _each(this._samples, (sample) => {
             if (sample.delayMicros < minDelayMicros) {
                 minDelayMicros = sample.delayMicros;
                 bestOffsetMicros = sample.offsetMicros;
             }
-        }
+        });
 
         // No update.
         if (bestOffsetMicros === this._currentOffsetMicros) {
@@ -110,10 +111,9 @@ class ClockState {
         // Now compute the jitter, i.e. the error relative to the new
         // offset were we to use it.
         let jitter = 0;
-        for (let key in this._samples) {
-            const sample = this._samples[key];
+        _each(this._samples, (sample) => {
             jitter += Math.pow(bestOffsetMicros - sample.offsetMicros, 2);
-        }
+        });
         jitter = Math.sqrt(jitter / this._samples.length);
 
         // Ignore spikes: only use the new offset if the change is not too

@@ -1,3 +1,5 @@
+import _each from '../_each';
+
 class InstrumentPageLoad {
     constructor() {
         this._inited = false;
@@ -63,7 +65,7 @@ class InstrumentPageLoad {
 
     _copyNavigatorProperties(nav) {
         let dst = {};
-        for (let key in nav) {
+        for (let key in nav) { // eslint-disable-line guard-for-in
             try {
                 let value = nav[key];
                 switch (key) {
@@ -114,12 +116,10 @@ class InstrumentPageLoad {
 
         parent.setTag('user_agent', navigator.userAgent);
 
-        for (let key in timing) {
-            let value = timing[key];
-
+        _each(timing, (value, key) => {
             // e.g. secureConnectionStart is not always set
             if (typeof value !== 'number' || value === 0) {
-                continue;
+                return;
             }
 
             let micros = value * 1000.0;
@@ -135,7 +135,7 @@ class InstrumentPageLoad {
                 timestamp_micros : micros,
                 payload          : payload,
             });
-        }
+        });
 
         if (window.chrome && window.chrome.loadTimes) {
             let chromeTimes = window.chrome.loadTimes();
