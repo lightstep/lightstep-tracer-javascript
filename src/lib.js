@@ -2,6 +2,7 @@ import globals from './imp/globals';
 import * as Constants from './constants';
 import TracerImp from './imp/tracer_imp';
 import { Platform } from './platform_abstraction_layer';
+import _each from './_each';
 
 class Library {
 
@@ -9,9 +10,9 @@ class Library {
         this._singleton = null;
 
         // Make the constants accessible off the LightStep object
-        for (let key in Constants) {
-            this[key] = this[key] || Constants[key];
-        }
+        _each(Constants, (val, key) => {
+            this[key] = val;
+        });
     }
 
     /**

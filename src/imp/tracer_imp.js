@@ -7,6 +7,7 @@ import { Platform, Transport, crouton_thrift } from '../platform_abstraction_lay
 import SpanContextImp from './span_context_imp';
 import SpanImp from './span_imp';
 import globals from './globals';
+import _each from '../_each';
 
 const constants     = require('../constants');
 const coerce        = require('./coerce');
@@ -180,11 +181,11 @@ export default class TracerImp extends EventEmitter {
         // Inherit all options of the global tracer unless explicitly specified
         // otherwise
         opts = opts || {};
-        for (let key in globals.options) {
+        _each(globals.options, (val, key) => {
             if (opts[key] === undefined) {
-                opts[key] = globals.options[key];
+                opts[key] = val;
             }
-        }
+        });
         return new TracerImp(opts);
     }
 
@@ -212,8 +213,7 @@ export default class TracerImp extends EventEmitter {
         let spanImp = new SpanImp(this, new SpanContextImp(this._platform.generateUUID(), traceGUID));
         spanImp.addTags(this._options.default_span_tags);
 
-        for (let key in fields) {
-            let value = fields[key];
+        _each(fields, (value, key) => {
             switch (key) {
             case 'references':
                 // Ignore: handled before constructing the span
@@ -232,7 +232,7 @@ export default class TracerImp extends EventEmitter {
                 this._warn(`Ignoring unknown field '${key}'`);
                 break;
             }
-        }
+        });
 
         if (parentCtxImp !== null) {
             spanImp.setParentGUID(parentCtxImp._guid);
@@ -279,76 +279,73 @@ export default class TracerImp extends EventEmitter {
     }
 
     extract(format, carrier) {
+        switch (format) {
+        case this._interface.FORMAT_HTTP_HEADERS:
+        case this._interface.FORMAT_TEXT_MAP:
+            return this._extractTextMap(format, carrier);
+
+        case this._interface.FORMAT_BINARY:
+            this._error(`Unsupported format: ${format}`);
+            return null;
+
+        default:
+            this._error(`Unsupported format: ${format}`);
+            return null;
+        }
+    }
+
+    _extractTextMap(format, carrier) {
         // Begin with the empty SpanContextImp
         let spanContext = new SpanContextImp(null, null);
 
-        switch (format) {
+        // Iterate over the contents of the carrier and set the properties
+        // accordingly.
+        let foundFields = 0;
+        _each(carrier, (value, key) => {
+            key = key.toLowerCase();
+            if (key.substr(0, CARRIER_TRACER_STATE_PREFIX.length) !== CARRIER_TRACER_STATE_PREFIX) {
+                return;
+            }
+            let suffix = key.substr(CARRIER_TRACER_STATE_PREFIX.length);
 
-        case this._interface.FORMAT_HTTP_HEADERS:
-        case this._interface.FORMAT_TEXT_MAP: {
-            // Iterate over the contents of the carrier and set the properties
-            // accordingly.
-            let foundFields = 0;
-            for (let key in carrier) {
-                let value = carrier[key];
-                key = key.toLowerCase();
-                if (key.substr(0, CARRIER_TRACER_STATE_PREFIX.length) !== CARRIER_TRACER_STATE_PREFIX) {
-                    continue;
-                }
-                let suffix = key.substr(CARRIER_TRACER_STATE_PREFIX.length);
+            switch (suffix) {
+            case 'traceid':
+                foundFields++;
+                spanContext._traceGUID = value;
+                break;
+            case 'spanid':
+                foundFields++;
+                spanContext._guid = value;
+                break;
+            case 'sampled':
+                // Ignored. The carrier may be coming from a different client
+                // library that sends this (even though it's not used).
+                break;
+            default:
+                this._error(`Unrecognized carrier key '${key}' with recognized prefix. Ignoring.`);
+                break;
+            }
+        });
 
-                switch (suffix) {
-                case 'traceid':
-                    foundFields++;
-                    spanContext._traceGUID = value;
-                    break;
-                case 'spanid':
-                    foundFields++;
-                    spanContext._guid = value;
-                    break;
-                case 'sampled':
-                    // Ignored. The carrier may be coming from a different client
-                    // library that sends this (even though it's not used).
-                    break;
-                default:
-                    this._error(`Unrecognized carrier key '${key}' with recognized prefix. Ignoring.`);
-                    break;
-                }
-            }
-            if (foundFields === 0) {
-                // This is not an error per se, there was simply no SpanContext
-                // in the carrier.
-                return null;
-            }
-            if (foundFields < 2) {
-                // A partial SpanContext suggests some sort of data corruption.
-                this._error(`Only found a partial SpanContext: ${format}, ${carrier}`);
-                return null;
-            }
-            for (let key in carrier) {
-                let value = carrier[key];
-                key = key.toLowerCase();
-                if (key.substr(0, CARRIER_BAGGAGE_PREFIX.length) !== CARRIER_BAGGAGE_PREFIX) {
-                    continue;
-                }
-                let suffix = key.substr(CARRIER_BAGGAGE_PREFIX.length);
-                spanContext.setBaggageItem(suffix, value);
-            }
-            break;
+        if (foundFields === 0) {
+            // This is not an error per se, there was simply no SpanContext
+            // in the carrier.
+            return null;
+        }
+        if (foundFields < 2) {
+            // A partial SpanContext suggests some sort of data corruption.
+            this._error(`Only found a partial SpanContext: ${format}, ${carrier}`);
+            return null;
         }
 
-        case this._interface.FORMAT_BINARY: {
-            this._error(`Unsupported format: ${format}`);
-            break;
-        }
-
-        default: {
-            this._error(`Unsupported format: ${format}`);
-            break;
-        }
-
-        }  // switch
-
+        _each(carrier, (value, key) => {
+            key = key.toLowerCase();
+            if (key.substr(0, CARRIER_BAGGAGE_PREFIX.length) !== CARRIER_BAGGAGE_PREFIX) {
+                return;
+            }
+            let suffix = key.substr(CARRIER_BAGGAGE_PREFIX.length);
+            spanContext.setBaggageItem(suffix, value);
+        });
         return spanContext;
     }
 
@@ -395,11 +392,9 @@ export default class TracerImp extends EventEmitter {
 
     setPlatformOptions(userOptions) {
         let opts = this._platform.options(this) || {};
-        if (userOptions) {
-            for (let key in userOptions) {
-                opts[key] = userOptions[key];
-            }
-        }
+        _each(userOptions, (val, key) => {
+            opts[key] = val;
+        });
         this.options(opts);
     }
 
@@ -435,10 +430,9 @@ export default class TracerImp extends EventEmitter {
         // Track what options have been modified
         let modified = {};
         let unchanged = {};
-        for (let i in this._optionDescs) {
-            const desc = this._optionDescs[i];
+        _each(this._optionDescs, (desc) => {
             this._setOptionInternal(modified, unchanged, opts, desc);
-        }
+        });
 
         // Check for any invalid options: is there a key in the specified operation
         // that didn't result either in a change or a reset to the existing value?
@@ -460,11 +454,10 @@ export default class TracerImp extends EventEmitter {
         if (this.verbosity() >= 3) {
             let optionsString = '';
             let count = 0;
-            for (let key in modified) {
-                let val = modified[key];
+            _each(modified, (val, key) => {
                 optionsString += `\t${JSON.stringify(key)}: ${JSON.stringify(val.newValue)}\n`;
                 count++;
-            }
+            });
             if (count > 0) {
                 this._debug(`Options modified:\n${optionsString}`);
             }
@@ -593,27 +586,26 @@ export default class TracerImp extends EventEmitter {
             // internal tags.
             //
             let tags = {};
-            for (let key in this._options.tags) {
-                let value = this._options.tags[key];
+            _each(this._options.tags, (value, key) => {
                 if (typeof value !== 'string') {
                     this._error(`Tracer tag value is not a string: key=${key}`);
-                    continue;
+                    return;
                 }
                 tags[key] = value;
-            }
+            });
             tags.lightstep_tracer_version = packageObject.version;
             let platformTags = this._platform.tracerTags();
-            for (let key in platformTags) {
-                tags[key] = platformTags[key];
-            }
+            _each(platformTags, (val, key) => {
+                tags[key] = val;
+            });
 
             let thriftAttrs = [];
-            for (let key in tags) {
+            _each(tags, (val, key) => {
                 thriftAttrs.push(new crouton_thrift.KeyValue({
                     Key   : coerce.toString(key),
-                    Value : coerce.toString(tags[key]),
+                    Value : coerce.toString(val),
                 }));
-            }
+            });
 
             // NOTE: for legacy reasons, the Thrift field is called "group_name"
             // but is semantically equivalen to the "component_name"
@@ -638,9 +630,9 @@ export default class TracerImp extends EventEmitter {
 
     addPlatformPlugins(opts) {
         let pluginSet = this._platform.plugins(opts);
-        for (let key in pluginSet) {
-            this.addPlugin(pluginSet[key]);
-        }
+        _each(pluginSet, (val) => {
+            this.addPlugin(val);
+        });
     }
 
     addPlugin(plugin) {
@@ -655,9 +647,9 @@ export default class TracerImp extends EventEmitter {
     }
 
     startPlugins() {
-        for (let key in this._plugins) {
+        _each(this._plugins, (val, key) => {
             this._plugins[key].start(this._interface, this);
-        }
+        });
     }
 
     //-----------------------------------------------------------------------//
@@ -696,13 +688,12 @@ export default class TracerImp extends EventEmitter {
         // Set the _activeRootSpan to the youngest of the roots in case of
         // multiple.
         this._activeRootSpan = null;
-        for (let guid in this._activeRootSpanSet) {
-            let span = this._activeRootSpanSet[guid];
+        _each(this._activeRootSpanSet, (span) => {
             if (!this._activeRootSpan ||
                 span._beginMicros > this._activeRootSpan._beginMicros) {
                 this._activeRootSpan = span;
             }
-        }
+        });
     }
 
     //-----------------------------------------------------------------------//
@@ -777,9 +768,9 @@ export default class TracerImp extends EventEmitter {
         // Create a new object to avoid overwriting the values in any references
         // to the old object
         let counters = {};
-        for (let key in this._counters) {
+        _each(this._counters, (unused, key) => {
             counters[key] = 0;
-        }
+        });
         this._counters = counters;
     }
 
@@ -793,12 +784,14 @@ export default class TracerImp extends EventEmitter {
         if (this._internalLogs.length > 0) {
             return false;
         }
-        for (let key in this._counters) {
-            if (this._counters[key] > 0) {
-                return false;
+
+        let countersAllZero = true;
+        _each(this._counters, (val) => {
+            if (val > 0) {
+                countersAllZero = false;
             }
-        }
-        return true;
+        });
+        return countersAllZero;
     }
 
     // Adds a completed record into the log buffer
@@ -866,28 +859,27 @@ export default class TracerImp extends EventEmitter {
     }
 
     _restoreRecords(logs, spans, internalLogs, counters) {
-        for (let i in logs) {
-            this._internalAddLogRecord(logs[i]);
-        }
-        for (let i in spans) {
-            this._internalAddSpanRecord(spans[i]);
-        }
+        _each(logs, (log) => {
+            this._internalAddLogRecord(log);
+        });
+        _each(spans, (span) => {
+            this._internalAddSpanRecord(span);
+        });
 
         let currentInternalLogs = this._internalLogs;
         this._internalLogs = [];
         let toAdd = internalLogs.concat(currentInternalLogs);
-        for (let i in toAdd) {
-            this._pushInternalLog(toAdd[i]);
-        }
+        _each(toAdd, (log) => {
+            this._pushInternalLog(log);
+        });
 
-        for (let key in counters) {
-            const record = counters[key];
+        _each(counters, (record) => {
             if (this._counters[record.Name]) {
                 this._counters[record.Name] += record.Value;
             } else {
                 this._error(`Bad counter name: ${record.Name}`);
             }
-        }
+        });
     }
 
     //-----------------------------------------------------------------------//
@@ -1059,24 +1051,23 @@ export default class TracerImp extends EventEmitter {
         // spans before the GUID is necessarily set.
         console.assert(this._runtimeGUID !== null, 'No runtime GUID for Tracer'); // eslint-disable-line no-console
 
-        for (let key in logRecords) {
-            logRecords[key].runtime_guid = this._runtimeGUID;
-        }
-        for (let key in spanRecords) {
-            spanRecords[key].runtime_guid = this._runtimeGUID;
-        }
+        _each(logRecords, (log) => {
+            log.runtime_guid = this._runtimeGUID;
+        });
+        _each(spanRecords, (span) => {
+            span.runtime_guid = this._runtimeGUID;
+        });
 
         let thriftCounters = [];
-        for (let key in counters) {
-            let value = counters[key];
+        _each(counters, (value, key) => {
             if (value === 0) {
-                continue;
+                return;
             }
             thriftCounters.push(new crouton_thrift.MetricsSample({
                 name         : coerce.toString(key),
                 double_value : coerce.toNumber(value),
             }));
-        }
+        });
 
         let timestampOffset = this._useClockState ? clockOffsetMicros : 0;
         let now = this._platform.nowMicros();

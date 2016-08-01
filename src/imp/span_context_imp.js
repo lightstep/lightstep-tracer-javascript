@@ -1,3 +1,5 @@
+import _each from '../_each';
+
 export default class SpanContextImp {
 
     // ---------------------------------------------------------------------- //
@@ -21,9 +23,9 @@ export default class SpanContextImp {
     //
     // https://github.com/opentracing/opentracing.github.io/issues/103
     forEachBaggageItem(f) {
-        for (let key in this._baggage) {
-            f(key, this._baggage[key]);
-        }
+        _each(this._baggage, (val, key) => {
+            f(key, val);
+        });
     }
 
     // ---------------------------------------------------------------------- //

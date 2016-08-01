@@ -1,4 +1,5 @@
 const os = require('os');
+const _each = require('../../../_each.js');
 
 function computeStartMicros() {
     let startTimeMs = Date.now();
@@ -106,9 +107,7 @@ export default class PlatformNode {
             return;
         }
         let opts = {};
-        for (let key in process.argv) {
-            const value = process.argv[key];
-
+        _each(process.argv, (value, key) => {
             // Keep the argument "parsing" simple.  These are primarily debug
             // options regardless.
             switch (value.toLowerCase()) {
@@ -136,7 +135,7 @@ export default class PlatformNode {
                 // Ignore
                 break;
             }
-        }
+        });
         return opts;
     }
 
