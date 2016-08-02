@@ -1,8 +1,8 @@
 # LightStep JavaScript Tracing Cookbook
 
-Creating a useful trace in LightStep takes only a few minutes. Once a single trace has been created in your system, the same logic can be applied to create more complex traces that will give you new insight into your production code.
+Creating a useful trace in LightStep takes only a few minutes. Once a single trace has been created in your system, the same logic can be applied to create more complex traces that will give you new insight into your running production system.
 
-The cookbook recipes here assume you've already successfully installed the OpenTracing and LightStep NPM packages.  If not, check out the [README](../README.md).
+The cookbook recipes here assume you've already successfully installed the OpenTracing and LightStep NPM packages. If not, check out the [README](../README.md).
 
 * Getting started
     * [Browser quick start](#browser-quick-start)
@@ -12,7 +12,7 @@ The cookbook recipes here assume you've already successfully installed the OpenT
     * [Spans in code using "context" objects](#context-objects)
 * Joining spans into traces
     * [Child spans in the same process](#parent-spans)
-    * [Joining spans in different processes / services by tag](#join-by-tag)
+    * [Joining spans in different processes / services by "join:" tag](#join-by-tag)
     * [Joining spans in different processes / services by injection](#join-by-inject)
 
 *Something missing from the Cookbook? [Log a GitHub issue](https://github.com/opentracing/opentracing-javascript/issues/new) and we'll get on it :)*
@@ -20,9 +20,7 @@ The cookbook recipes here assume you've already successfully installed the OpenT
 <a name='browser-quick-start'></a>
 ## Browser quick start
 
-To try out LightStep in the browser with minimal changes, you can use hosted versions of the LightStep and OpenTracing scripts along with some auto-instrumentation options.
-
-The below will generate basic spans for page-load events in the browser as well as `XMLHttpRequest` operations.
+To try out LightStep in the browser with minimal changes, you can use hosted versions of the LightStep and OpenTracing scripts along with some auto-instrumentation options. The below will generate basic spans for page-load events in the browser as well as `XMLHttpRequest` operations.
 
 While in production, you'll likely want more control than this, this is an easy option to try things out quickly!
 
@@ -46,13 +44,13 @@ The above will automatically create and report spans for any `XMLHttpRequests` m
 <a name='promises'></a>
 ## Instrumenting Promise-based code
 
-Instrumenting code that uses standard [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) objects is easy.
+Instrumenting code that uses standard [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) objects is easy. There's also an [opentracing-tracedpromise package](https://www.npmjs.com/package/opentracing-tracedpromise) to automate the below:
 
 1. Before initiating the request that returns the `Promise`, create a span
-2. Be sure to assign your span a helpful name that describes the operation it is measuring
-3. In handling the Promise completion, be sure to always call `finish()` on the span
+2. Assign your span a helpful name that describes the operation it is measuring
+3. In handling the Promise completion, always call `finish()` on the span
 
-*Note: if you're using a custom promise library or wrapper, it's easy to make spans part of the promise implementation itself.*
+*Note: if you're using a custom promise library or wrapper, it may be easier to make [spans part of the promise implementation itself](http://lightstep.com/blog/traced-promises/).*
 
 ```javascript
 // Let's assume you have an application-specific object representing a request
@@ -165,7 +163,6 @@ function Context() {
 Context.prototype.begin = function(appDomain, name, transactionID) {
     this._span = Tracer.startSpan(appDomain + '/' + name);
     this._span.setTag('join:transaction_id', transactionID);
-
     //
     // <Normal implementation code here>
     //
@@ -175,7 +172,6 @@ Context.prototype.end = function() {
     //
     // <Normal implementation code here>
     //
-
     this._span.finish();
 }
 ```
@@ -193,7 +189,6 @@ The additional parameter will let LightStep know about the relationship so trace
 
 ```javascript
 function startSubOperation(parentSpan, param1, param2, param3) {
-
     let childSpan = Tracer.startSpan('my_child', { childOf : parentSpan });
 
     //
@@ -202,7 +197,6 @@ function startSubOperation(parentSpan, param1, param2, param3) {
 
     childSpan.finish();
 }
-
 ```
 
 <a name="join-by-tag"></a>
@@ -252,19 +246,20 @@ function doWork(job) {
 ```
 
 <a name="join-by-inject"></a>
-## Joining spans in different processes / services by injection
+## Joining spans in different processes / services using `inject`
 
-Joining spans from different processes or services using the OpenTracing `inject` and `join` methods is an alternative to using tags. While the tag approach is more concise, injection allows parent-child relationships to be conveyed unambiguously across processes and services without relying on timing information.
+Joining spans from different processes or services using the OpenTracing `inject` and `extract` methods is an alternative to using tags. While the tag approach is more concise, injection allows parent-child relationships to be conveyed unambiguously without relying on implicit timing information.
 
-The injection approach also has the advantage of being part of all OpenTracing compliant implementations. A disadvantage is that this approach requires all "links in the chain" of operations to be instrumented for a trace to be constructed between services (join tags, on the other hand, can be used to join between service A and service C without knowledge of an intermediary service B).
+The injection approach also has the advantage of being part of all OpenTracing-compliant implementations. A disadvantage is that this approach requires all "links in the chain" of operations to be instrumented for a trace to be constructed between services (join tags, on the other hand, can be used to join between service A and service C without knowledge of an intermediary service B).
 
 *Note: it's perfectly acceptable in LightStep to use a combination of "join tags" and `inject()`/`join()` calls.*
 
-1. Before crossing the process boundary call `inject()` to transfer the span information to a text or binary carrier object
+1. Before crossing the process boundary call `inject()` to transfer the span context information to a text or binary carrier object
 2. Pass the carrier data along with the normal payload being sent to the out-of-process service
-3. In the external service, use `join()` (instead of `startSpan()`) to create a new span with parentage information from the carrier
+3. In the external service, use `extract()` to reconstruct the original span context
+4. Call `startSpan(name, { childOf : context })`) to create a new span with the parent context
 
-More information about the particulars of what and when to use `inject()` and `join()` is available on [the OpenTracing site](http://opentracing.io/).
+#### More information about the particulars of what and when to use `inject()` and `extract()` is available on [the OpenTracing site](http://opentracing.io/).
 
 
 ```javascript
@@ -276,7 +271,7 @@ function startParallelWorkers() {
     let span = Tracer.startSpan('large_operation');
 
     var carrier = {};
-    Tracer.inject(span, Tracer.FORMAT_TEXT_MAP, carrier);
+    Tracer.inject(span.context(), Tracer.FORMAT_TEXT_MAP, carrier);
 
     // Launch a bunch of parallel child processes
     async.parallel(jobArray, function(job, next) {
@@ -294,12 +289,12 @@ function startParallelWorkers() {
 
 // in child_process.js
 function doWork(job) {
-    let span = Tracer.join('worker_operation', Tracer.FORMAT_TEXT_MAP, job.spanCarrier);
+    let extractedContext = Tracer.extract(Tracer.FORMAT_TEXT_MAP, job.spanCarrier);
+    let span = Tracer.startSpan('worker_operation', { childOf : extractedContext }); 
 
-    asyncWork(function(result) {
+  asyncWork(function(result) {
         span.logEvent('Worker finished', result);
         span.finish();
     });
 }
-
 ```
