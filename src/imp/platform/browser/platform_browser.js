@@ -58,12 +58,9 @@ class PlatformBrowser {
     }
 
     _generateLongUUID() {
-        let a = Math.floor(Math.random() * 0xFFFFFFFF).toString(16);
-        let b = Math.floor(Math.random() * 0xFFFFFFFF).toString(16);
-        while (b.length < 8) {
-            b = `0${b}`;
-        }
-        return a + b;
+        let p0 = `00000000${Math.abs((Math.random() * 0xFFFFFFFF) | 0).toString(16)}`.substr(-8);
+        let p1 = `00000000${Math.abs((Math.random() * 0xFFFFFFFF) | 0).toString(16)}`.substr(-8);
+        return `${p0}${p1}`;
     }
 
     onBeforeExit(...args) {

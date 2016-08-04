@@ -47,6 +47,23 @@ describe("SpanImp", function() {
             expect(span.imp().guid).to.be.a("function");
             span.finish();
         });
+
+        it("is a valid 64-bit hex UUID", function() {
+            for (var i = 0; i < 256; i++) {
+                var span = Tracer.startSpan('test');
+                var guid = span.imp().guid();
+                expect(guid).to.be.a('string');
+                expect(guid.length).to.eq(16);
+                var c = guid.split('');
+                expect(c.length).to.eq(16);
+                for (var j = 0; j < 16; j++) {
+                    var v = parseInt(c[j], 16);
+                    expect(v).to.be.gte(0);
+                    expect(v).to.be.lte(15);
+                }
+                span.finish();
+            }
+        });
     });
 
     describe("SpanImp#parentGUID", function() {
