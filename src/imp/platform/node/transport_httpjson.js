@@ -128,7 +128,7 @@ export default class TransportHTTPJSON {
                     this._error('HTTP request error', {
                         error  : err,
                         extra  : extraErrorData,
-                        report : truncatedString(payload),
+                        report : encodeAndTruncate(reportRequest),
                     });
                 });
                 done(err, null);
