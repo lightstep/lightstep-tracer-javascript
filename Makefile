@@ -34,7 +34,6 @@ publish: test test_all coverage
 	git push --tags
 	npm whoami
 	npm publish
-	bash scripts/update_docs_repo.sh
 	@echo
 	@echo "Publish complete. Don't forget to update CHANGELOG.md if not done already."
 	@echo

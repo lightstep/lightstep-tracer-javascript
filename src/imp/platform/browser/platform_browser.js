@@ -51,10 +51,8 @@ class PlatformBrowser {
         return uuid;
     }
 
-    // A low-quality UUID: this is just a 53-bit random integer! (53 bits since the
-    // backing store for the number is a 64-bit float).
     generateUUID() {
-        return Math.floor(Math.random() * 9e15).toString(16);
+        return this._generateLongUUID();
     }
 
     _generateLongUUID() {
