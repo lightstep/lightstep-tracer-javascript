@@ -6,7 +6,7 @@ const kMaxDetailedErrorFrequencyMs = 30000;
 const kMaxStringLength = 2048;
 
 function truncatedString(s) {
-    if (s.length <= kMaxStringLength) {
+    if (!s || s.length <= kMaxStringLength) {
         return s;
     }
     let half = Math.floor(kMaxStringLength / 2);
@@ -22,7 +22,9 @@ function encodeAndTruncate(obj) {
 }
 
 function errorFromResponse(res, buffer) {
-    buffer = truncatedString(`${buffer}`.replace(/\s+$/, ''));
+    if (buffer && buffer.length) {
+        buffer = truncatedString(`${buffer}`.replace(/\s+$/, ''));
+    }
     return new Error(`status code=${res.statusCode}, message='${res.statusMessage}', body='${buffer}'`);
 }
 
