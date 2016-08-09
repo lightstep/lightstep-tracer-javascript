@@ -61,7 +61,8 @@ export default class TracerImp extends EventEmitter {
         this._reportYoungestMicros = now;
         this._reportTimer = null;
         this._reportErrorStreak = 0;    // Number of consecutive errors
-        this._visibleErrorCount = 0;
+        this._lastVisibleErrorMillis = 0;
+        this._skippedVisibleErrors = 0;
 
         // Set addActiveRootSpan() for detail
         this._activeRootSpanSet = {};
@@ -147,6 +148,8 @@ export default class TracerImp extends EventEmitter {
         this.addOption('gzip_json_requests',    { type: 'bool',    defaultValue: true });
         this.addOption('disable_reporting_loop', { type: 'bool',    defaultValue: false });
         this.addOption('disable_report_on_exit', { type: 'bool',    defaultValue: false });
+        this.addOption('delay_initial_report_millis', { type: 'int', defaultValue: 1000 });
+        this.addOption('error_throttle_millis', { type: 'int',     defaultValue: 60000 });
 
         // Debugging options
         //
@@ -952,7 +955,11 @@ export default class TracerImp extends EventEmitter {
                 }
             });
         };
-        loop();
+
+        const delay = Math.floor(Math.random() * this._options.delay_initial_report_millis);
+        util.detachedTimeout(() => {
+            loop();
+        }, delay);
     }
 
     _stopReportingLoop() {
@@ -971,17 +978,23 @@ export default class TracerImp extends EventEmitter {
         }
 
         // If the clock state is still being primed, potentially use the
-        // shorted report interval
+        // shorted report interval.
+        //
+        // However, do not use the shorter interval in the case of an error.
+        // That does not provide sufficient backoff.
         let reportInterval = this._options.max_reporting_interval_millis;
-        if (this._useClockState && !this._clockState.isReady()) {
+        if (this._reportErrorStreak === 0 &&
+            this._useClockState &&
+            !this._clockState.isReady()) {
             reportInterval = Math.min(constants.CLOCK_STATE_REFRESH_INTERVAL_MS, reportInterval);
         }
 
         // After 3 consecutive errors, expand the retry delay up to 8x the
-        // normal interval. Also, jitter the delay by +/- 10%
-        let backOff = 1 + Math.min(7, Math.max(0, this._reportErrorStreak - 3));
+        // normal interval, jitter the delay by +/- 25%, and be sure to back off
+        // *at least* the standard reporting interval in the case of an error.
+        let backOff = 1 + Math.min(7, Math.max(0, this._reportErrorStreak));
         let basis = backOff * reportInterval;
-        let jitter = 1.0 + (Math.random() * 0.2 - 0.1);
+        let jitter = 1.0 + (Math.random() * 0.5 - 0.25);
         let delay = Math.floor(Math.max(0, jitter * basis));
 
         this._debug(`Delaying next flush for ${delay}ms`);
@@ -1225,11 +1238,26 @@ export default class TracerImp extends EventEmitter {
         if (verbosity === 0) {
             return;
         }
-        if (verbosity === 1 && this._visibleErrorCount > 0) {
-            return;
+
+        // Error messages are throttled in verbosity === 1 mode
+        const now = Date.now();
+        if (verbosity === 1) {
+            const nextVisible = this._lastVisibleErrorMillis + this._options.error_throttle_millis;
+            if (now < nextVisible) {
+                this._skippedVisibleErrors++;
+                return;
+            }
+            if (this._skippedVisibleErrors > 0) {
+                /* eslint-disable max-len */
+                const s = `${this._skippedVisibleErrors} errors masked since last logged error. Increase 'verbosity' option to see all errors.`;
+                /* eslint-enable max-len */
+                this._printToConsole('error', `[LightStep:ERROR ${new Date()}] ${s}`, payload);
+            }
         }
-        this._visibleErrorCount++;
+
         this._printToConsole('error', `[LightStep:ERROR ${new Date()}] ${msg}`, payload);
+        this._lastVisibleErrorMillis = now;
+        this._skippedVisibleErrors = 0;
     }
 
     _printToConsole(type, msg, payload) {

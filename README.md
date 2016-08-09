@@ -60,7 +60,7 @@ The OpenTracing standard JavaScript API is [documented here](https://doc.esdoc.o
 
 * `verbosity` `number` *optional, default=1* - controls the level of logging to the console
     - `0` - the client library will *never* log to the console
-    - `1` - only the first error encountered will be logged to the console
+    - `1` - error reporting will be throttled to the first error per minute
     - `2` - all errors are logged to the console
     - `3` - all errors, warnings, and info statements are logged to the console
     - `4` - all log statements, including debugging details
@@ -84,7 +84,11 @@ The OpenTracing standard JavaScript API is [documented here](https://doc.esdoc.o
 
 * `disable_reporting_loop` `bool` *optional*, *default=false* - if true, the timer that automatically sends reports to the collector will be disabled. This option is independent of `disable_report_on_exit`.
 * `disable_report_on_exit` `bool` *optional*, *default=false* - if true, the final report that is automatically sent at process exit in Node or page unload in the browser will not be sent.
+* `report_timeout_millis` `number` *optional*, *default=30000* - the default timeout value, in milliseconds, for reports to the LightStep collector
+* `gzip_json_requests` `bool` *optional*, *default=true* - if true, the reports will be gzipped before sent to the collector.
 * `default_span_tags` `string` *optional* - an associative array of tags to add to every span started by the tracer (e.g., the active user id in a browser client)
+* `delay_initial_report_millis` `int` *optional*, *default=1000* - maximum additional delay of the initial report in addition to the normal reporting interval. A value between zero and this maximum will be selected as the actual delay. This can be useful when concurrently launching a large number of new processes and there is a desire to distribute the initial reports over a window of time.
+* `error_throttle_millis` `int` *optional*, *default=60000* - when `verbosity` is set to `1`, this the minimum time between logged errors.
 
 ### SpanImp
 
