@@ -15,6 +15,7 @@ describe("Reporting loop", function() {
             max_reporting_interval_millis : 10,
             override_transport            : transport,
             disable_reporting_loop        : false,
+            delay_initial_report_millis   : 0,
         }));
 
         var count = 0;
