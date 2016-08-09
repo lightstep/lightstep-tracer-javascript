@@ -2,6 +2,12 @@
 
 *Log of significant changes, especially those affecting the supported API.*
 
+## 0.11.16
+
+* Option `verbosity=1` will now throttle the error logging to the first error per minute
+* Option `delay_initial_report_millis` will delay the initial report to the collector by at least some value between 0 and this value. This is useful when spawning a large number of new processes to help distribute the load at startup. Note: this is a non-standard option that is not supported by other LightStep libraries and is subject to change.
+* Back off on errors is more now more aggressive. The back off always uses the the reporting interval, not the clock calibration interval.
+
 ## 0.11.2
 
 * Fixes defects where the XHR instrumentation was still using the old `parent` option
