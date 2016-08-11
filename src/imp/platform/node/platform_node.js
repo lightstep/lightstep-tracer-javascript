@@ -141,17 +141,17 @@ export default class PlatformNode {
 
     tracerTags() {
         let tags = {
-            lightstep_tracer_platform : 'node',
-            node_version              : process.version,
-            node_platform             : process.platform,
-            node_arch                 : process.arch,
-            hostname                  : os.hostname(),
+            'lightstep.tracer_platform'         : 'node',
+            'lightstep.tracer_platform_version' : process.version,
+            'lightstep.node_platform'           : process.platform,
+            'lightstep.node_arch'               : process.arch,
+            'lightstep.hostname'                : os.hostname(),
         };
         if (process.argv) {
-            tags.command_line = process.argv.join(' ');
+            tags['lightstep.command_line'] = process.argv.join(' ');
         }
-        if (process.execArgv) {
-            tags.node_arguments = process.execArgv.join(' ');
+        if (process.execArgv && process.execArgv.length > 0) {
+            tags['lightstep.node_arguments'] = process.execArgv.join(' ');
         }
 
         return tags;
