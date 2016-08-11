@@ -103,7 +103,7 @@ class PlatformBrowser {
 
     tracerTags() {
         return {
-            lightstep_tracer_platform : 'browser',
+            'lightstep.tracer_platform' : 'browser',
         };
     }
 

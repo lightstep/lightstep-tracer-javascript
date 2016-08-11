@@ -596,7 +596,7 @@ export default class TracerImp extends EventEmitter {
                 }
                 tags[key] = value;
             });
-            tags.lightstep_tracer_version = packageObject.version;
+            tags['lightstep.tracer_version'] = packageObject.version;
             let platformTags = this._platform.tracerTags();
             _each(platformTags, (val, key) => {
                 tags[key] = val;
