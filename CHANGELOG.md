@@ -2,6 +2,10 @@
 
 *Log of significant changes, especially those affecting the supported API.*
 
+## 0.11.17
+
+* Update the internal, automatic tracer tags to follow the convention of using a `lightstep.*` prefix
+
 ## 0.11.16
 
 * Option `verbosity=1` will now throttle the error logging to the first error per minute
