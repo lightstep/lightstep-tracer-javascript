@@ -45,21 +45,6 @@ switch (CONFIG) {
 }
 
 switch (PLATFORM) {
-    case 'node':
-        bundlePlatform = '-node';
-        bundleSuffix = (CONFIG === 'debug') ? '-debug' : '';
-        defines.PLATFORM_NODE = true;
-        target = 'node';
-        libraryTarget = 'commonjs2';
-
-        if (CONFIG === 'debug') {
-            plugins.push(new webpack.BannerPlugin("require('source-map-support').install();", {
-                raw: true,
-                entryOnly: false
-            }));
-        }
-        break;
-
     case 'browser':
         bundlePlatform = '';
         bundleSuffix = (CONFIG === 'debug') ? '' : '.min';

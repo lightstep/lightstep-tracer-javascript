@@ -4,7 +4,7 @@ global.expect = require('chai').expect;
 global.Tracer = require('opentracing');
 global.util = require('./util/util');
 global.requireES6 = requireES6;
-global.LightStep = require('../dist/lightstep-tracer-node-debug');
+global.LightStep = require('../dist/lib');
 var path = require('path');
 var FileTransport = require("./util/file_transport");
 
