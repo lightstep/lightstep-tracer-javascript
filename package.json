@@ -6,11 +6,12 @@
     "node": ">=0.12.0"
   },
   "scripts": {
+    "babel": "babel src --presets babel-preset-es2015 --plugins add-module-exports --out-dir dist",
+    "dist-node": "npm run thrift-browser && npm run thrift-node && npm run babel",
+    "prepublish": "npm run dist-node",
     "thrift-browser": "node ./scripts/build_browser_thrift_lib.js",
     "thrift-node": "node ./scripts/build_node_thrift_lib.js",
-    "webpack": "npm run thrift-browser && npm run thrift-node && npm run webpack-node-debug && npm run webpack-node-prod && npm run webpack-browser-debug && npm run webpack-browser-prod",
-    "webpack-node-debug": "BUILD_PLATFORM=node BUILD_CONFIG=debug webpack --display-error-details",
-    "webpack-node-prod": "BUILD_PLATFORM=node BUILD_CONFIG=prod webpack --display-error-details",
+    "webpack": "npm run thrift-browser && npm run thrift-node && npm run webpack-browser-debug && npm run webpack-browser-prod",
     "webpack-browser-debug": "BUILD_PLATFORM=browser BUILD_CONFIG=debug webpack --display-error-details",
     "webpack-browser-prod": "BUILD_PLATFORM=browser BUILD_CONFIG=prod webpack --display-error-details",
     "test": "rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js"
@@ -27,6 +28,7 @@
     "thrift": "0.9.2"
   },
   "devDependencies": {
+    "babel-cli": "^6.14.0",
     "babel-core": "^6.3.26",
     "babel-loader": "^6.2.0",
     "babel-plugin-add-module-exports": "^0.1.2",

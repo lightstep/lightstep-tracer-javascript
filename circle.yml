@@ -8,3 +8,4 @@ machine:
 test:
   pre:
     - npm run webpack
+    - npm run dist-node
