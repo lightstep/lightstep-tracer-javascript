@@ -1,5 +1,6 @@
 node_modules/
 dist/*
+lib/*
 tmp-publish
 npm-debug.log
 npm-debug.log.*

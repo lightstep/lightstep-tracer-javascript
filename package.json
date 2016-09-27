@@ -6,7 +6,7 @@
     "node": ">=0.12.0"
   },
   "scripts": {
-    "babel": "babel src --presets babel-preset-es2015 --plugins add-module-exports --out-dir dist",
+    "babel": "babel src --presets babel-preset-es2015 --plugins add-module-exports --out-dir lib",
     "dist-node": "npm run thrift-browser && npm run thrift-node && npm run babel",
     "prepublish": "npm run dist-node",
     "thrift-browser": "node ./scripts/build_browser_thrift_lib.js",

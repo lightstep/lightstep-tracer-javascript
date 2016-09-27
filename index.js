@@ -1,1 +1,1 @@
-module.exports = require('./dist/lib.js');
+module.exports = require('./lib/lib.js');

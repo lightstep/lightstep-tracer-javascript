@@ -18,6 +18,7 @@ SRC_FILES = $(shell find src/ -type f) \
 build: $(DST_FILES)
 $(DST_FILES) : node_modules $(SRC_FILES)
 	npm run webpack
+	npm run babel
 
 node_modules:
 	npm install
