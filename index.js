@@ -1,1 +1,1 @@
-module.exports = require('./dist/lightstep-tracer-node.js');
+module.exports = require('./lib/lib.js');

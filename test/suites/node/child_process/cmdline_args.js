@@ -1,5 +1,5 @@
 var Tracer = require('opentracing');
-var LightStep = require("../../../../dist/lightstep-tracer-node-debug");
+var LightStep = require("../../../..");
 var FileTransport = require("../../../util/file_transport");
 var path = require('path');
 var filename = path.join(__dirname, "../../../results/cmdline_args.json");

@@ -17,7 +17,7 @@
 var http      = require('http');
 var url       = require('url');
 var Tracer    = require('opentracing');
-var LightStep = require('../../dist/lightstep-tracer-node');
+var LightStep = require('../..');
 
 // Proxy the requests through a LightStep server
 var PROXY_HOST = process.env.LIGHTSTEP_PROXY_HOST || 'example-proxy.lightstep.com';
