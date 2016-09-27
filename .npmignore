@@ -1,3 +1,2 @@
-rbuildfile.js
-TODO.md
-rpublish.config.js
+/coverage/
+/node_modules/

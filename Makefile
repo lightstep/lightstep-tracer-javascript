@@ -32,6 +32,7 @@ lib/%.js: src/%.js
 clean:
 	rm -rf dist
 	rm -rf lib
+	rm -rf coverage
 
 #
 # publish
@@ -39,7 +40,7 @@ clean:
 # NOTE: `npm version` automatically creates a git commit and git tag for the
 # incremented version
 .PHONY: publish
-publish: test test_all coverage
+publish: test test-all coverage
 	@if [ $(shell git symbolic-ref --short -q HEAD) = "master" ]; then exit 0; else \
 	echo "Current git branch does not appear to be 'master'. Refusing to publish."; exit 1; \
 	fi
@@ -69,7 +70,7 @@ node_modules/sc-benchmark:
 #
 # test
 #
-test: build test_node test_browser lint
+test: build test-node test-browser lint
 
 # The "_mocha" in the below is important:
 # https://github.com/gotwarlost/istanbul/issues/262
@@ -81,12 +82,12 @@ coverage: build
 	@echo "Coverage is currently run against the compiled code. Numbers are not fully accurate."
 	@echo "Open coverage/lcov-report/index.html for details."
 
-.PHONY: test_node
-test_node:
+.PHONY: test-node
+test-node:
 	npm test
 
-.PHONY: test_browser
-test_browser:
+.PHONY: test-browser
+test-browser:
 	cp node_modules/opentracing/dist/opentracing-browser.js test/dist
 	cp dist/lightstep-tracer.js test/dist
 	cd test && node ../node_modules/webpack/bin/webpack.js unittest_browser.js dist/unittest_browser.bundle.js
@@ -94,14 +95,14 @@ test_browser:
 
 # Note: versions < 0.12 are *not* supported.  The 'beforeExit' event has
 # different behavior that does not work with the current implementation.
-.PHONY: test_all
-test_all: build
+.PHONY: test-all
+test-all: build
 	scripts/docker_test.sh latest
+	scripts/docker_test.sh 6.6
 	scripts/docker_test.sh 6.2
 	scripts/docker_test.sh 5.8
 	scripts/docker_test.sh 5.1
 	scripts/docker_test.sh 4.4
-	scripts/docker_test.sh 4.0
 	scripts/docker_test.sh 0.12
 
 #
@@ -119,8 +120,8 @@ lint:
 watch: build
 	node node_modules/watch-trigger/index.js watch-trigger.config.json
 
-.PHONY: update_examples
-update_examples: node_modules
+.PHONY: update-examples
+update-examples: node_modules
 	cp node_modules/opentracing/dist/opentracing-browser.min.js examples/browser/opentracing-browser.min.js
 	cp node_modules/opentracing/dist/opentracing-browser.min.js examples/browser-trivial/opentracing-browser.min.js
 
