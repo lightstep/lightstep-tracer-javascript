@@ -1,22 +1,14 @@
 var webpack = require('webpack');
 
-const CONFIG   = process.env.BUILD_CONFIG
-const PLATFORM = process.env.BUILD_PLATFORM;
+const CONFIG = process.env.BUILD_CONFIG
 
-//
-// Modulate the webpack settings based on the configuration
-//
+// Modify the webpack settings based on the configuration
 var plugins = [];
 var defines = {
     DEBUG            : false,
-    PLATFORM_NODE    : false,
-    PLATFORM_BROWSER : false,
+    PLATFORM_BROWSER : true,
 };
-
-var bundlePlatform = '';
-var bundleSuffix = '';
-var libraryTarget = '';
-var target = '';
+var bundleSuffix = (CONFIG === 'debug') ? '' : '.min';
 var devtool = undefined;
 
 switch (CONFIG) {
@@ -44,34 +36,20 @@ switch (CONFIG) {
         process.exit(1);
 }
 
-switch (PLATFORM) {
-    case 'browser':
-        bundlePlatform = '';
-        bundleSuffix = (CONFIG === 'debug') ? '' : '.min';
-        defines.PLATFORM_BROWSER = true;
-        target = 'web';
-        libraryTarget = 'umd';
-        break;
-
-    default:
-        console.error('Unexpected BUILD_PLATFORM!');
-        process.exit(1);
-}
-
 //
 // Webpack configuration
 //
-var bundleName = 'lightstep-tracer' + bundlePlatform + bundleSuffix;
+var bundleName = 'lightstep-tracer' + bundleSuffix;
 
 module.exports = {
     entry   : './src/lib.js',
-    target  : target,
+    target  : 'web',
     devtool : devtool,
     output  : {
         path          : 'dist/',
         filename      : bundleName + '.js',
         library       : 'LightStep',
-        libraryTarget : libraryTarget,
+        libraryTarget : 'umd',
     },
     plugins :[
         new webpack.DefinePlugin(defines),
@@ -91,7 +69,6 @@ module.exports = {
                     presets : [ ],
                     plugins : [
                         'add-module-exports',
-
                         //
                         // Manually specify the *subset* of the ES2015 preset
                         // to use. This reduces the output file size and improves
