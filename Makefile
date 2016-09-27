@@ -1,30 +1,44 @@
-.PHONY: build publish \
-	test test_quick test_node test_browser test_all \
-	benchmark \
-	update_examples \
-	lint \
-	watch thrift
+# http://stackoverflow.com/questions/3774568/makefile-issue-smart-way-to-scan-directory-tree-for-c-files
+recursive_wildcard = $(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call recursive_wildcard,$d/,$2))
 
-DST_FILES = \
-	dist/lightstep-tracer-node-debug.js \
-	dist/lightstep-tracer-node.js \
-	dist/lightstep-tracer.js \
-	dist/lightstep-tracer.min.js
-SRC_FILES = $(shell find src/ -type f) \
-	webpack.config.js \
-	package.json
+#
+# build
+#
+CMD_BABEL=node node_modules/.bin/babel
+CMD_WEBPACK=node node_modules/.bin/webpack
+SOURCES_JS=$(call recursive_wildcard,src/,*.js)
+COMPILED_JS=$(SOURCES_JS:src/%.js=lib/%.js)
+BUNDLE_JS=dist/lightstep-tracer.js dist/lightstep-tracer.min.js
 
-
-build: $(DST_FILES)
-$(DST_FILES) : node_modules $(SRC_FILES)
-	npm run webpack
-	npm run babel
+.PHONY: build
+build: node_modules build-node build-browser
 
 node_modules:
 	npm install
 
+.PHONY: build-browser
+build-browser: $(BUNDLE_JS)
+$(BUNDLE_JS): $(SOURCES_JS) webpack.config.js package.json
+	BUILD_PLATFORM=browser BUILD_CONFIG=debug $(CMD_WEBPACK) --display-error-details
+	BUILD_PLATFORM=browser BUILD_CONFIG=prod $(CMD_WEBPACK) --display-error-details
+
+.PHONY: build-node
+build-node: $(COMPILED_JS)
+lib/%.js: src/%.js
+	@mkdir -p $(@D)
+	$(CMD_BABEL) --presets es2015 --plugins add-module-exports $< -o $@ --source-maps
+
+.PHONY: clean
+clean:
+	rm -rf dist
+	rm -rf lib
+
+#
+# publish
+#
 # NOTE: `npm version` automatically creates a git commit and git tag for the
 # incremented version
+.PHONY: publish
 publish: test test_all coverage
 	@if [ $(shell git symbolic-ref --short -q HEAD) = "master" ]; then exit 0; else \
 	echo "Current git branch does not appear to be 'master'. Refusing to publish."; exit 1; \
@@ -45,12 +59,16 @@ publish: test test_all coverage
 #
 # NOTE: the --max-old-space-size=4000 works around what appears to be a defect
 # in Node 6.x
+.PHONY: benchmark
 benchmark: build node_modules/sc-benchmark
 	node --max-old-space-size=4000 benchmarks/benchmark.js
 
 node_modules/sc-benchmark:
 	npm install sc-benchmark@0.1.11
 
+#
+# test
+#
 test: build test_node test_browser lint
 
 # The "_mocha" in the below is important:
@@ -63,13 +81,11 @@ coverage: build
 	@echo "Coverage is currently run against the compiled code. Numbers are not fully accurate."
 	@echo "Open coverage/lcov-report/index.html for details."
 
-test_quick:
-	npm run webpack-node-debug
-	npm test
-
+.PHONY: test_node
 test_node:
 	npm test
 
+.PHONY: test_browser
 test_browser:
 	cp node_modules/opentracing/dist/opentracing-browser.js test/dist
 	cp dist/lightstep-tracer.js test/dist
@@ -78,6 +94,7 @@ test_browser:
 
 # Note: versions < 0.12 are *not* supported.  The 'beforeExit' event has
 # different behavior that does not work with the current implementation.
+.PHONY: test_all
 test_all: build
 	scripts/docker_test.sh latest
 	scripts/docker_test.sh 6.2
@@ -87,13 +104,22 @@ test_all: build
 	scripts/docker_test.sh 4.0
 	scripts/docker_test.sh 0.12
 
+#
+# lint
+#
+.PHONY: lint
 lint:
 	node node_modules/eslint/bin/eslint.js --color --fix src
 
+#
+# watch
+#
 # Dev convenience for automatically rebuilding on file changes
+.PHONY: watch
 watch: build
 	node node_modules/watch-trigger/index.js watch-trigger.config.json
 
+.PHONY: update_examples
 update_examples: node_modules
 	cp node_modules/opentracing/dist/opentracing-browser.min.js examples/browser/opentracing-browser.min.js
 	cp node_modules/opentracing/dist/opentracing-browser.min.js examples/browser-trivial/opentracing-browser.min.js
@@ -103,7 +129,11 @@ example-browser: build
 	cd examples/browser && bash run.sh
 
 # LightStep internal target
-thrift:
+.PHONY: thrift
+thrift: thrift-compile thrift-postprocess
+
+.PHONY: thrift-compile
+thrift-compile:
 	docker run -v "$(LIGHTSTEP_HOME)/go/src/crouton/:/data" -v "$(PWD):/out" --rm thrift:0.9.2 \
 		thrift -r -gen js:node -out /out/src/imp/platform/node/thrift_api /data/crouton.thrift
 	docker run -v "$(LIGHTSTEP_HOME)/go/src/crouton/:/data" -v "$(PWD):/out" --rm thrift:0.9.2 \
@@ -112,3 +142,8 @@ thrift:
 	rm src/imp/platform/node/thrift_api/ReportingService.js
 	npm run thrift-browser
 	npm run thrift-node
+
+.PHONY: thrift-postprocess
+thrift-postprocess:
+	node ./scripts/build_browser_thrift_lib.js
+	node ./scripts/build_node_thrift_lib.js

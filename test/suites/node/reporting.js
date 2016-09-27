@@ -2,7 +2,7 @@ var path = require("path");
 var fs   = require("fs");
 var child_process = require("child_process");
 var FileTransport = require("../../util/file_transport");
-var LightStep = require('../../../dist/lib');
+var LightStep = require('../../..');
 
 describe("Reporting loop", function() {
     it("should flush at a regular interval", function(done) {

@@ -1,6 +1,6 @@
 'use strict';
 var Tracer    = require('opentracing');
-var LightStep = require('../../../dist/lib');
+var LightStep = require('../../..');
 
 Tracer.initGlobalTracer(LightStep.tracer({
     access_token   : '{your_access_token}',
