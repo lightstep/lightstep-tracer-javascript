@@ -36,7 +36,7 @@ export default class TransportHTTPJSON {
         this._timeoutMs = 0;
 
         this._logger = logger;
-        this._lastErrorMs = 0;
+        this._lastLogMs = 0;
     }
 
     ensureConnection(opts) {
@@ -90,8 +90,8 @@ export default class TransportHTTPJSON {
                     let err = null;
                     let resp = null;
                     if (res.statusCode === 400) {
-                        this._throttleError(() => {
-                            this._error('transport status code = 400', {
+                        this._throttleLog(() => {
+                            this._warning('transport status code = 400', {
                                 code    : res.statusCode,
                                 message : res.statusMessage,
                                 body    : buffer,
@@ -124,8 +124,8 @@ export default class TransportHTTPJSON {
                 });
             });
             req.on('error', (err) => {
-                this._throttleError(() => {
-                    this._error('HTTP request error', {
+                this._throttleLog(() => {
+                    this._warning('HTTP request error', {
                         error  : err,
                         extra  : extraErrorData,
                         report : encodeAndTruncate(reportRequest),
@@ -150,13 +150,17 @@ export default class TransportHTTPJSON {
         });
     }
 
-    _throttleError(f) {
+    _throttleLog(f) {
         let now = Date.now();
-        if (now - this._lastErrorMs < kMaxDetailedErrorFrequencyMs) {
+        if (now - this._lastLogMs < kMaxDetailedErrorFrequencyMs) {
             return;
         }
-        this._lastErrorMs = now;
+        this._lastLogMs = now;
         f();
+    }
+
+    _warning(msg, payload) {
+        this._logger.warn(msg, payload);
     }
 
     _error(msg, payload) {

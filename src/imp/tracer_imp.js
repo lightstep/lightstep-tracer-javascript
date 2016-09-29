@@ -53,6 +53,7 @@ export default class TracerImp extends EventEmitter {
         this._thriftRuntime = null;
 
         let logger = {
+            warn  : (msg, payload) => { this._warn(msg, payload); },
             error : (err, payload) => { this._error(err, payload); },
         };
         this._transport = (opts ? opts.override_transport : null) || new Transport(logger);
@@ -904,7 +905,7 @@ export default class TracerImp extends EventEmitter {
             this._info('Final flush before exit.');
             this._flushReport(false, true, (err) => {
                 if (err) {
-                    this._error('Final report before exit failed', {
+                    this._warn('Final report before exit failed', {
                         error                  : err,
                         unflushed_spans        : this._spanRecords.length,
                         unflushed_logs         : this._logRecords.length,
@@ -1116,7 +1117,7 @@ export default class TracerImp extends EventEmitter {
                 } else {
                     errString = `${err}`;
                 }
-                this._error(`Error in report: ${errString}`, {
+                this._warn(`Error in report: ${errString}`, {
                     last_report_seconds_ago : reportWindowSeconds,
                 });
 
@@ -1162,7 +1163,7 @@ export default class TracerImp extends EventEmitter {
                     }
 
                     if (res.errors && res.errors.length > 0) {
-                        this._error('Errors in report', res.errors);
+                        this._warn('Errors in report', res.errors);
                     }
                 } else {
                     this._useClockState = false;
