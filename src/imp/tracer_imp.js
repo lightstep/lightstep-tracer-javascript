@@ -1202,14 +1202,14 @@ export default class TracerImp extends EventEmitter {
         if (this.verbosity() < 4) {
             return;
         }
-        this._printToConsole('log', `[LightStep:DEBUG ${new Date()}] ${msg}`, payload);
+        this._printToConsole('log', `[LightStep:DEBUG] ${msg}`, payload);
     }
 
     _info(msg, payload) {
         if (this.verbosity() < 3) {
             return;
         }
-        this._printToConsole('log', `[LightStep:INFO ${new Date()}] ${msg}`, payload);
+        this._printToConsole('log', `[LightStep:INFO] ${msg}`, payload);
     }
 
     _warn(msg, payload) {
@@ -1218,7 +1218,7 @@ export default class TracerImp extends EventEmitter {
         if (this.verbosity() < 3) {
             return;
         }
-        this._printToConsole('warn', `[LightStep:WARN ${new Date()}] ${msg}`, payload);
+        this._printToConsole('warn', `[LightStep:WARN] ${msg}`, payload);
     }
 
     _error(msg, payload) {
@@ -1251,11 +1251,11 @@ export default class TracerImp extends EventEmitter {
                 /* eslint-disable max-len */
                 const s = `${this._skippedVisibleErrors} errors masked since last logged error. Increase 'verbosity' option to see all errors.`;
                 /* eslint-enable max-len */
-                this._printToConsole('error', `[LightStep:ERROR ${new Date()}] ${s}`, payload);
+                this._printToConsole('error', `[LightStep:ERROR] ${s}`, payload);
             }
         }
 
-        this._printToConsole('error', `[LightStep:ERROR ${new Date()}] ${msg}`, payload);
+        this._printToConsole('error', `[LightStep:ERROR] ${msg}`, payload);
         this._lastVisibleErrorMillis = now;
         this._skippedVisibleErrors = 0;
     }
