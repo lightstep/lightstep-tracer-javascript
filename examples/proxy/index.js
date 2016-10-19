@@ -84,6 +84,7 @@ var server = http.createServer(function (req, res) {
 
         https.get(options, function(proxyResp) {
             if (proxyResp.statusCode >= 400) {
+                ghSpan.setTag('error', true);
                 ghSpan.imp().error('Status code = ' + proxyResp.statusCode);
             } else {
                 ghSpan.imp().info('Status code = ' + proxyResp.statusCode);
