@@ -4,7 +4,7 @@
   "main": "index.js",
   "dependencies": {
     "lightstep-tracer": "*",
-    "opentracing": "*"
+    "opentracing": "0.11.x"
   },
   "scripts":{
     "forever" : "forever start --append -l forever.log -o out.log -e err.log index.js"
