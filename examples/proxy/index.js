@@ -42,7 +42,7 @@ var server = http.createServer(function (req, res) {
         var key = req.rawHeaders[i];
         var value = req.rawHeaders[i+1];
         requestHeaders[key] = value;
-        if (key.toLowerCase() === 'lightStep-access-token') {
+        if (key.toLowerCase() === 'lightstep-access-token') {
             accessToken = value;
         }
     }
@@ -69,6 +69,7 @@ var server = http.createServer(function (req, res) {
         headers: headers,
     };
     span.setTag('url', req.url);
+    span.logEvent('Request headers', requestHeaders);
     span.imp().info('Forwarding equest to GitHub: ' + req.url, {
         host: options.host,
         path: req.url,
