@@ -141,8 +141,6 @@ thrift-compile:
 		thrift -r -gen js -out /out/src/imp/platform/browser/thrift_api /data/crouton.thrift
 	rm src/imp/platform/browser/thrift_api/ReportingService.js
 	rm src/imp/platform/node/thrift_api/ReportingService.js
-	npm run thrift-browser
-	npm run thrift-node
 
 .PHONY: thrift-postprocess
 thrift-postprocess:
