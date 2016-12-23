@@ -1,5 +1,6 @@
 import * as coerce from './coerce.js';
 import * as constants from '../constants';
+import _each from '../_each';
 import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
 
 export default class SpanImp {
@@ -31,49 +32,48 @@ export default class SpanImp {
         }
     }
 
-    /**
-     * The set of OpenTracing fields is:
-     * - 'event'
-     * - 'timestamp'
-     * - 'payload'
-     */
-    // Log record specified by fields
-    log(fields) {
-        const argumentType = typeof fields;
+    log(keyValuePairs, timestamp) {
+        let self = this;
+        const argumentType = typeof keyValuePairs;
         if (argumentType !== 'object') {
-            this._tracer._error('Span.log() expects an object as its argument');
+            self._tracer._error('Span.log() expects an object as its first argument');
             return;
         }
 
-        let rec = this._tracer.log()
-            .span(this.guid())
-            .level(constants.LOG_STRING_TO_LEVEL[fields.level] || constants.LOG_INFO);
-
-        //
-        // OpenTracing attributes
-        //
-        if (fields.event !== undefined) {
-            rec.name(fields.event);
+        let tsMicros = null;
+        if (timestamp) {
+            tsMicros = timestamp * 1000;
+        } else {
+            tsMicros = self._tracer._platform.nowMicros();
         }
-        if (fields.timestamp !== undefined) {
-            // The incoming 'timestamp' field is in milliseconds. The internal
-            // timestamp is in microseconds.
-            rec.timestamp(fields.timestamp * 1000);
-        }
-        if (fields.payload !== undefined) {
-            rec.payload(fields.payload);
-        }
-
-        //
-        // LightStep-specific attributes
-        //
-        if (fields.message !== undefined) {
-            rec.message(fields.message);
-        }
-        if (fields.timestamp_micros !== undefined) {
-            rec.timestamp(fields.timestamp_micros);
-        }
-        rec.end();
+        let fields = [];
+        _each(keyValuePairs, function(value, key) {
+            if (!key || !value) {
+                return;
+            }
+            let keyStr = String(key);
+            let valStr = String(value);
+            if (keyStr > self._tracer._options.log_field_key_hard_limit) {
+                this._counters['logs.keys.over_limit']++;
+                keyStr = keyStr.substr(0, self._tracer._options.log_field_key_hard_limit);
+            }
+            if (valStr > self._tracer._options.log_field_key_hard_limit) {
+                this._counters['logs.values.over_limit']++;
+                valStr = valStr.substr(0, self._tracer._options.log_field_value_hard_limit);
+            }
+            fields.push(new crouton_thrift.KeyValue({
+                Key : keyStr,
+                Value : valStr,
+            }));
+        });
+        let record = new crouton_thrift.LogRecord({
+            timestamp_micros : tsMicros,
+            fields           : fields,
+        });
+        this._log_records = this._log_records || [];
+        this._log_records.push(record);
+        self._tracer.emit('log_added', record);
+        console.log("record", record);
     }
 
     finish(finishTime) {
@@ -97,6 +97,7 @@ export default class SpanImp {
         this._beginMicros = tracer._platform.nowMicros();
         this._endMicros   = 0;
         this._errorFlag   = false;
+        this._log_records = null;
     }
 
     // ---------------------------------------------------------------------- //
@@ -289,6 +290,7 @@ export default class SpanImp {
             youngest_micros : this._endMicros,
             attributes      : attributes,
             error_flag      : this._errorFlag,
+            log_records     : this._log_records,
         });
         return record;
     }

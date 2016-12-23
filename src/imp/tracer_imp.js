@@ -23,11 +23,6 @@ const DEFAULT_COLLECTOR_HOSTNAME   = 'collector.lightstep.com';
 const DEFAULT_COLLECTOR_PORT_TLS   = 443;
 const DEFAULT_COLLECTOR_PORT_PLAIN = 80;
 
-// Internal errors should be rare. Set a low limit to ensure a cascading failure
-// does not compound an existing problem by trying to send a great deal of
-// internal error data.
-const MAX_INTERNAL_LOGS = 20;
-
 export default class TracerImp extends EventEmitter {
 
     constructor(opts) {
@@ -83,9 +78,8 @@ export default class TracerImp extends EventEmitter {
             },
         });
 
-        // Report buffers and per-report data
+        // Span reporting buffer and per-report data
         // These data are reset on every successful report.
-        this._logRecords = [];
         this._spanRecords = [];
 
         // The counter names need to match those accepted by the collector.
@@ -142,7 +136,6 @@ export default class TracerImp extends EventEmitter {
 
         // Non-standard, may be deprecated
         this.addOption('disabled',              { type: 'bool',    defaultValue: false });
-        this.addOption('max_log_records',       { type: 'int',     defaultValue: 4096 });
         this.addOption('max_span_records',      { type: 'int',     defaultValue: 4096 });
         this.addOption('default_span_tags',     { type: 'any',     defaultValue: {} });
         this.addOption('report_timeout_millis', { type: 'int',     defaultValue: 30000 });
@@ -164,9 +157,9 @@ export default class TracerImp extends EventEmitter {
         this.addOption('override_transport',            { type : 'any',    defaultValue: null });
         this.addOption('silent',                        { type : 'bool',   defaultValue: false });
 
-        // Hard upper limits to protect against worst-case scenarios
-        this.addOption('log_message_length_hard_limit', { type: 'int',     defaultValue: 512 * 1024 });
-        this.addOption('log_payload_length_hard_limit', { type: 'int',     defaultValue: 512 * 1024 });
+        // Hard upper limits to protect against worst-case scenarios for log field sizes.
+        this.addOption('log_field_key_hard_limit',   { type: 'int',     defaultValue: 512 });
+        this.addOption('log_field_value_hard_limit', { type: 'int',     defaultValue: 16 * 1024 });
 
         /* eslint-disable key-spacing, no-multi-spaces */
     }
@@ -765,7 +758,6 @@ export default class TracerImp extends EventEmitter {
     //-----------------------------------------------------------------------//
 
     _clearBuffers() {
-        this._logRecords = [];
         this._spanRecords = [];
         this._internalLogs = [];
 
@@ -779,9 +771,6 @@ export default class TracerImp extends EventEmitter {
     }
 
     _buffersAreEmpty() {
-        if (this._logRecords.length > 0) {
-            return false;
-        }
         if (this._spanRecords.length > 0) {
             return false;
         }
@@ -796,50 +785,6 @@ export default class TracerImp extends EventEmitter {
             }
         });
         return countersAllZero;
-    }
-
-    // Adds a completed record into the log buffer
-    _addLogRecord(record) {
-        // Check record content against the hard-limits
-        if (record.message && record.message.length > this._options.log_message_length_hard_limit) {
-            let truncated = record.message.substr(0, this._options.log_message_length_hard_limit - 1);
-            record.message = `${truncated}…`;
-        }
-
-        if (record.payload_json && record.payload_json.length > this._options.log_payload_length_hard_limit) {
-            this._counters['logs.payloads.over_limit']++;
-            this._warn('Payload too large. Dropped', {
-                length : record.payload_json.length,
-                limit  : this._options.log_payload_length_hard_limit,
-            });
-            record.payload_json = undefined;
-        }
-
-        this._internalAddLogRecord(record);
-        this.emit('log_added', record);
-
-        if (record.level === constants.LOG_FATAL) {
-            this._platform.fatal(record.message);
-        }
-    }
-
-    // Internal worker for adding the log record to the buffer.
-    //
-    // Note: this is also used when a failed report needs to restores records
-    // back to the buffer, therefore it should not do things like echo the
-    // log message to the console with the assumption this is a new record.
-    _internalAddLogRecord(record) {
-        if (!record) {
-            this._error('Attempt to add null record to buffer');
-            return;
-        }
-        if (this._logRecords.length >= this._options.max_log_records) {
-            let index = Math.floor(this._logRecords.length * Math.random());
-            this._logRecords[index] = record;
-            this._counters['logs.dropped']++;
-        } else {
-            this._logRecords.push(record);
-        }
     }
 
     _addSpanRecord(record) {
@@ -862,10 +807,7 @@ export default class TracerImp extends EventEmitter {
         }
     }
 
-    _restoreRecords(logs, spans, internalLogs, counters) {
-        _each(logs, (log) => {
-            this._internalAddLogRecord(log);
-        });
+    _restoreRecords(spans, internalLogs, counters) {
         _each(spans, (span) => {
             this._internalAddSpanRecord(span);
         });
@@ -908,7 +850,6 @@ export default class TracerImp extends EventEmitter {
                     this._warn('Final report before exit failed', {
                         error                  : err,
                         unflushed_spans        : this._spanRecords.length,
-                        unflushed_logs         : this._logRecords.length,
                         buffer_youngest_micros : this._reportYoungestMicros,
                     });
                 }
@@ -1031,7 +972,6 @@ export default class TracerImp extends EventEmitter {
             ready          : clockReady,
         });
 
-        let logRecords = this._logRecords;
         let spanRecords = this._spanRecords;
         let counters = this._counters;
         let internalLogs = this._internalLogs;
@@ -1042,7 +982,6 @@ export default class TracerImp extends EventEmitter {
         // ditch effort" event) should always use the real data.
         if (this._useClockState && !manual && !clockReady && !detached) {
             this._debug('Flushing empty report to prime clock state');
-            logRecords  = [];
             spanRecords = [];
             counters    = {};
             internalLogs = [];
@@ -1056,7 +995,7 @@ export default class TracerImp extends EventEmitter {
             // Clear the object buffers as the data is now in the local
             // variables
             this._clearBuffers();
-            this._debug(`Flushing report (${logRecords.length} logs, ${spanRecords.length} spans)`);
+            this._debug(`Flushing report (${spanRecords.length} spans)`);
         }
 
         this._transport.ensureConnection(this._options);
@@ -1065,9 +1004,6 @@ export default class TracerImp extends EventEmitter {
         // spans before the GUID is necessarily set.
         console.assert(this._runtimeGUID !== null, 'No runtime GUID for Tracer'); // eslint-disable-line no-console
 
-        _each(logRecords, (log) => {
-            log.runtime_guid = this._runtimeGUID;
-        });
         _each(spanRecords, (span) => {
             span.runtime_guid = this._runtimeGUID;
         });
@@ -1089,7 +1025,6 @@ export default class TracerImp extends EventEmitter {
             runtime                 : this._thriftRuntime,
             oldest_micros           : this._reportYoungestMicros,
             youngest_micros         : now,
-            log_records             : logRecords,
             span_records            : spanRecords,
             internal_logs           : internalLogs,
             internal_metrics        : new crouton_thrift.Metrics({
@@ -1122,7 +1057,6 @@ export default class TracerImp extends EventEmitter {
                 });
 
                 this._restoreRecords(
-                    report.log_records,
                     report.span_records,
                     report.internal_logs,
                     report.counters);
@@ -1139,7 +1073,6 @@ export default class TracerImp extends EventEmitter {
                 if (this.verbosity() >= 4) {
                     this._debug(`Report flushed for last ${reportWindowSeconds} seconds`, {
                         spans_reported : report.span_records.length,
-                        logs_reported  : report.log_records.length,
                     });
                 }
 
