@@ -10,8 +10,8 @@ var Tracer = LightStep.tracer({
     override_transport     : transport,
 });
 
-var span = Tracer.startSpan("test_span");
 for (var i = 0; i < 10; i++) {
+    var span = Tracer.startSpan("test_span_" + i);
     span.log({"record_idx" : i});
+    span.finish();
 }
-span.finish();

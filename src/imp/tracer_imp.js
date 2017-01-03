@@ -7,7 +7,6 @@ import opentracing from 'opentracing';
 import { Platform, Transport, crouton_thrift } from '../platform_abstraction_layer';    // eslint-disable-line camelcase
 import SpanContextImp from './span_context_imp';
 import SpanImp from './span_imp';
-import globals from './globals';
 import _each from '../_each';
 
 const constants     = require('../constants');
@@ -97,12 +96,13 @@ export default class TracerImp extends opentracing.Tracer {
         // The counter names need to match those accepted by the collector.
         // These are internal counters only.
         this._counters = {
-            'internal.errors'          : 0,
-            'internal.warnings'        : 0,
-            'spans.dropped'            : 0,
-            'logs.dropped'             : 0,
-            'logs.payloads.over_limit' : 0,
-            'reports.errors.send'      : 0,
+            'internal.errors'        : 0,
+            'internal.warnings'      : 0,
+            'spans.dropped'          : 0,
+            'logs.dropped'           : 0,
+            'logs.keys.over_limit'   : 0,
+            'logs.values.over_limit' : 0,
+            'reports.errors.send'    : 0,
         };
 
         // For internal (not client) logs reported to the collector
@@ -155,7 +155,7 @@ export default class TracerImp extends opentracing.Tracer {
             'removeListener',
             'setMaxListeners',
         ], (methodName) => {
-            self[methodName] = function() {
+            self[methodName] = function () {
                 if (self._ee[methodName]) {
                     self._ee[methodName].apply(self._ee, arguments);
                 }
@@ -675,7 +675,8 @@ export default class TracerImp extends opentracing.Tracer {
 
     startPlugins() {
         _each(this._plugins, (val, key) => {
-            this._plugins[key].start(this._opentracing, this);
+            // XXX XXX fix this... only need one param.
+            this._plugins[key].start(this, this);
         });
     }
 

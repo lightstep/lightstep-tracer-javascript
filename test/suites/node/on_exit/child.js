@@ -11,8 +11,8 @@ Tracer = LightStep.tracer({
     override_transport : new FileTransport(reportFilename),
 });
 
-var span = Tracer.startSpan("test_span");
 for (var i = 0; i < 10; i++) {
+    var span = Tracer.startSpan("test_span_" + i);
     span.log({"log_index" : i});
+    span.finish();
 }
-span.finish();

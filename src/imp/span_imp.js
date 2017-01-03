@@ -24,7 +24,7 @@ export default class SpanImp extends opentracing.Span {
 
     _addTags(keyValuePairs) {
         let self = this;
-        _each(keyValuePairs, function(value, key) {
+        _each(keyValuePairs, (value, key) => {
             self._tags[key] = value;
         });
     }
@@ -44,22 +44,22 @@ export default class SpanImp extends opentracing.Span {
             tsMicros = self._tracerImp._platform.nowMicros();
         }
         let fields = [];
-        _each(keyValuePairs, function(value, key) {
+        _each(keyValuePairs, (value, key) => {
             if (!key || !value) {
                 return;
             }
             let keyStr = String(key);
             let valStr = String(value);
             if (keyStr > self._tracerImp._options.log_field_key_hard_limit) {
-                this._counters['logs.keys.over_limit']++;
+                self._tracerImp._counters['logs.keys.over_limit']++;
                 keyStr = keyStr.substr(0, self._tracerImp._options.log_field_key_hard_limit);
             }
             if (valStr > self._tracerImp._options.log_field_key_hard_limit) {
-                this._counters['logs.values.over_limit']++;
+                self._tracerImp._counters['logs.values.over_limit']++;
                 valStr = valStr.substr(0, self._tracerImp._options.log_field_value_hard_limit);
             }
             fields.push(new crouton_thrift.KeyValue({
-                Key : keyStr,
+                Key   : keyStr,
                 Value : valStr,
             }));
         });
@@ -67,8 +67,8 @@ export default class SpanImp extends opentracing.Span {
             timestamp_micros : tsMicros,
             fields           : fields,
         });
-        this._log_records = this._log_records || [];
-        this._log_records.push(record);
+        self._log_records = self._log_records || [];
+        self._log_records.push(record);
         self._tracerImp.emit('log_added', record);
     }
 
@@ -196,12 +196,12 @@ export default class SpanImp extends opentracing.Span {
 
     _toThrift() {
         let attributes = [];
-        for (let key in this._tags) {
+        _each(this._tags, (value, key) => {
             attributes.push(new crouton_thrift.KeyValue({
                 Key   : coerce.toString(key),
-                Value : coerce.toString(this._tags[key]),
+                Value : coerce.toString(value),
             }));
-        }
+        });
 
         let record = new crouton_thrift.SpanRecord({
             span_guid       : this.guid(),

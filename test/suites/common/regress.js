@@ -10,9 +10,7 @@ it('should behave sanely with excessively large log messages', function() {
     var msg = (new Array(8*1024*1024)).join('x');
 
     var span = Tracer.startSpan('test');
-    span.info(msg);
-    span.warn(msg);
-    span.error(msg);
+    span.log({msg: msg});
     span.finish();
 });
 
@@ -22,9 +20,7 @@ it('should behave sanely with excessively large log payloads', function() {
         arr.push((new Array(8*1024)).join('x'));
     }
     var span = Tracer.startSpan('test');
-    span.info('message', arr);
-    span.warn('message', arr);
-    span.error('message', arr);
+    span.log({arr: arr});
     span.finish();
 });
 

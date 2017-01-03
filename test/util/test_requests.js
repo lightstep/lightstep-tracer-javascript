@@ -15,18 +15,10 @@ TestRequests.prototype.spanRecordCount = function () {
     return count;
 };
 
-TestRequests.prototype.logRecordCount = function () {
-    var count = 0;
-    _.each(this.requests, function(req) {
-        count += req.report.log_records.length;
-    });
-    return count;
-};
-
-TestRequests.prototype.hasLogMessage = function (msg) {
+TestRequests.prototype.hasSpanRecord = function (opName) {
     return _.any(this.requests, function (req) {
-        return _.any(req.report.log_records, function (log) {
-            return log.message == msg;
+        return _.any(req.report.span_records, function (spanRec) {
+            return spanRec.span_name == opName;
         });
     });
 };

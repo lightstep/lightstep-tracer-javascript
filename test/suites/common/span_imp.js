@@ -105,22 +105,6 @@ describe("SpanImp", function() {
         });
     });
 
-    describe("SpanImp#warn", function() {
-        it("is a method", function() {
-            var span = Tracer.startSpan('test');
-            expect(span.warn).to.be.a("function");
-            span.finish();
-        });
-    });
-
-    describe("SpanImp#fatal", function() {
-        it("is a method", function() {
-            var span = Tracer.startSpan('test');
-            expect(span.fatal).to.be.a("function");
-            span.finish();
-        });
-    });
-
     describe("SpanImp#generateTraceURL", function() {
         it("is a method", function() {
             var span = Tracer.startSpan('test');
