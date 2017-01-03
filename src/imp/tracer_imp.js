@@ -675,8 +675,7 @@ export default class TracerImp extends opentracing.Tracer {
 
     startPlugins() {
         _each(this._plugins, (val, key) => {
-            // XXX XXX fix this... only need one param.
-            this._plugins[key].start(this, this);
+            this._plugins[key].start(this);
         });
     }
 

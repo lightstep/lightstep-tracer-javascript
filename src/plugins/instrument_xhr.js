@@ -73,11 +73,11 @@ class InstrumentXHR {
         tracerImp.addOption('xhr_url_exclusion_patterns', { type : 'array', defaultValue : [] });
     }
 
-    start(tracer, tracerImp) {
+    start(tracerImp) {
         if (!this._enabled) {
             return;
         }
-        this._tracer = tracer;
+        this._tracer = tracerImp;
 
         let currentOptions = tracerImp.options();
         this._addServiceHostToExclusions(currentOptions);
@@ -181,7 +181,7 @@ class InstrumentXHR {
             }
 
             let span = tracer.startSpan('XMLHttpRequest');
-            tracer.imp().addActiveRootSpan(span.imp());
+            tracer.addActiveRootSpan(span);
             this.__tracer_span = span;
             this.__tracer_url = url;
 
@@ -206,70 +206,54 @@ class InstrumentXHR {
             if (async) {
                 this.addEventListener('readystatechange', function () {
                     if (this.readyState === 0) {
-                        span.imp().info('XMLHttpRequest unsent (readyState=0)');
-                    } else if (this.readyState === 1) {
-                        span.imp().info('XMLHttpRequest unsent (readyState=1)');
-                    } else if (this.readyState === 2) {
-                        span.imp().info(`XMLHttpRequest: ${method} ${url}`, openPayload);
-                        span.imp().addTags(tags);
-                        span.imp().info('XMLHttpRequest headers received (readyState=2)', {
-                            headers : getResponseHeaders(this),
+                        span.log({
+                            readyState: 0,
+                            event: 'unsent',
                         });
+                    } else if (this.readyState === 1) {
+                        span.log({
+                            readyState: 1,
+                            event: 'sending',
+                        });
+                    } else if (this.readyState === 2) {
+                        span.log({
+                            readyState  : 2,
+                            event       : 'headers received',
+                            method      : method,
+                            url         : url,
+                            openPayload : openPayload,
+                            headers     : getResponseHeaders(this),
+                        });
+                        span.addTags(tags);
                     } else if (this.readyState === 3) {
-                        span.imp().info('XMLHttpRequest loading (readyState=3)');
+                        span.log({
+                            readyState : 3,
+                            event      : 'loading',
+                        });
                     } else if (this.readyState === 4) {
                         let responseType = this.responseType;
-                        let payload = {
+                        span.log({
+                            readyState   : 4,
                             url          : url,
                             method       : method,
                             headers      : getResponseHeaders(this),
                             status       : this.status,
                             statusText   : this.statusText,
                             responseType : responseType,
-                        };
-
-                        // The responseText property is only valid if the responseType is
-                        // '' or 'text'.  There are other types like 'arraybuffer' for which
-                        // attempting to read responseText will throw an exception.
-                        let validResponseType = (responseType === '' || responseType === 'text');
-                        if (validResponseType && this.responseText) {
-                            // Display the payload as JSON if it's parseable as such
-                            try {
-                                payload.responseJSON = JSON.parse(this.responseText);
-                            } catch (e) {
-                                payload.responseText = this.responseText;
-                            }
-                        } else {
-                            payload.response = this.response;
-                        }
-
-                        let prefix = `XMLHttpRequest ${tags.method} done (readyState=4), status ${this.status}`;
-                        if (!(this.status > 99)) {
-                            span.imp().error(`${prefix} (unknown)`, payload);
-                        } else if (this.status < 199) {
-                            span.imp().info(`${prefix} (informational)`, payload);
-                        } else if (this.status < 299) {
-                            span.imp().info(`${prefix} (successful)`, payload);
-                        } else if (this.status < 399) {
-                            span.info(`${prefix} (redirection)`, payload);
-                        } else if (this.status < 499) {
-                            span.imp().error(`${prefix} (client error)`, payload);
-                        } else if (this.status < 599) {
-                            span.imp().error(`${prefix} (server error)`, payload);
-                        } else {
-                            span.imp().error(`${prefix} (unknown)`, payload);
-                        }
-                        tracer.imp().removeActiveRootSpan(span.imp());
+                        });
+                        tracer.removeActiveRootSpan(span);
                         span.finish();
                     } else {
-                        span.imp().info(`XMLHttpRequest readyState=${this.readyState}`);
+                        span.log({
+                            readyState: this.readyState,
+                        });
                     }
                 });
             }
 
             let result = proxied.open.apply(this, arguments);
             if (!async) {
-                tracer.imp().removeActiveRootSpan(span.imp());
+                tracer.removeActiveRootSpan(span);
                 span.finish();
             }
             return result;
@@ -302,18 +286,21 @@ class InstrumentXHR {
                 }
             }
             let lenStr = (len === undefined) ? '' : `, data length=${len}`;
-            span.imp().info(`XMLHttpRequest send${lenStr}`, data ? { data : data } : undefined);
+            span.log({
+                event : 'send',
+                data_length : lenStr,
+            });
             return proxied.send.apply(this, arguments);
         };
     }
 
     _shouldTrace(tracer, xhr, url) {
         // This shouldn't be possible, but let's be paranoid
-        if (!tracer.imp()) {
+        if (!tracer) {
             return false;
         }
 
-        let opts = tracer.imp().options();
+        let opts = tracer.options();
         if (opts.disabled) {
             return false;
         }

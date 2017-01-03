@@ -25,7 +25,7 @@ class LogToConsole {
     }
 
     stop() {
-        this._tracer.imp().removeListener('options', this._optionsCb);
+        this._tracer.removeListener('options', this._optionsCb);
     }
 
     _handleOptions(modified, current, tracerImp) {

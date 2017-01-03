@@ -13,7 +13,7 @@ class InstrumentPageLoad {
     addOptions(tracerImp) {
     }
 
-    start(tracer, tracerImp) {
+    start(tracerImp) {
         if (this._inited) {
             return;
         }
@@ -22,16 +22,16 @@ class InstrumentPageLoad {
         if (typeof window !== 'object' || typeof document !== 'object') {
             return;
         }
-        this._ensureSpanStarted(tracer, tracerImp);
+        this._ensureSpanStarted(tracerImp);
         document.addEventListener('readystatechange', this._handleReadyStateChange.bind(this));
     }
 
     stop() {
     }
 
-    _ensureSpanStarted(tracer, tracerImp) {
+    _ensureSpanStarted(tracerImp) {
         if (!this._span) {
-            this._span = tracer.startSpan('document/load');
+            this._span = tracerImp.startSpan('document/load');
             tracerImp.addActiveRootSpan(this._span);
         }
     }
