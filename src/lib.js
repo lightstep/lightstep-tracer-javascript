@@ -16,7 +16,7 @@ class Library {
     }
 
     /**
-     * Creates a new OpenTracing-compatible tracer implementation object.
+     * Creates a new OpenTracing-compatible Tracer implementation object.
      */
     tracer(opts) {
         let tracerImp = new TracerImp(opts);

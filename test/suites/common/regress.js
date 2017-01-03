@@ -10,9 +10,9 @@ it('should behave sanely with excessively large log messages', function() {
     var msg = (new Array(8*1024*1024)).join('x');
 
     var span = Tracer.startSpan('test');
-    span.imp().info(msg);
-    span.imp().warn(msg);
-    span.imp().error(msg);
+    span.info(msg);
+    span.warn(msg);
+    span.error(msg);
     span.finish();
 });
 
@@ -22,18 +22,18 @@ it('should behave sanely with excessively large log payloads', function() {
         arr.push((new Array(8*1024)).join('x'));
     }
     var span = Tracer.startSpan('test');
-    span.imp().info('message', arr);
-    span.imp().warn('message', arr);
-    span.imp().error('message', arr);
+    span.info('message', arr);
+    span.warn('message', arr);
+    span.error('message', arr);
     span.finish();
 });
 
 it('should generate correct URLs for both finished and unfinished spans', function() {
     var span = Tracer.startSpan('test');
-    var url1 = span.imp().generateTraceURL();
+    var url1 = span.generateTraceURL();
     span.finish();
 
-    var url2 = span.imp().generateTraceURL();
+    var url2 = span.generateTraceURL();
 
     expect(url1).to.be.a('string');
     expect(url2).to.be.a('string');
@@ -52,10 +52,8 @@ it('should coerce non-string operation names to strings', function() {
     var i;
     for (i = 0; i < cases.length; i++) {
         var span = Tracer.startSpan('valid_name');
-        // Call the imp() object directly. The OpenTracing API checks will
-        // complain about non-string operation names
-        span.imp().setOperationName(cases[i]);
-        var name = span.imp().getOperationName();
+        span.setOperationName(cases[i]);
+        var name = span.getOperationName();
         expect(name).to.be.a('string');
         span.finish();
     }

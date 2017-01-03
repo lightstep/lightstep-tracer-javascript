@@ -8,19 +8,19 @@ function makeLSTracer(extraOpts) {
     for (var key in extraOpts) {
         opts[key] = extraOpts[key];
     }
-    return Tracer.initNewTracer(LightStep.tracer(opts));
+    return LightStep.tracer(opts);
 }
 
 describe("TracerImp", function() {
     describe("TracerImp#options", function() {
         it('is a method', function() {
-            expect(Tracer.imp().options).to.be.a("function");
+            expect(Tracer.options).to.be.a("function");
         });
 
         it('should return an object', function() {
             var tracer = makeLSTracer();
-            expect(tracer.imp()).to.be.an('object');
-            expect(tracer.imp().options()).to.be.an('object');
+            expect(tracer).to.be.an('object');
+            expect(tracer.options()).to.be.an('object');
         });
 
         it('should throw an exception on invalid options', function() {
@@ -28,11 +28,11 @@ describe("TracerImp", function() {
             expect(function () { makeLSTracer() }).to.not.throw();
 
             expect(function () {
-                Tracer.imp().options({ not_a_real_option : 100 });
+                Tracer.options({ not_a_real_option : 100 });
             }).to.throw();
 
             expect(function () {
-                Tracer.imp().options({
+                Tracer.options({
                     invalid_option_name    : 'test',
                     another_invalid_option : 'test',
                 });
@@ -114,37 +114,37 @@ describe("TracerImp", function() {
         });
 
         it('should default to an HTTPS port', function() {
-            expect(makeLSTracer().imp().options().collector_port).to.equal(443);
+            expect(makeLSTracer().options().collector_port).to.equal(443);
         });
 
         it('should default to correct ports when collector_encryption is set', function() {
             expect(makeLSTracer({
                 collector_encryption : 'none',
-            }).imp().options().collector_port).to.equal(80);
+            }).options().collector_port).to.equal(80);
             expect(makeLSTracer({
                 collector_encryption : 'tls',
-            }).imp().options().collector_port).to.equal(443);
+            }).options().collector_port).to.equal(443);
         });
 
         it('should treat collector_port=0 as meaning "use the default"', function() {
             expect(makeLSTracer({
                 collector_port : 4000,
-            }).imp().options().collector_port).to.equal(4000);
+            }).options().collector_port).to.equal(4000);
 
             expect(makeLSTracer({
                 collector_port : 0,
-            }).imp().options().collector_port).to.equal(443);
+            }).options().collector_port).to.equal(443);
 
             expect(makeLSTracer({
                 collector_port : 0,
                 collector_encryption : 'none',
-            }).imp().options().collector_port).to.equal(80);
+            }).options().collector_port).to.equal(80);
         });
     });
 
     describe("TracerImp#on", function() {
         it('is a method', function() {
-            expect(Tracer.imp().on).to.be.a("function");
+            expect(Tracer.on).to.be.a("function");
         });
 
         it("should emit a 'span_added' event when each span ends", function() {
@@ -153,7 +153,7 @@ describe("TracerImp", function() {
                 count++;
             };
 
-            Tracer.imp().on('span_added', onSpan);
+            Tracer.on('span_added', onSpan);
             var s = Tracer.startSpan("test");
             expect(count).to.equal(0);
             s.finish();
@@ -163,7 +163,7 @@ describe("TracerImp", function() {
             s.finish();
             expect(count).to.equal(2);
 
-            Tracer.imp().removeListener('span_added', onSpan);
+            Tracer.removeListener('span_added', onSpan);
             s = Tracer.startSpan("test");
             expect(count).to.equal(2);
             s.finish();
@@ -172,12 +172,12 @@ describe("TracerImp", function() {
     });
     describe("TracerImp#once", function() {
         it('is a method', function() {
-            expect(Tracer.imp().once).to.be.a("function");
+            expect(Tracer.once).to.be.a("function");
         });
     });
     describe("TracerImp#emit", function() {
         it('is a method', function() {
-            expect(Tracer.imp().emit).to.be.a("function");
+            expect(Tracer.emit).to.be.a("function");
         });
     });
 });

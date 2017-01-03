@@ -1,7 +1,7 @@
 // For the convenience of unit testing, add these to the global namespace
 global._ = require('underscore');
 global.expect = require('chai').expect;
-global.Tracer = require('opentracing');
+global.opentracing = require('../../opentracing-javascript/lib');
 global.util = require('./util/util');
 global.requireES6 = requireES6;
 global.LightStep = require('..');
@@ -13,13 +13,13 @@ var FileTransport = require("./util/file_transport");
 process.setMaxListeners(256);
 
 // Use for "override" options specifically for unit testing
-Tracer.initGlobalTracer(LightStep.tracer({
+global.Tracer = LightStep.tracer({
     override_transport     : new FileTransport(path.join(__dirname, 'results/default_report.json')),
     component_name         : 'lightstep-tracer/unit-tests',
     access_token           : '010101010101010101020101010',
     disable_reporting_loop : true,
     verbosity              : 0,
-}));
+});
 
 describe('Common tests', function() {
     require('./suites/common.js');

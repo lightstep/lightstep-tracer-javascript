@@ -3,6 +3,7 @@
 //============================================================================//
 
 import EventEmitter from 'eventemitter3';
+import opentracing from 'opentracing';
 import { Platform, Transport, crouton_thrift } from '../platform_abstraction_layer';    // eslint-disable-line camelcase
 import SpanContextImp from './span_context_imp';
 import SpanImp from './span_imp';
@@ -23,13 +24,19 @@ const DEFAULT_COLLECTOR_HOSTNAME   = 'collector.lightstep.com';
 const DEFAULT_COLLECTOR_PORT_TLS   = 443;
 const DEFAULT_COLLECTOR_PORT_PLAIN = 80;
 
-export default class TracerImp extends EventEmitter {
+// Internal errors should be rare. Set a low limit to ensure a cascading failure
+// does not compound an existing problem by trying to send a great deal of
+// internal error data.
+const MAX_INTERNAL_LOGS = 20;
+
+export default class TracerImp extends opentracing.Tracer {
 
     constructor(opts) {
         super();
-        opts = opts || {};
 
-        this._interface = null;
+        this._delegateEventEmitterMethods();
+
+        opts = opts || {};
 
         // Platform abstraction layer
         this._platform = new Platform(this);
@@ -38,6 +45,11 @@ export default class TracerImp extends EventEmitter {
         this._options = {};
         this._optionDescs = [];
         this._makeOptionsTable();
+
+        this._opentracing = opentracing;
+        if (opts.opentracing_module) {
+            this._opentracing = opts.opentracing_module;
+        }
 
         let now = this._platform.nowMicros();
 
@@ -116,6 +128,39 @@ export default class TracerImp extends EventEmitter {
         this._setupReportOnExit();
 
         this._info(`TracerImp created with guid ${this._runtimeGUID}`);
+
+        this.startPlugins();
+    }
+
+    // Morally speaking, TracerImp also inherits from EventEmmiter, but we must
+    // fake it via composition.
+    //
+    // If not obvious on inspection: a hack.
+    _delegateEventEmitterMethods() {
+        let self = this;
+        this._ee = new EventEmitter();
+        // The list of methods at https://nodejs.org/api/events.html
+        _each([
+            'addListener',
+            'emit',
+            'eventNames',
+            'getMaxListeners',
+            'listenerCount',
+            'listeners',
+            'on',
+            'once',
+            'prependListener',
+            'prependOnceListener',
+            'removeAllListeners',
+            'removeListener',
+            'setMaxListeners',
+        ], (methodName) => {
+            self[methodName] = function() {
+                if (self._ee[methodName]) {
+                    self._ee[methodName].apply(self._ee, arguments);
+                }
+            };
+        });
     }
 
     _makeOptionsTable() {
@@ -165,58 +210,38 @@ export default class TracerImp extends EventEmitter {
     }
 
     // ---------------------------------------------------------------------- //
-    // OpenTracing API
+    // opentracing.Tracer SPI
     // ---------------------------------------------------------------------- //
 
-    setInterface(tracerInterface) {
-        this._interface = tracerInterface;
-        this.startPlugins();
-        this._debug('Initialization complete', this._options);
-    }
-
-    newTracer(opts) {
-        // Inherit all options of the global tracer unless explicitly specified
-        // otherwise
-        opts = opts || {};
-        _each(globals.options, (val, key) => {
-            if (opts[key] === undefined) {
-                opts[key] = val;
-            }
-        });
-        return new TracerImp(opts);
-    }
-
-    startSpan(fields) {
+    _startSpan(name, fields) {
         // First, assemble the SpanContextImp for our SpanImp.
         let parentCtxImp = null;
+        fields = fields || {};
         if (fields.references) {
             for (let i = 0; i < fields.references.length; i++) {
                 let ref = fields.references[i];
                 let type = ref.type();
-                if (type === this._interface.REFERENCE_CHILD_OF ||
-                    type === this._interface.REFERENCE_FOLLOWS_FROM) {
+                if (type === this._opentracing.REFERENCE_CHILD_OF ||
+                    type === this._opentracing.REFERENCE_FOLLOWS_FROM) {
                     let context = ref.referencedContext();
                     if (!context) {
                         this._error('Span reference has an invalid context', context);
                         continue;
                     }
-                    parentCtxImp = context.imp();
+                    parentCtxImp = context;
                     break;
                 }
             }
         }
 
         let traceGUID = parentCtxImp ? parentCtxImp._traceGUID : this.generateTraceGUIDForRootSpan();
-        let spanImp = new SpanImp(this, new SpanContextImp(this._platform.generateUUID(), traceGUID));
+        let spanImp = new SpanImp(this, name, new SpanContextImp(this._platform.generateUUID(), traceGUID));
         spanImp.addTags(this._options.default_span_tags);
 
         _each(fields, (value, key) => {
             switch (key) {
             case 'references':
                 // Ignore: handled before constructing the span
-                break;
-            case 'operationName':
-                spanImp.setOperationName(value);
                 break;
             case 'startTime':
                 // startTime is in milliseconds
@@ -239,14 +264,14 @@ export default class TracerImp extends EventEmitter {
         return spanImp;
     }
 
-    inject(spanContext, format, carrier) {
+    _inject(spanContext, format, carrier) {
         switch (format) {
-        case this._interface.FORMAT_HTTP_HEADERS:
-        case this._interface.FORMAT_TEXT_MAP:
+        case this._opentracing.FORMAT_HTTP_HEADERS:
+        case this._opentracing.FORMAT_TEXT_MAP:
             this._injectToTextMap(spanContext, carrier);
             break;
 
-        case this._interface.FORMAT_BINARY:
+        case this._opentracing.FORMAT_BINARY:
             this._error(`Unsupported format: ${format}`);
             break;
 
@@ -275,13 +300,13 @@ export default class TracerImp extends EventEmitter {
         return carrier;
     }
 
-    extract(format, carrier) {
+    _extract(format, carrier) {
         switch (format) {
-        case this._interface.FORMAT_HTTP_HEADERS:
-        case this._interface.FORMAT_TEXT_MAP:
+        case this._opentracing.FORMAT_HTTP_HEADERS:
+        case this._opentracing.FORMAT_TEXT_MAP:
             return this._extractTextMap(format, carrier);
 
-        case this._interface.FORMAT_BINARY:
+        case this._opentracing.FORMAT_BINARY:
             this._error(`Unsupported format: ${format}`);
             return null;
 
@@ -345,6 +370,11 @@ export default class TracerImp extends EventEmitter {
         });
         return spanContext;
     }
+
+
+    // ---------------------------------------------------------------------- //
+    // LightStep extensions
+    // ---------------------------------------------------------------------- //
 
     /**
      * Manually sends a report of all buffered data.
@@ -645,7 +675,7 @@ export default class TracerImp extends EventEmitter {
 
     startPlugins() {
         _each(this._plugins, (val, key) => {
-            this._plugins[key].start(this._interface, this);
+            this._plugins[key].start(this._opentracing, this);
         });
     }
 
