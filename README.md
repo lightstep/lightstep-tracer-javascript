@@ -19,10 +19,10 @@ All modern browsers and Node versions >= 0.12 are supported.
 To use LightStep as the OpenTracing binding, initialize the global tracer with the LightStep implementation:
 
 ```javascript
-var Tracer    = require('opentracing');
-var LightStep = require('lightstep-tracer');
+var opentracing = require('opentracing');
+var lightstep   = require('lightstep-tracer');
 
-Tracer.initGlobalTracer(LightStep.tracer({
+opentracing.initGlobalTracer(lightstep.tracer({
     access_token   : '{your_access_token}',
     component_name : '{your_service_or_app_name}',
 }));
@@ -37,7 +37,7 @@ The **[LightStep JavaScript Tracing Cookbook](doc/cookbook.md)** is a good next 
 The browser version of the code can be explicitly included using the following, which can be helpful in some [`browserify`](https://github.com/substack/node-browserify) (or similar) setups:
 
 ```javascript
-var LightStep = require('lightstep-tracer/browser');
+var lightstep = require('lightstep-tracer/browser');
 ```
 
 
@@ -102,7 +102,7 @@ Returns an absolute URL to the LightStep application for the trace containing th
 ...
 span.finish();
 
-var url = span.imp().generateTraceURL())
+var url = span.generateTraceURL())
 console.log('View the trace for this span at:', url);
 ```
 
