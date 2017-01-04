@@ -148,7 +148,6 @@ class InstrumentPageLoad {
 
         parentImp.setBeginMicros(timing.navigationStart * 1000.0);
 
-        // XXX use OT APIs for these timestamps
         parentImp.tracer().startSpan('document/time_to_first_byte', { childOf : parentImp })
             .setBeginMicros(timing.requestStart * 1000.0)
             .setEndMicros(timing.responseStart * 1000.0)
