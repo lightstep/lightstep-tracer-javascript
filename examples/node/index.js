@@ -13,9 +13,9 @@
 // Note: the LightStep package is included directly. Normally this require()
 // would simply be:
 //
-//   var LightStep = require('lightstep');
+//   var lightstep = require('lightstep');
 //
-var LightStep   = require('../..');
+var lightstep   = require('../..');
 
 var http        = require('http');
 var url         = require('url');
@@ -36,7 +36,7 @@ var username = process.argv[2] || 'lightstep';
 // token. The component_name can be an identifier you wish to use to identify the
 // service or process.
 //
-opentracing.initGlobalTracer(LightStep.tracer({
+opentracing.initGlobalTracer(new lightstep.Tracer({
     access_token   : '{your_access_token}',
     component_name : 'lightstep-tracer/examples/node',
 }));

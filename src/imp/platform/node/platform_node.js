@@ -76,7 +76,6 @@ export default class PlatformNode {
     }
 
     static initLibrary(lib) {
-
     }
 
     nowMicros() {

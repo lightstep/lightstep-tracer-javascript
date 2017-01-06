@@ -1,13 +1,13 @@
 'use strict';
 
-var LightStep   = require('../..');
+var lightstep = require('../..');
 
-var Tracer = LightStep.tracer({
+var tracer = new lightstep.Tracer({
     access_token   : '{your_access_token}',
     component_name : 'lightstep-tracer/examples/node-trivial',
 });
 
-var span = Tracer.startSpan('trivial_span');
+var span = tracer.startSpan('trivial_span');
 setTimeout(function() {
     span.logEvent('log_event');
     span.log({

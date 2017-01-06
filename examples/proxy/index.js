@@ -6,12 +6,12 @@
 var http        = require('http');
 var https       = require('https');
 var url         = require('url');
-var OpenTracing = require('opentracing');
+var opentracing = require('opentracing');
 
 // During development, this will need to be
 //
-//   var LightStep   = require('../..');
-var LightStep   = require('lightstep');
+//   var lightstep   = require('../..');
+var lightstep   = require('lightstep');
 
 var PROXY_PORT = process.env.LIGHTSTEP_PROXY_PORT || 80;
 
@@ -53,7 +53,7 @@ var server = http.createServer(function (req, res) {
 
     var tracer = tracerMap[accessToken];
     if (!tracer) {
-        tracer = LightStep.tracer({
+        tracer = new lightstep.Tracer({
             access_token   : accessToken,
             component_name : 'lightstep-tracer/examples/node_proxy',
         });
@@ -65,7 +65,7 @@ var server = http.createServer(function (req, res) {
     // among the other HTTP headers.  join() is presumed to ignore unrecognized
     // keys in the map.
 
-    var ctx = tracer.extract(OpenTracing.FORMAT_TEXT_MAP, requestHeaders);
+    var ctx = tracer.extract(opentracing.FORMAT_TEXT_MAP, requestHeaders);
     var span = tracer.startSpan('request_proxy', { childOf : ctx });
     var options = {
         host: 'api.github.com',

@@ -4,17 +4,19 @@
 
 import EventEmitter from 'eventemitter3';
 import opentracing from 'opentracing';
-import { Platform, Transport, crouton_thrift } from '../platform_abstraction_layer';    // eslint-disable-line camelcase
+
 import SpanContextImp from './span_context_imp';
 import SpanImp from './span_imp';
 import _each from '../_each';
+import { Platform, Transport, crouton_thrift } from '../platform_abstraction_layer';    // eslint-disable-line camelcase
 
-const constants     = require('../constants');
-const coerce        = require('./coerce');
-const util          = require('./util/util');
-const LogBuilder    = require('./log_builder');
 const ClockState    = require('./util/clock_state');
+const LogBuilder    = require('./log_builder');
+const coerce        = require('./coerce');
+const constants     = require('../constants');
+const globals       = require('./globals');
 const packageObject = require('../../package.json');
+const util          = require('./util/util');
 
 const CARRIER_TRACER_STATE_PREFIX = 'ot-tracer-';
 const CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
@@ -28,7 +30,9 @@ const DEFAULT_COLLECTOR_PORT_PLAIN = 80;
 // internal error data.
 const MAX_INTERNAL_LOGS = 20;
 
-export default class TracerImp extends opentracing.Tracer {
+let _singleton = null;
+
+export default class Tracer extends opentracing.Tracer {
 
     constructor(opts) {
         super();
@@ -36,6 +40,11 @@ export default class TracerImp extends opentracing.Tracer {
         this._delegateEventEmitterMethods();
 
         opts = opts || {};
+
+        if (!_singleton) {
+            globals.setOptions(opts);
+            _singleton = this;
+        }
 
         // Platform abstraction layer
         this._platform = new Platform(this);
@@ -127,12 +136,12 @@ export default class TracerImp extends opentracing.Tracer {
         // This relies on the options being set: call this last.
         this._setupReportOnExit();
 
-        this._info(`TracerImp created with guid ${this._runtimeGUID}`);
+        this._info(`Tracer created with guid ${this._runtimeGUID}`);
 
         this.startPlugins();
     }
 
-    // Morally speaking, TracerImp also inherits from EventEmmiter, but we must
+    // Morally speaking, Tracer also inherits from EventEmmiter, but we must
     // fake it via composition.
     //
     // If not obvious on inspection: a hack.
