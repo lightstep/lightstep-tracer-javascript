@@ -57,11 +57,11 @@ export default class SpanImp extends opentracing.Span {
             }
             if (keyStr.length > self._tracerImp._options.log_field_key_hard_limit) {
                 self._tracerImp._counters['logs.keys.over_limit']++;
-                keyStr = keyStr.substr(0, self._tracerImp._options.log_field_key_hard_limit) + "…";
+                keyStr = keyStr.substr(0, self._tracerImp._options.log_field_key_hard_limit) + "...";
             }
             if (valStr.length > self._tracerImp._options.log_field_value_hard_limit) {
                 self._tracerImp._counters['logs.values.over_limit']++;
-                valStr = valStr.substr(0, self._tracerImp._options.log_field_value_hard_limit) + "…";
+                valStr = valStr.substr(0, self._tracerImp._options.log_field_value_hard_limit) + "...";
             }
             fields.push(new crouton_thrift.KeyValue({
                 Key   : keyStr,
