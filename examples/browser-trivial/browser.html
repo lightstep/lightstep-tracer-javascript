@@ -52,7 +52,7 @@
             var linkDiv = document.getElementById('trace-link-div');
             var link = document.getElementById('trace-link');
             results.value = 'Span finished.'
-            var url = span.imp().generateTraceURL();
+            var url = span.generateTraceURL();
             link.href = url;
             linkDiv.style.opacity = 1.0;
         }, 200);
