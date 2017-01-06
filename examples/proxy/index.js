@@ -7,7 +7,11 @@ var http        = require('http');
 var https       = require('https');
 var url         = require('url');
 var OpenTracing = require('opentracing');
-var LightStep   = require('../..');
+
+// During development, this will need to be
+//
+//   var LightStep   = require('../..');
+var LightStep   = require('lightstep');
 
 var PROXY_PORT = process.env.LIGHTSTEP_PROXY_PORT || 80;
 

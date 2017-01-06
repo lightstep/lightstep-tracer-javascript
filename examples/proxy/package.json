@@ -1,8 +1,9 @@
 {
-  "name": "opentracing-example",
+  "name": "example-proxy",
   "version": "1.0.0",
   "main": "index.js",
   "dependencies": {
+    "lightstep": "*",
     "opentracing": "0.13.x"
   },
   "scripts":{
