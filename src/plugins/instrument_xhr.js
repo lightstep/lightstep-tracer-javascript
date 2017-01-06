@@ -207,13 +207,13 @@ class InstrumentXHR {
                 this.addEventListener('readystatechange', function () {
                     if (this.readyState === 0) {
                         span.log({
-                            readyState: 0,
-                            event: 'unsent',
+                            readyState : 0,
+                            event      : 'unsent',
                         });
                     } else if (this.readyState === 1) {
                         span.log({
-                            readyState: 1,
-                            event: 'sending',
+                            readyState : 1,
+                            event      : 'sending',
                         });
                     } else if (this.readyState === 2) {
                         span.log({
@@ -245,7 +245,7 @@ class InstrumentXHR {
                         span.finish();
                     } else {
                         span.log({
-                            readyState: this.readyState,
+                            readyState : this.readyState,
                         });
                     }
                 });
@@ -287,7 +287,7 @@ class InstrumentXHR {
             }
             let lenStr = (len === undefined) ? '' : `, data length=${len}`;
             span.log({
-                event : 'send',
+                event       : 'send',
                 data_length : lenStr,
             });
             return proxied.send.apply(this, arguments);

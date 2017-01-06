@@ -1,6 +1,6 @@
 var LocalStorageTransport = require('./util/localstorage_transport');
 
-global.Tracer = LightStep.tracer({
+global.Tracer = new lightstep.Tracer({
     access_token       : '{your_access_token}',
     component_name     : 'lightstep/unittests/browser',
     override_transport : new LocalStorageTransport('lightstep_report'),

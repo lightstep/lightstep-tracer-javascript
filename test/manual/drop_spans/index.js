@@ -1,8 +1,8 @@
 'use strict';
 
-var LightStep = require('../../..');
+var lightstep = require('../../..');
 
-var Tracer = LightStep.tracer({
+var Tracer = new lightstep.Tracer({
     access_token   : '{your_access_token}',
     component_name : 'lightstep-tracer/examples/node-trivial',
     collector_host : 'localhost',

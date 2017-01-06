@@ -48,7 +48,7 @@ module.exports = {
     output  : {
         path          : 'dist/',
         filename      : bundleName + '.js',
-        library       : 'LightStep',
+        library       : 'lightstep',
         libraryTarget : 'umd',
     },
     plugins :[

@@ -8,7 +8,7 @@ function makeLSTracer(extraOpts) {
     for (var key in extraOpts) {
         opts[key] = extraOpts[key];
     }
-    return LightStep.tracer(opts);
+    return new lightstep.Tracer(opts);
 }
 
 describe("TracerImp", function() {
@@ -94,7 +94,7 @@ describe("TracerImp", function() {
             ];
 
             for (var i = 0; i < testTable.length; i++) {
-                var tracer = LightStep.tracer({
+                var tracer = new lightstep.Tracer({
                     access_token : '{your_access_token}',
                     component_name : '{node_test_suite}',
                     disable_reporting_loop : true,

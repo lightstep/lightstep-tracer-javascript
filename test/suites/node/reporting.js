@@ -2,14 +2,14 @@ var path = require("path");
 var fs   = require("fs");
 var child_process = require("child_process");
 var FileTransport = require("../../util/file_transport");
-var LightStep = require('../../..');
+var lightstep = require('../../..');
 
 describe("Reporting loop", function() {
     it("should flush at a regular interval", function(done) {
         this.timeout(5000);
 
         var transport = new FileTransport(path.join(__dirname, '../../results/report_flush_loop.json'));
-        var tracer = LightStep.tracer({
+        var tracer = new lightstep.Tracer({
             access_token                  : "{your_access_token}",
             component_name                : "api-javascript/unit-test/report_flush_loop",
             max_reporting_interval_millis : 10,
