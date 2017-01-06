@@ -45,7 +45,7 @@
         <!--
             Include the standard OpenTracing APIs and the LightStep bindings.
         -->
-        <script type="text/javascript" src="opentracing-browser.min.js"></script>
+        <script type="text/javascript" src="opentracing-browser.js"></script>
         <script type="text/javascript" src="../../dist/lightstep-tracer.js"></script>
 
         <!--
@@ -60,7 +60,7 @@
         // token. The component_name can be an identifier you wish to use to
         // identify the service or process.
         //
-        Tracer.initGlobalTracer(LightStep.tracer({
+        opentracing.initGlobalTracer(new lightstep.Tracer({
             access_token        : '{your_access_token}',
             component_name      : 'lightstep-tracer/examples/browser',
             xhr_instrumentation : true,
@@ -82,7 +82,7 @@
         function printUserInfo(username) {
 
             // Start the outer operation span
-            var span = Tracer.startSpan('printUserInfo');
+            var span = opentracing.globalTracer().startSpan('printUserInfo');
             span.logEvent('query_started');
 
             queryUserInfo(span, username, function(err, user) {
@@ -184,7 +184,7 @@
 
         function httpGet(parentSpan, urlString, callback) {
             // Create a span representing the https request
-            var span = Tracer.startSpan('https.get', { childOf : parentSpan });
+            var span = opentracing.globalTracer().startSpan('https.get', { childOf : parentSpan });
             span.setTag('url', urlString);
 
             var xhr = new XMLHttpRequest();
