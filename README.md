@@ -16,13 +16,13 @@ All modern browsers and Node versions >= 0.12 are supported.
 
 ## Getting started
 
-To use LightStep as the OpenTracing binding, initialize the global tracer with the LightStep implementation:
+To use LightStep as the OpenTracing binding, initialize the global `Tracer` with the LightStep implementation:
 
 ```javascript
 var opentracing = require('opentracing');
 var lightstep   = require('lightstep-tracer');
 
-opentracing.initGlobalTracer(lightstep.tracer({
+opentracing.initGlobalTracer(new lightstep.Tracer({
     access_token   : '{your_access_token}',
     component_name : '{your_service_or_app_name}',
 }));
@@ -49,7 +49,7 @@ The OpenTracing standard JavaScript API is [documented here](https://doc.esdoc.o
 
 ---
 
-#### tracer(options)
+#### new Tracer(options)
 
 **Required options**
 
