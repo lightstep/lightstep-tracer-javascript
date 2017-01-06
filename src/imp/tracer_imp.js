@@ -212,8 +212,8 @@ export default class Tracer extends opentracing.Tracer {
         this.addOption('silent',                        { type : 'bool',   defaultValue: false });
 
         // Hard upper limits to protect against worst-case scenarios for log field sizes.
-        this.addOption('log_field_key_hard_limit',   { type: 'int',     defaultValue: 512 });
-        this.addOption('log_field_value_hard_limit', { type: 'int',     defaultValue: 16 * 1024 });
+        this.addOption('log_field_key_hard_limit',   { type: 'int',     defaultValue: 256 });
+        this.addOption('log_field_value_hard_limit', { type: 'int',     defaultValue: 1024 });
 
         /* eslint-disable key-spacing, no-multi-spaces */
     }
