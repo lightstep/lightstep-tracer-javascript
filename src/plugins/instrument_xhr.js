@@ -308,7 +308,7 @@ class InstrumentXHR {
             return false;
         }
         for (let key in this._internalExclusions) {
-            if (!opts._internalExclusions.hasOwnProperty(key)) {
+            if (!this._internalExclusions.hasOwnProperty(key)) {
                 continue;
             }
             const ex = this._internalExclusions[key];
