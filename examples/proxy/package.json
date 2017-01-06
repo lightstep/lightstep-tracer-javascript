@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "dependencies": {
-    "lightstep-tracer": "*",
-    "opentracing": "0.11.x"
+    "opentracing": "0.13.x"
   },
   "scripts":{
     "forever" : "forever start --append -l forever.log -o out.log -e err.log index.js"

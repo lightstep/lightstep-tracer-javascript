@@ -1,12 +1,11 @@
 'use strict';
 
-var Tracer    = require('opentracing');
-var LightStep = require('../..');
+var LightStep   = require('../..');
 
-Tracer.initGlobalTracer(LightStep.tracer({
-    access_token   : 'DEVELOPMENT_TOKEN_bhs',
+var Tracer = LightStep.tracer({
+    access_token   : '{your_access_token}',
     component_name : 'lightstep-tracer/examples/node-trivial',
-}));
+});
 
 var span = Tracer.startSpan('trivial_span');
 setTimeout(function() {
@@ -25,5 +24,5 @@ setTimeout(function() {
     span.finish();
 }, 200);
 
-var url = span.imp().generateTraceURL();
+var url = span.generateTraceURL();
 console.log('URL: ' + url);

@@ -12,12 +12,14 @@
 //
 // Note: the LightStep package is included directly. Normally this require()
 // would simply be:
-// var LightStep = require('lightstep');
 //
-var http      = require('http');
-var url       = require('url');
-var Tracer    = require('opentracing');
-var LightStep = require('../..');
+//   var LightStep = require('lightstep');
+//
+var LightStep   = require('../..');
+
+var http        = require('http');
+var url         = require('url');
+var opentracing = require('opentracing');
 
 // Proxy the requests through a LightStep server
 var PROXY_HOST = process.env.LIGHTSTEP_PROXY_HOST || 'example-proxy.lightstep.com';
@@ -34,11 +36,12 @@ var username = process.argv[2] || 'lightstep';
 // token. The component_name can be an identifier you wish to use to identify the
 // service or process.
 //
-Tracer.initGlobalTracer(LightStep.tracer({
+opentracing.initGlobalTracer(LightStep.tracer({
     access_token   : '{your_access_token}',
     component_name : 'lightstep-tracer/examples/node',
 }));
 
+// Do the work.
 printUserInfo(username);
 
 //
@@ -47,17 +50,18 @@ printUserInfo(username);
 function printUserInfo(username) {
 
     // Start the outer operation span
-    var span = Tracer.startSpan('printUserInfo');
-    span.logEvent('query_started');
+    var span = opentracing.globalTracer().startSpan('printUserInfo');
+    span.log({event : 'query_started'});
 
     queryUserInfo(span, username, function(err, user) {
         if (err) {
-            span.imp().exception('Error in queryUserInfo', err);
+            span.exception('Error in queryUserInfo', err);
             span.finish();
             return;
         }
-        span.logEvent('query_finished', {
-            user: user,
+        span.log({
+            event : 'query_finished',
+            user  : user,
         });
 
         console.log('User: ' + user.login);
@@ -74,16 +78,15 @@ function printUserInfo(username) {
         // Lastly, log the remaining rate limit data to see how many more times
         // the public GitHub APIs can be queried!
         httpGet(span, 'http://api.github.com/rate_limit', function (err, json) {
-            span.logEvent('rate_limit', {
+            span.log({
+                event : 'rate_limit',
                 error : err,
                 json  : json,
             })
             span.finish();
 
             // Generate a LightStep-specific URL
-            // Note the call to imp() to access the LightStep implementation
-            // object.
-            var url = span.imp().generateTraceURL();
+            var url = span.generateTraceURL();
             console.log('');
             console.log('View the trace at: ' + url);
         });
@@ -135,6 +138,7 @@ function queryUserInfo(parentSpan, username, callback) {
         });
 
         // In parallel, query the recent events activity for the user
+        console.log(json.received_events_url);
         httpGet(parentSpan, json.received_events_url, function (err, json) {
             if (err) {
                 return next(err);
@@ -156,7 +160,7 @@ function queryUserInfo(parentSpan, username, callback) {
  * Helper function to make a GET request and return parsed JSON data.
  */
 function httpGet(parentSpan, urlString, callback) {
-    var span = Tracer.startSpan('http.get', { childOf : parentSpan });
+    var span = opentracing.globalTracer().startSpan('http.get', { childOf : parentSpan });
     var callbackWrapper = function (err, data) {
         span.finish();
         callback(err, data);
@@ -164,7 +168,7 @@ function httpGet(parentSpan, urlString, callback) {
 
     try {
         var carrier = {};
-        Tracer.inject(span, Tracer.FORMAT_TEXT_MAP, carrier);
+        opentracing.globalTracer().inject(span, opentracing.FORMAT_TEXT_MAP, carrier);
 
         var dest = url.parse(urlString);
         var options = {
@@ -182,7 +186,9 @@ function httpGet(parentSpan, urlString, callback) {
 
         // Create a span representing the https request
         span.setTag('url', urlString);
-        span.logEvent('options', options);
+        span.log({
+            'options': options,
+        });
 
         return http.get(options, function(response) {
             var bodyBuffer = '';
@@ -190,7 +196,7 @@ function httpGet(parentSpan, urlString, callback) {
                 bodyBuffer += chunk;
             });
             response.on('end', function() {
-                span.logEvent('response_end', {
+                span.log({
                     body   : bodyBuffer,
                     length : bodyBuffer.length,
                 });
@@ -203,7 +209,7 @@ function httpGet(parentSpan, urlString, callback) {
                         buffer    : bodyBuffer,
                         exception : exception,
                     };
-                    span.logEvent('error', err);
+                    span.log({'error': err});
                 }
 
                 callbackWrapper(err, parsedJSON);
@@ -211,7 +217,7 @@ function httpGet(parentSpan, urlString, callback) {
         });
 
     } catch (exception) {
-        span.imp().exception('Exception thrown during request', exception);
+        span.log({'exception': exception});
         callbackWrapper(exception, null);
     }
 }
