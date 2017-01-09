@@ -30,8 +30,8 @@ While in production, you'll likely want more control than this, this is an easy 
 2. Include the following scripts in your page HTML and replace `{your_access_token}` with, well, your access token value and replace `{name_to_use_for_your_component}` with a string identifier that'll be used in the LightStep UI to identify this component:
 
 ```html
-<script src=".../opentracing-browser.min.js"></script>
-<script src=".../lightstep-tracer.min.js"
+<script src="PATH/TO/opentracing-browser.min.js"></script>
+<script src="PATH/TO/lightstep-tracer.min.js"
         data-init_global_tracer="true"
         data-access_token="{your_access_token}"
         data-component_name="{name_to_use_for_your_component}"
