@@ -11,7 +11,7 @@ describe("Command-line arguments", function() {
         ]);
         child.on('close', function() {
             var reqs = util.requestsFromFile(reportFile);
-            expect(reqs.logRecordCount()).to.be.at.least(5);
+            expect(reqs.spanRecordCount()).to.be.at.least(10);
             done();
         });
     });

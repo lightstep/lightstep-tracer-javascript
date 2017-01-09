@@ -6,8 +6,12 @@
 var http        = require('http');
 var https       = require('https');
 var url         = require('url');
-var OpenTracing = require('opentracing');
-var LightStep   = require('lightstep-tracer');
+var opentracing = require('opentracing');
+
+// During development, this will need to be
+//
+//   var lightstep   = require('../..');
+var lightstep   = require('lightstep');
 
 var PROXY_PORT = process.env.LIGHTSTEP_PROXY_PORT || 80;
 
@@ -49,10 +53,10 @@ var server = http.createServer(function (req, res) {
 
     var tracer = tracerMap[accessToken];
     if (!tracer) {
-        tracer = OpenTracing.initNewTracer(LightStep.tracer({
+        tracer = new lightstep.Tracer({
             access_token   : accessToken,
             component_name : 'lightstep-tracer/examples/node_proxy',
-        }));
+        });
         tracerMap[accessToken] = tracer;
     }
 
@@ -61,7 +65,7 @@ var server = http.createServer(function (req, res) {
     // among the other HTTP headers.  join() is presumed to ignore unrecognized
     // keys in the map.
 
-    var ctx = tracer.extract(OpenTracing.FORMAT_TEXT_MAP, requestHeaders);
+    var ctx = tracer.extract(opentracing.FORMAT_TEXT_MAP, requestHeaders);
     var span = tracer.startSpan('request_proxy', { childOf : ctx });
     var options = {
         host: 'api.github.com',
@@ -70,24 +74,32 @@ var server = http.createServer(function (req, res) {
     };
     span.setTag('url', req.url);
     span.logEvent('Request headers', requestHeaders);
-    span.imp().info('Forwarding equest to GitHub: ' + req.url, {
-        host: options.host,
-        path: req.url,
-        method: req.method,
-        headers: headers,
+    span.log({
+        event   : 'forwarding request to gitHub',
+        url     : req.url,
+        host    : options.host,
+        path    : req.url,
+        method  : req.method,
+        headers : headers,
     });
 
     // Queue up the request in main Node event queue
     setTimeout(function() {
         var ghSpan = tracer.startSpan('github_request', { parent : span });
-        ghSpan.imp().info('Request to ' + req.url);
+        ghSpan.log({
+            url : req.url,
+        });
 
         https.get(options, function(proxyResp) {
             if (proxyResp.statusCode >= 400) {
                 ghSpan.setTag('error', true);
-                ghSpan.imp().error('Status code = ' + proxyResp.statusCode);
+                ghSpan.log({
+                    status_code : proxyResp.statusCode,
+                });
             } else {
-                ghSpan.imp().info('Status code = ' + proxyResp.statusCode);
+                ghSpan.log({
+                    status_code : proxyResp.statusCode,
+                });
             }
             ghSpan.logEvent('Response headers', proxyResp.headers);
 
@@ -96,8 +108,9 @@ var server = http.createServer(function (req, res) {
                 bodyBuffer += chunk;
             });
             proxyResp.on('end', function() {
-                span.imp().info('Response body (length='+bodyBuffer.length+')', {
-                    body   : bodyBuffer,
+                span.log({
+                    body_length : bodyBuffer.length,
+                    body        : bodyBuffer,
                 });
                 res.writeHead(200, {
                     'Access-Control-Allow-Origin': '*',

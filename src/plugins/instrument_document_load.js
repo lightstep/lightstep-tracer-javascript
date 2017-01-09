@@ -13,7 +13,7 @@ class InstrumentPageLoad {
     addOptions(tracerImp) {
     }
 
-    start(tracer, tracerImp) {
+    start(tracerImp) {
         if (this._inited) {
             return;
         }
@@ -22,17 +22,17 @@ class InstrumentPageLoad {
         if (typeof window !== 'object' || typeof document !== 'object') {
             return;
         }
-        this._ensureSpanStarted(tracer, tracerImp);
+        this._ensureSpanStarted(tracerImp);
         document.addEventListener('readystatechange', this._handleReadyStateChange.bind(this));
     }
 
     stop() {
     }
 
-    _ensureSpanStarted(tracer, tracerImp) {
+    _ensureSpanStarted(tracerImp) {
         if (!this._span) {
-            this._span = tracer.startSpan('document/load');
-            tracerImp.addActiveRootSpan(this._span.imp());
+            this._span = tracerImp.startSpan('document/load');
+            tracerImp.addActiveRootSpan(this._span);
         }
     }
 
@@ -55,9 +55,8 @@ class InstrumentPageLoad {
         span.logEvent(`document.readystatechange ${state}`, payload);
 
         if (state === 'complete') {
-            let tracerImp = span.tracer().imp();
-            if (tracerImp) {
-                tracerImp.removeActiveRootSpan(span.imp());
+            if (span.tracer()) {
+                span.tracer().removeActiveRootSpan(span.tracer());
             }
             span.finish();
         }
@@ -107,14 +106,13 @@ class InstrumentPageLoad {
     }
 
     // Retroactively create the appropriate spans and logs
-    _addTimingSpans(parent, timing) {
+    _addTimingSpans(parentImp, timing) {
         // NOTE: this currently relies on LightStep-specific APIs
-        let parentImp = parent.imp();
         if (!parentImp) {
             return;
         }
 
-        parent.setTag('user_agent', navigator.userAgent);
+        parentImp.setTag('user_agent', navigator.userAgent);
 
         _each(timing, (value, key) => {
             // e.g. secureConnectionStart is not always set
@@ -122,7 +120,6 @@ class InstrumentPageLoad {
                 return;
             }
 
-            let micros = value * 1000.0;
             let payload = undefined;
 
             if (key === 'navigationStart' && typeof navigator === 'object') {
@@ -132,9 +129,8 @@ class InstrumentPageLoad {
             }
             parentImp.log({
                 message          : `document ${key}`,
-                timestamp_micros : micros,
                 payload          : payload,
-            });
+            }, value);
         });
 
         if (window.chrome && window.chrome.loadTimes) {
@@ -142,24 +138,23 @@ class InstrumentPageLoad {
             if (chromeTimes) {
                 parentImp.log({
                     message          : 'window.chrome.loadTimes()',
-                    timestamp_micros : timing.domComplete * 1000.0,
                     payload          : chromeTimes,
-                });
+                }, timing.domComplete);
             }
         }
 
         parentImp.setBeginMicros(timing.navigationStart * 1000.0);
 
-        parent.tracer().startSpan('document/time_to_first_byte', { childOf : parent }).imp()
+        parentImp.tracer().startSpan('document/time_to_first_byte', { childOf : parentImp })
             .setBeginMicros(timing.requestStart * 1000.0)
             .setEndMicros(timing.responseStart * 1000.0)
             .finish();
-        parent.tracer()
-            .startSpan('document/response_transfer', { childOf : parent }).imp()
+        parentImp.tracer()
+            .startSpan('document/response_transfer', { childOf : parentImp })
             .setBeginMicros(timing.responseStart * 1000.0)
             .setEndMicros(timing.responseEnd * 1000.0)
             .finish();
-        parent.tracer().startSpan('document/dom_load', { childOf : parent }).imp()
+        parentImp.tracer().startSpan('document/dom_load', { childOf : parentImp })
             .setBeginMicros(timing.domLoading * 1000.0)
             .setEndMicros(timing.domInteractive * 1000.0)
             .finish();

@@ -280,6 +280,7 @@ crouton_thrift.Runtime.prototype.write = false && function(output) {
 
 crouton_thrift.LogRecord = function(args) {
   this.timestamp_micros = null;
+  this.fields = null;
   this.runtime_guid = null;
   this.span_guid = null;
   this.stable_name = null;
@@ -294,6 +295,9 @@ crouton_thrift.LogRecord = function(args) {
   if (args) {
     if (args.timestamp_micros !== undefined) {
       this.timestamp_micros = args.timestamp_micros;
+    }
+    if (args.fields !== undefined) {
+      this.fields = args.fields;
     }
     if (args.runtime_guid !== undefined) {
       this.runtime_guid = args.runtime_guid;
@@ -347,6 +351,27 @@ crouton_thrift.LogRecord.prototype.read = false && function(input) {
       case 1:
       if (ftype == Thrift.Type.I64) {
         this.timestamp_micros = input.readI64().value;
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 13:
+      if (ftype == Thrift.Type.LIST) {
+        var _size8 = 0;
+        var _rtmp312;
+        this.fields = [];
+        var _etype11 = 0;
+        _rtmp312 = input.readListBegin();
+        _etype11 = _rtmp312.etype;
+        _size8 = _rtmp312.size;
+        for (var _i13 = 0; _i13 < _size8; ++_i13)
+        {
+          var elem14 = null;
+          elem14 = new crouton_thrift.KeyValue();
+          elem14.read(input);
+          this.fields.push(elem14);
+        }
+        input.readListEnd();
       } else {
         input.skip(ftype);
       }
@@ -409,18 +434,18 @@ crouton_thrift.LogRecord.prototype.read = false && function(input) {
       break;
       case 10:
       if (ftype == Thrift.Type.LIST) {
-        var _size8 = 0;
-        var _rtmp312;
+        var _size15 = 0;
+        var _rtmp319;
         this.stack_frames = [];
-        var _etype11 = 0;
-        _rtmp312 = input.readListBegin();
-        _etype11 = _rtmp312.etype;
-        _size8 = _rtmp312.size;
-        for (var _i13 = 0; _i13 < _size8; ++_i13)
+        var _etype18 = 0;
+        _rtmp319 = input.readListBegin();
+        _etype18 = _rtmp319.etype;
+        _size15 = _rtmp319.size;
+        for (var _i20 = 0; _i20 < _size15; ++_i20)
         {
-          var elem14 = null;
-          elem14 = input.readString().value;
-          this.stack_frames.push(elem14);
+          var elem21 = null;
+          elem21 = input.readString().value;
+          this.stack_frames.push(elem21);
         }
         input.readListEnd();
       } else {
@@ -455,6 +480,20 @@ crouton_thrift.LogRecord.prototype.write = false && function(output) {
   if (this.timestamp_micros !== null && this.timestamp_micros !== undefined) {
     output.writeFieldBegin('timestamp_micros', Thrift.Type.I64, 1);
     output.writeI64(this.timestamp_micros);
+    output.writeFieldEnd();
+  }
+  if (this.fields !== null && this.fields !== undefined) {
+    output.writeFieldBegin('fields', Thrift.Type.LIST, 13);
+    output.writeListBegin(Thrift.Type.STRUCT, this.fields.length);
+    for (var iter22 in this.fields)
+    {
+      if (this.fields.hasOwnProperty(iter22))
+      {
+        iter22 = this.fields[iter22];
+        iter22.write(output);
+      }
+    }
+    output.writeListEnd();
     output.writeFieldEnd();
   }
   if (this.runtime_guid !== null && this.runtime_guid !== undefined) {
@@ -500,12 +539,12 @@ crouton_thrift.LogRecord.prototype.write = false && function(output) {
   if (this.stack_frames !== null && this.stack_frames !== undefined) {
     output.writeFieldBegin('stack_frames', Thrift.Type.LIST, 10);
     output.writeListBegin(Thrift.Type.STRING, this.stack_frames.length);
-    for (var iter15 in this.stack_frames)
+    for (var iter23 in this.stack_frames)
     {
-      if (this.stack_frames.hasOwnProperty(iter15))
+      if (this.stack_frames.hasOwnProperty(iter23))
       {
-        iter15 = this.stack_frames[iter15];
-        output.writeString(iter15);
+        iter23 = this.stack_frames[iter23];
+        output.writeString(iter23);
       }
     }
     output.writeListEnd();
@@ -684,19 +723,19 @@ crouton_thrift.SpanRecord.prototype.read = false && function(input) {
       break;
       case 4:
       if (ftype == Thrift.Type.LIST) {
-        var _size16 = 0;
-        var _rtmp320;
+        var _size24 = 0;
+        var _rtmp328;
         this.join_ids = [];
-        var _etype19 = 0;
-        _rtmp320 = input.readListBegin();
-        _etype19 = _rtmp320.etype;
-        _size16 = _rtmp320.size;
-        for (var _i21 = 0; _i21 < _size16; ++_i21)
+        var _etype27 = 0;
+        _rtmp328 = input.readListBegin();
+        _etype27 = _rtmp328.etype;
+        _size24 = _rtmp328.size;
+        for (var _i29 = 0; _i29 < _size24; ++_i29)
         {
-          var elem22 = null;
-          elem22 = new crouton_thrift.TraceJoinId();
-          elem22.read(input);
-          this.join_ids.push(elem22);
+          var elem30 = null;
+          elem30 = new crouton_thrift.TraceJoinId();
+          elem30.read(input);
+          this.join_ids.push(elem30);
         }
         input.readListEnd();
       } else {
@@ -719,19 +758,19 @@ crouton_thrift.SpanRecord.prototype.read = false && function(input) {
       break;
       case 8:
       if (ftype == Thrift.Type.LIST) {
-        var _size23 = 0;
-        var _rtmp327;
+        var _size31 = 0;
+        var _rtmp335;
         this.attributes = [];
-        var _etype26 = 0;
-        _rtmp327 = input.readListBegin();
-        _etype26 = _rtmp327.etype;
-        _size23 = _rtmp327.size;
-        for (var _i28 = 0; _i28 < _size23; ++_i28)
+        var _etype34 = 0;
+        _rtmp335 = input.readListBegin();
+        _etype34 = _rtmp335.etype;
+        _size31 = _rtmp335.size;
+        for (var _i36 = 0; _i36 < _size31; ++_i36)
         {
-          var elem29 = null;
-          elem29 = new crouton_thrift.KeyValue();
-          elem29.read(input);
-          this.attributes.push(elem29);
+          var elem37 = null;
+          elem37 = new crouton_thrift.KeyValue();
+          elem37.read(input);
+          this.attributes.push(elem37);
         }
         input.readListEnd();
       } else {
@@ -747,19 +786,19 @@ crouton_thrift.SpanRecord.prototype.read = false && function(input) {
       break;
       case 10:
       if (ftype == Thrift.Type.LIST) {
-        var _size30 = 0;
-        var _rtmp334;
+        var _size38 = 0;
+        var _rtmp342;
         this.log_records = [];
-        var _etype33 = 0;
-        _rtmp334 = input.readListBegin();
-        _etype33 = _rtmp334.etype;
-        _size30 = _rtmp334.size;
-        for (var _i35 = 0; _i35 < _size30; ++_i35)
+        var _etype41 = 0;
+        _rtmp342 = input.readListBegin();
+        _etype41 = _rtmp342.etype;
+        _size38 = _rtmp342.size;
+        for (var _i43 = 0; _i43 < _size38; ++_i43)
         {
-          var elem36 = null;
-          elem36 = new crouton_thrift.LogRecord();
-          elem36.read(input);
-          this.log_records.push(elem36);
+          var elem44 = null;
+          elem44 = new crouton_thrift.LogRecord();
+          elem44.read(input);
+          this.log_records.push(elem44);
         }
         input.readListEnd();
       } else {
@@ -800,12 +839,12 @@ crouton_thrift.SpanRecord.prototype.write = false && function(output) {
   if (this.join_ids !== null && this.join_ids !== undefined) {
     output.writeFieldBegin('join_ids', Thrift.Type.LIST, 4);
     output.writeListBegin(Thrift.Type.STRUCT, this.join_ids.length);
-    for (var iter37 in this.join_ids)
+    for (var iter45 in this.join_ids)
     {
-      if (this.join_ids.hasOwnProperty(iter37))
+      if (this.join_ids.hasOwnProperty(iter45))
       {
-        iter37 = this.join_ids[iter37];
-        iter37.write(output);
+        iter45 = this.join_ids[iter45];
+        iter45.write(output);
       }
     }
     output.writeListEnd();
@@ -824,12 +863,12 @@ crouton_thrift.SpanRecord.prototype.write = false && function(output) {
   if (this.attributes !== null && this.attributes !== undefined) {
     output.writeFieldBegin('attributes', Thrift.Type.LIST, 8);
     output.writeListBegin(Thrift.Type.STRUCT, this.attributes.length);
-    for (var iter38 in this.attributes)
+    for (var iter46 in this.attributes)
     {
-      if (this.attributes.hasOwnProperty(iter38))
+      if (this.attributes.hasOwnProperty(iter46))
       {
-        iter38 = this.attributes[iter38];
-        iter38.write(output);
+        iter46 = this.attributes[iter46];
+        iter46.write(output);
       }
     }
     output.writeListEnd();
@@ -843,12 +882,12 @@ crouton_thrift.SpanRecord.prototype.write = false && function(output) {
   if (this.log_records !== null && this.log_records !== undefined) {
     output.writeFieldBegin('log_records', Thrift.Type.LIST, 10);
     output.writeListBegin(Thrift.Type.STRUCT, this.log_records.length);
-    for (var iter39 in this.log_records)
+    for (var iter47 in this.log_records)
     {
-      if (this.log_records.hasOwnProperty(iter39))
+      if (this.log_records.hasOwnProperty(iter47))
       {
-        iter39 = this.log_records[iter39];
-        iter39.write(output);
+        iter47 = this.log_records[iter47];
+        iter47.write(output);
       }
     }
     output.writeListEnd();
@@ -1146,9 +1185,13 @@ crouton_thrift.MetricsSample.prototype.write = false && function(output) {
 
 crouton_thrift.Metrics = function(args) {
   this.counts = null;
+  this.gauges = null;
   if (args) {
     if (args.counts !== undefined) {
       this.counts = args.counts;
+    }
+    if (args.gauges !== undefined) {
+      this.gauges = args.gauges;
     }
   }
 };
@@ -1168,28 +1211,46 @@ crouton_thrift.Metrics.prototype.read = false && function(input) {
     {
       case 1:
       if (ftype == Thrift.Type.LIST) {
-        var _size40 = 0;
-        var _rtmp344;
+        var _size48 = 0;
+        var _rtmp352;
         this.counts = [];
-        var _etype43 = 0;
-        _rtmp344 = input.readListBegin();
-        _etype43 = _rtmp344.etype;
-        _size40 = _rtmp344.size;
-        for (var _i45 = 0; _i45 < _size40; ++_i45)
+        var _etype51 = 0;
+        _rtmp352 = input.readListBegin();
+        _etype51 = _rtmp352.etype;
+        _size48 = _rtmp352.size;
+        for (var _i53 = 0; _i53 < _size48; ++_i53)
         {
-          var elem46 = null;
-          elem46 = new crouton_thrift.MetricsSample();
-          elem46.read(input);
-          this.counts.push(elem46);
+          var elem54 = null;
+          elem54 = new crouton_thrift.MetricsSample();
+          elem54.read(input);
+          this.counts.push(elem54);
         }
         input.readListEnd();
       } else {
         input.skip(ftype);
       }
       break;
-      case 0:
+      case 2:
+      if (ftype == Thrift.Type.LIST) {
+        var _size55 = 0;
+        var _rtmp359;
+        this.gauges = [];
+        var _etype58 = 0;
+        _rtmp359 = input.readListBegin();
+        _etype58 = _rtmp359.etype;
+        _size55 = _rtmp359.size;
+        for (var _i60 = 0; _i60 < _size55; ++_i60)
+        {
+          var elem61 = null;
+          elem61 = new crouton_thrift.MetricsSample();
+          elem61.read(input);
+          this.gauges.push(elem61);
+        }
+        input.readListEnd();
+      } else {
         input.skip(ftype);
-        break;
+      }
+      break;
       default:
         input.skip(ftype);
     }
@@ -1204,12 +1265,26 @@ crouton_thrift.Metrics.prototype.write = false && function(output) {
   if (this.counts !== null && this.counts !== undefined) {
     output.writeFieldBegin('counts', Thrift.Type.LIST, 1);
     output.writeListBegin(Thrift.Type.STRUCT, this.counts.length);
-    for (var iter47 in this.counts)
+    for (var iter62 in this.counts)
     {
-      if (this.counts.hasOwnProperty(iter47))
+      if (this.counts.hasOwnProperty(iter62))
       {
-        iter47 = this.counts[iter47];
-        iter47.write(output);
+        iter62 = this.counts[iter62];
+        iter62.write(output);
+      }
+    }
+    output.writeListEnd();
+    output.writeFieldEnd();
+  }
+  if (this.gauges !== null && this.gauges !== undefined) {
+    output.writeFieldBegin('gauges', Thrift.Type.LIST, 2);
+    output.writeListBegin(Thrift.Type.STRUCT, this.gauges.length);
+    for (var iter63 in this.gauges)
+    {
+      if (this.gauges.hasOwnProperty(iter63))
+      {
+        iter63 = this.gauges[iter63];
+        iter63.write(output);
       }
     }
     output.writeListEnd();
@@ -1284,19 +1359,19 @@ crouton_thrift.ReportRequest.prototype.read = false && function(input) {
       break;
       case 3:
       if (ftype == Thrift.Type.LIST) {
-        var _size48 = 0;
-        var _rtmp352;
+        var _size64 = 0;
+        var _rtmp368;
         this.span_records = [];
-        var _etype51 = 0;
-        _rtmp352 = input.readListBegin();
-        _etype51 = _rtmp352.etype;
-        _size48 = _rtmp352.size;
-        for (var _i53 = 0; _i53 < _size48; ++_i53)
+        var _etype67 = 0;
+        _rtmp368 = input.readListBegin();
+        _etype67 = _rtmp368.etype;
+        _size64 = _rtmp368.size;
+        for (var _i69 = 0; _i69 < _size64; ++_i69)
         {
-          var elem54 = null;
-          elem54 = new crouton_thrift.SpanRecord();
-          elem54.read(input);
-          this.span_records.push(elem54);
+          var elem70 = null;
+          elem70 = new crouton_thrift.SpanRecord();
+          elem70.read(input);
+          this.span_records.push(elem70);
         }
         input.readListEnd();
       } else {
@@ -1305,19 +1380,19 @@ crouton_thrift.ReportRequest.prototype.read = false && function(input) {
       break;
       case 4:
       if (ftype == Thrift.Type.LIST) {
-        var _size55 = 0;
-        var _rtmp359;
+        var _size71 = 0;
+        var _rtmp375;
         this.log_records = [];
-        var _etype58 = 0;
-        _rtmp359 = input.readListBegin();
-        _etype58 = _rtmp359.etype;
-        _size55 = _rtmp359.size;
-        for (var _i60 = 0; _i60 < _size55; ++_i60)
+        var _etype74 = 0;
+        _rtmp375 = input.readListBegin();
+        _etype74 = _rtmp375.etype;
+        _size71 = _rtmp375.size;
+        for (var _i76 = 0; _i76 < _size71; ++_i76)
         {
-          var elem61 = null;
-          elem61 = new crouton_thrift.LogRecord();
-          elem61.read(input);
-          this.log_records.push(elem61);
+          var elem77 = null;
+          elem77 = new crouton_thrift.LogRecord();
+          elem77.read(input);
+          this.log_records.push(elem77);
         }
         input.readListEnd();
       } else {
@@ -1347,19 +1422,19 @@ crouton_thrift.ReportRequest.prototype.read = false && function(input) {
       break;
       case 9:
       if (ftype == Thrift.Type.LIST) {
-        var _size62 = 0;
-        var _rtmp366;
+        var _size78 = 0;
+        var _rtmp382;
         this.counters = [];
-        var _etype65 = 0;
-        _rtmp366 = input.readListBegin();
-        _etype65 = _rtmp366.etype;
-        _size62 = _rtmp366.size;
-        for (var _i67 = 0; _i67 < _size62; ++_i67)
+        var _etype81 = 0;
+        _rtmp382 = input.readListBegin();
+        _etype81 = _rtmp382.etype;
+        _size78 = _rtmp382.size;
+        for (var _i83 = 0; _i83 < _size78; ++_i83)
         {
-          var elem68 = null;
-          elem68 = new crouton_thrift.NamedCounter();
-          elem68.read(input);
-          this.counters.push(elem68);
+          var elem84 = null;
+          elem84 = new crouton_thrift.NamedCounter();
+          elem84.read(input);
+          this.counters.push(elem84);
         }
         input.readListEnd();
       } else {
@@ -1368,19 +1443,19 @@ crouton_thrift.ReportRequest.prototype.read = false && function(input) {
       break;
       case 10:
       if (ftype == Thrift.Type.LIST) {
-        var _size69 = 0;
-        var _rtmp373;
+        var _size85 = 0;
+        var _rtmp389;
         this.internal_logs = [];
-        var _etype72 = 0;
-        _rtmp373 = input.readListBegin();
-        _etype72 = _rtmp373.etype;
-        _size69 = _rtmp373.size;
-        for (var _i74 = 0; _i74 < _size69; ++_i74)
+        var _etype88 = 0;
+        _rtmp389 = input.readListBegin();
+        _etype88 = _rtmp389.etype;
+        _size85 = _rtmp389.size;
+        for (var _i90 = 0; _i90 < _size85; ++_i90)
         {
-          var elem75 = null;
-          elem75 = new crouton_thrift.LogRecord();
-          elem75.read(input);
-          this.internal_logs.push(elem75);
+          var elem91 = null;
+          elem91 = new crouton_thrift.LogRecord();
+          elem91.read(input);
+          this.internal_logs.push(elem91);
         }
         input.readListEnd();
       } else {
@@ -1414,12 +1489,12 @@ crouton_thrift.ReportRequest.prototype.write = false && function(output) {
   if (this.span_records !== null && this.span_records !== undefined) {
     output.writeFieldBegin('span_records', Thrift.Type.LIST, 3);
     output.writeListBegin(Thrift.Type.STRUCT, this.span_records.length);
-    for (var iter76 in this.span_records)
+    for (var iter92 in this.span_records)
     {
-      if (this.span_records.hasOwnProperty(iter76))
+      if (this.span_records.hasOwnProperty(iter92))
       {
-        iter76 = this.span_records[iter76];
-        iter76.write(output);
+        iter92 = this.span_records[iter92];
+        iter92.write(output);
       }
     }
     output.writeListEnd();
@@ -1428,12 +1503,12 @@ crouton_thrift.ReportRequest.prototype.write = false && function(output) {
   if (this.log_records !== null && this.log_records !== undefined) {
     output.writeFieldBegin('log_records', Thrift.Type.LIST, 4);
     output.writeListBegin(Thrift.Type.STRUCT, this.log_records.length);
-    for (var iter77 in this.log_records)
+    for (var iter93 in this.log_records)
     {
-      if (this.log_records.hasOwnProperty(iter77))
+      if (this.log_records.hasOwnProperty(iter93))
       {
-        iter77 = this.log_records[iter77];
-        iter77.write(output);
+        iter93 = this.log_records[iter93];
+        iter93.write(output);
       }
     }
     output.writeListEnd();
@@ -1457,12 +1532,12 @@ crouton_thrift.ReportRequest.prototype.write = false && function(output) {
   if (this.counters !== null && this.counters !== undefined) {
     output.writeFieldBegin('counters', Thrift.Type.LIST, 9);
     output.writeListBegin(Thrift.Type.STRUCT, this.counters.length);
-    for (var iter78 in this.counters)
+    for (var iter94 in this.counters)
     {
-      if (this.counters.hasOwnProperty(iter78))
+      if (this.counters.hasOwnProperty(iter94))
       {
-        iter78 = this.counters[iter78];
-        iter78.write(output);
+        iter94 = this.counters[iter94];
+        iter94.write(output);
       }
     }
     output.writeListEnd();
@@ -1471,12 +1546,12 @@ crouton_thrift.ReportRequest.prototype.write = false && function(output) {
   if (this.internal_logs !== null && this.internal_logs !== undefined) {
     output.writeFieldBegin('internal_logs', Thrift.Type.LIST, 10);
     output.writeListBegin(Thrift.Type.STRUCT, this.internal_logs.length);
-    for (var iter79 in this.internal_logs)
+    for (var iter95 in this.internal_logs)
     {
-      if (this.internal_logs.hasOwnProperty(iter79))
+      if (this.internal_logs.hasOwnProperty(iter95))
       {
-        iter79 = this.internal_logs[iter79];
-        iter79.write(output);
+        iter95 = this.internal_logs[iter95];
+        iter95.write(output);
       }
     }
     output.writeListEnd();
@@ -1577,19 +1652,19 @@ crouton_thrift.ReportResponse.prototype.read = false && function(input) {
     {
       case 1:
       if (ftype == Thrift.Type.LIST) {
-        var _size80 = 0;
-        var _rtmp384;
+        var _size96 = 0;
+        var _rtmp3100;
         this.commands = [];
-        var _etype83 = 0;
-        _rtmp384 = input.readListBegin();
-        _etype83 = _rtmp384.etype;
-        _size80 = _rtmp384.size;
-        for (var _i85 = 0; _i85 < _size80; ++_i85)
+        var _etype99 = 0;
+        _rtmp3100 = input.readListBegin();
+        _etype99 = _rtmp3100.etype;
+        _size96 = _rtmp3100.size;
+        for (var _i101 = 0; _i101 < _size96; ++_i101)
         {
-          var elem86 = null;
-          elem86 = new crouton_thrift.Command();
-          elem86.read(input);
-          this.commands.push(elem86);
+          var elem102 = null;
+          elem102 = new crouton_thrift.Command();
+          elem102.read(input);
+          this.commands.push(elem102);
         }
         input.readListEnd();
       } else {
@@ -1606,18 +1681,18 @@ crouton_thrift.ReportResponse.prototype.read = false && function(input) {
       break;
       case 3:
       if (ftype == Thrift.Type.LIST) {
-        var _size87 = 0;
-        var _rtmp391;
+        var _size103 = 0;
+        var _rtmp3107;
         this.errors = [];
-        var _etype90 = 0;
-        _rtmp391 = input.readListBegin();
-        _etype90 = _rtmp391.etype;
-        _size87 = _rtmp391.size;
-        for (var _i92 = 0; _i92 < _size87; ++_i92)
+        var _etype106 = 0;
+        _rtmp3107 = input.readListBegin();
+        _etype106 = _rtmp3107.etype;
+        _size103 = _rtmp3107.size;
+        for (var _i108 = 0; _i108 < _size103; ++_i108)
         {
-          var elem93 = null;
-          elem93 = input.readString().value;
-          this.errors.push(elem93);
+          var elem109 = null;
+          elem109 = input.readString().value;
+          this.errors.push(elem109);
         }
         input.readListEnd();
       } else {
@@ -1638,12 +1713,12 @@ crouton_thrift.ReportResponse.prototype.write = false && function(output) {
   if (this.commands !== null && this.commands !== undefined) {
     output.writeFieldBegin('commands', Thrift.Type.LIST, 1);
     output.writeListBegin(Thrift.Type.STRUCT, this.commands.length);
-    for (var iter94 in this.commands)
+    for (var iter110 in this.commands)
     {
-      if (this.commands.hasOwnProperty(iter94))
+      if (this.commands.hasOwnProperty(iter110))
       {
-        iter94 = this.commands[iter94];
-        iter94.write(output);
+        iter110 = this.commands[iter110];
+        iter110.write(output);
       }
     }
     output.writeListEnd();
@@ -1657,12 +1732,12 @@ crouton_thrift.ReportResponse.prototype.write = false && function(output) {
   if (this.errors !== null && this.errors !== undefined) {
     output.writeFieldBegin('errors', Thrift.Type.LIST, 3);
     output.writeListBegin(Thrift.Type.STRING, this.errors.length);
-    for (var iter95 in this.errors)
+    for (var iter111 in this.errors)
     {
-      if (this.errors.hasOwnProperty(iter95))
+      if (this.errors.hasOwnProperty(iter111))
       {
-        iter95 = this.errors[iter95];
-        output.writeString(iter95);
+        iter111 = this.errors[iter111];
+        output.writeString(iter111);
       }
     }
     output.writeListEnd();

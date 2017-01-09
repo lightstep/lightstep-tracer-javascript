@@ -30,16 +30,15 @@ While in production, you'll likely want more control than this, this is an easy 
 2. Include the following scripts in your page HTML and replace `{your_access_token}` with, well, your access token value and replace `{name_to_use_for_your_component}` with a string identifier that'll be used in the LightStep UI to identify this component:
 
 ```html
-<script src="http://docs.lightstep.com/dist/opentracing-javascript/current/opentracing-browser.min.js"></script>
-<script src="http://docs.lightstep.com/dist/lightstep-tracer-javascript/current/lightstep-tracer.min.js"
+<script src="PATH/TO/opentracing-browser.min.js"></script>
+<script src="PATH/TO/lightstep-tracer.min.js"
         data-init_global_tracer="true"
         data-access_token="{your_access_token}"
         data-component_name="{name_to_use_for_your_component}"
-        data-xhr_instrumentation="true"
         ></script>
 ```
 
-The above will automatically create and report spans for any `XMLHttpRequests` made by the hosted page as well as spans for the page load.
+The above will automatically create spans for the browser page load. You will be able to access the global OpenTracing `Tracer` via a static call to `opentracing.globalTracer()`.
 
 <a name='promises'></a>
 ## Instrumenting Promise-based code
@@ -62,7 +61,7 @@ let req = ...;
 // better.  Setting a tag prefixed with "join:" will allow spans to be connected
 // by LightStep across different services and systems (spans with the same
 // key-value pairs are made part of the same trace).
-let span = Tracer.startSpan('remote_request');
+let span = opentracing.globalTracer().startSpan('remote_request');
 span.setTag('join:request_id', req.id);
 
 // Initiate your normal request
@@ -113,7 +112,7 @@ let req = ...;
 // better.  Setting a tag prefixed with "join:" will allow spans to be connected
 // by LightStep across different services and systems (spans with the same
 // key-value pairs are made part of the same trace).
-let span = Tracer.startSpan('remote_request');
+let span = opentracing.globalTracer().startSpan('remote_request');
 span.setTag('join:request_id', req.id);
 
 // Initiate your normal request
@@ -161,7 +160,7 @@ function Context() {
 }
 
 Context.prototype.begin = function(appDomain, name, transactionID) {
-    this._span = Tracer.startSpan(appDomain + '/' + name);
+    this._span = opentracing.globalTracer().startSpan(appDomain + '/' + name);
     this._span.setTag('join:transaction_id', transactionID);
     //
     // <Normal implementation code here>
@@ -189,7 +188,7 @@ The additional parameter will let LightStep know about the relationship so trace
 
 ```javascript
 function startSubOperation(parentSpan, param1, param2, param3) {
-    let childSpan = Tracer.startSpan('my_child', { childOf : parentSpan });
+    let childSpan = opentracing.globalTracer().startSpan('my_child', { childOf : parentSpan });
 
     //
     // Do normal work here...
@@ -216,7 +215,7 @@ function startParallelWorkers() {
 
     let transactionId = generateNewTransactionID();
 
-    let span = Tracer.startSpan('large_operation');
+    let span = opentracing.globalTracer().startSpan('large_operation');
     span.setTag('join:transaction_id', transactionId);
 
     // Launch a bunch of parallel child processes
@@ -235,7 +234,7 @@ function startParallelWorkers() {
 
 // in child_process.js
 function doWork(job) {
-    let span = Tracer.startSpan('worker_operation');
+    let span = opentracing.globalTracer().startSpan('worker_operation');
     span.setTag('join:transaction_id', job.transactionId);
 
     asyncWork(function(result) {
@@ -268,10 +267,10 @@ function startParallelWorkers() {
 
     let transactionId = generateNewTransactionID();
 
-    let span = Tracer.startSpan('large_operation');
+    let span = opentracing.globalTracer().startSpan('large_operation');
 
     var carrier = {};
-    Tracer.inject(span.context(), Tracer.FORMAT_TEXT_MAP, carrier);
+    opentracing.globalTracer().inject(span.context(), opentracing.FORMAT_TEXT_MAP, carrier);
 
     // Launch a bunch of parallel child processes
     async.parallel(jobArray, function(job, next) {
@@ -289,8 +288,8 @@ function startParallelWorkers() {
 
 // in child_process.js
 function doWork(job) {
-    let extractedContext = Tracer.extract(Tracer.FORMAT_TEXT_MAP, job.spanCarrier);
-    let span = Tracer.startSpan('worker_operation', { childOf : extractedContext }); 
+    let extractedContext = opentracing.globalTracer().extract(opentracing.FORMAT_TEXT_MAP, job.spanCarrier);
+    let span = opentracing.globalTracer().startSpan('worker_operation', { childOf : extractedContext }); 
 
   asyncWork(function(result) {
         span.logEvent('Worker finished', result);

@@ -1,15 +1,15 @@
 'use strict';
-var Tracer    = require('opentracing');
-var LightStep = require('../../..');
 
-Tracer.initGlobalTracer(LightStep.tracer({
+var lightstep = require('../../..');
+
+var Tracer = new lightstep.Tracer({
     access_token   : '{your_access_token}',
     component_name : 'lightstep-tracer/examples/node-trivial',
     collector_host : 'localhost',
     collector_port : 9998,
     collector_encryption : 'none',
     //disable_reporting_loop : true,
-}));
+});
 
 function loop() {
     var parent = Tracer.startSpan('parent');
@@ -25,9 +25,9 @@ function loop() {
     }
     parent.finish();
 
-    console.log(Tracer.imp().stats());
-    Tracer.imp().flush(function() {
-        var url = parent.imp().generateTraceURL();
+    console.log(Tracer.stats());
+    Tracer.flush(function() {
+        var url = parent.generateTraceURL();
         console.log();
         console.log(url);
         console.log();

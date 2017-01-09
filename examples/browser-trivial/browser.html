@@ -25,22 +25,22 @@
         <!--
             Include the standard OpenTracing APIs and the LightStep bindings.
         -->
-        <script type="text/javascript" src="opentracing-browser.min.js"></script>
-        <script type="text/javascript" src="../../dist/lightstep-tracer.js"></script>
+        <script type="text/javascript" src="opentracing-browser.js"></script>
+        <!-- <script type="text/javascript" src="../../dist/lightstep-tracer.js"></script> -->
+        <script type="text/javascript" src="../../dist/lightstep-tracer.js"
+            data-init_global_tracer="true"
+            data-access_token="{your_access_token}"
+            data-component_name="lightstep-tracer/examples/browser-trivial"
+            data-xhr_instrumentation="true"
+        ></script>
 
         <!--
             Add a quick example script using OpenTracing and LightStep
         -->
         <script type="text/javascript">
         <!--
-        Tracer.initGlobalTracer(LightStep.tracer({
-            access_token   : '{your_access_token}',
-            component_name : 'lightstep-tracer/examples/browser-trivial',
-            log_to_console : true,
-            verbosity      : 3,
-        }));
 
-        var span = Tracer.startSpan('trivial_span');
+        var span = opentracing.globalTracer().startSpan('trivial_span');
         setTimeout(function() {
             span.logEvent('log_event');
         }, 100);
@@ -52,7 +52,7 @@
             var linkDiv = document.getElementById('trace-link-div');
             var link = document.getElementById('trace-link');
             results.value = 'Span finished.'
-            var url = span.imp().generateTraceURL();
+            var url = span.generateTraceURL();
             link.href = url;
             linkDiv.style.opacity = 1.0;
         }, 200);

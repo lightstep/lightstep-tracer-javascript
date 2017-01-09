@@ -2,6 +2,13 @@
 
 *Log of significant changes, especially those affecting the supported API.*
 
+## 0.20.0
+
+* **API CHANGE**: use `new lightstep.Tracer(opts)` to return a lightstep `Tracer` instance
+* **API CHANGE**: `lightstep-browser.min.js` and `lightstep-browser.js` use a `lightstep` rather than `LightStep` prefix for LightStep symbols
+* **API CHANGE**: two new length limits for key-value logs: `log_field_key_hard_limit` and `log_field_value_hard_limit`, both specified as a number of bytes
+* Many implementation changes, especially support for key-value logging per OpenTracing-javascript `0.13.*`
+
 ## 0.11.17
 
 * Update the internal, automatic tracer tags to follow the convention of using a `lightstep.*` prefix

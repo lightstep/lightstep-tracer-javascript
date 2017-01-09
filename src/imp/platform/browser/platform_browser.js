@@ -95,10 +95,10 @@ class PlatformBrowser {
         if (typeof window !== 'object') {
             return;
         }
-        if (typeof window.Tracer !== 'object') {
+        if (typeof window.opentracing !== 'object') {
             return;
         }
-        Tracer.initGlobalTracer(lib.tracer(opts));  // eslint-disable-line no-undef
+        opentracing.initGlobalTracer(new lib.Tracer(opts));  // eslint-disable-line no-undef
     }
 
     tracerTags() {
