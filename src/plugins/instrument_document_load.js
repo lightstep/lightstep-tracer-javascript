@@ -128,8 +128,8 @@ class InstrumentPageLoad {
                 };
             }
             parentImp.log({
-                message          : `document ${key}`,
-                payload          : payload,
+                message : `document ${key}`,
+                payload : payload,
             }, value);
         });
 
@@ -137,8 +137,8 @@ class InstrumentPageLoad {
             let chromeTimes = window.chrome.loadTimes();
             if (chromeTimes) {
                 parentImp.log({
-                    message          : 'window.chrome.loadTimes()',
-                    payload          : chromeTimes,
+                    message : 'window.chrome.loadTimes()',
+                    payload : chromeTimes,
                 }, timing.domComplete);
             }
         }
