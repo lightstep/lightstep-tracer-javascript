@@ -9,7 +9,6 @@ var tracer = new lightstep.Tracer({
 
 var span = tracer.startSpan('trivial_span');
 setTimeout(function() {
-    span.logEvent('log_event');
     span.log({
         foo: 'foo string',
         'bar bar': 'two words',

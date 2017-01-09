@@ -120,7 +120,6 @@ class InstrumentPageLoad {
                 return;
             }
 
-            let micros = value * 1000.0;
             let payload = undefined;
 
             if (key === 'navigationStart' && typeof navigator === 'object') {
@@ -130,9 +129,8 @@ class InstrumentPageLoad {
             }
             parentImp.log({
                 message          : `document ${key}`,
-                timestamp_micros : micros,
                 payload          : payload,
-            });
+            }, value);
         });
 
         if (window.chrome && window.chrome.loadTimes) {
@@ -140,9 +138,8 @@ class InstrumentPageLoad {
             if (chromeTimes) {
                 parentImp.log({
                     message          : 'window.chrome.loadTimes()',
-                    timestamp_micros : timing.domComplete * 1000.0,
                     payload          : chromeTimes,
-                });
+                }, timing.domComplete);
             }
         }
 

@@ -55,7 +55,7 @@ function printUserInfo(username) {
 
     queryUserInfo(span, username, function(err, user) {
         if (err) {
-            span.exception('Error in queryUserInfo', err);
+            span.log({error : err});
             span.finish();
             return;
         }
@@ -138,7 +138,6 @@ function queryUserInfo(parentSpan, username, callback) {
         });
 
         // In parallel, query the recent events activity for the user
-        console.log(json.received_events_url);
         httpGet(parentSpan, json.received_events_url, function (err, json) {
             if (err) {
                 return next(err);

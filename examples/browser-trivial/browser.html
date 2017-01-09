@@ -26,19 +26,19 @@
             Include the standard OpenTracing APIs and the LightStep bindings.
         -->
         <script type="text/javascript" src="opentracing-browser.js"></script>
-        <script type="text/javascript" src="../../dist/lightstep-tracer.js"></script>
+        <!-- <script type="text/javascript" src="../../dist/lightstep-tracer.js"></script> -->
+        <script type="text/javascript" src="../../dist/lightstep-tracer.js"
+            data-init_global_tracer="true"
+            data-access_token="{your_access_token}"
+            data-component_name="lightstep-tracer/examples/browser-trivial"
+            data-xhr_instrumentation="true"
+        ></script>
 
         <!--
             Add a quick example script using OpenTracing and LightStep
         -->
         <script type="text/javascript">
         <!--
-        opentracing.initGlobalTracer(new lightstep.Tracer({
-            access_token   : '{your_access_token}',
-            component_name : 'lightstep-tracer/examples/browser-trivial',
-            log_to_console : true,
-            verbosity      : 3,
-        }));
 
         var span = opentracing.globalTracer().startSpan('trivial_span');
         setTimeout(function() {
