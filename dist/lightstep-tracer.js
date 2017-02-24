@@ -60,7 +60,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _tracer_imp2 = _interopRequireDefault(_tracer_imp);
 	
-	var _platform_abstraction_layer = __webpack_require__(9);
+	var _platform_abstraction_layer = __webpack_require__(19);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -91,19 +91,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _opentracing2 = _interopRequireDefault(_opentracing);
 	
-	var _span_context_imp = __webpack_require__(4);
+	var _span_context_imp = __webpack_require__(14);
 	
 	var _span_context_imp2 = _interopRequireDefault(_span_context_imp);
 	
-	var _span_imp = __webpack_require__(6);
+	var _span_imp = __webpack_require__(16);
 	
 	var _span_imp2 = _interopRequireDefault(_span_imp);
 	
-	var _each2 = __webpack_require__(5);
+	var _each2 = __webpack_require__(15);
 	
 	var _each3 = _interopRequireDefault(_each2);
 	
-	var _platform_abstraction_layer = __webpack_require__(9);
+	var _platform_abstraction_layer = __webpack_require__(19);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -117,13 +117,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	// eslint-disable-line camelcase
 	
-	var ClockState = __webpack_require__(19);
-	var LogBuilder = __webpack_require__(20);
-	var coerce = __webpack_require__(7);
-	var constants = __webpack_require__(8);
-	var globals = __webpack_require__(21);
-	var packageObject = __webpack_require__(22);
-	var util = __webpack_require__(23);
+	var ClockState = __webpack_require__(29);
+	var LogBuilder = __webpack_require__(30);
+	var coerce = __webpack_require__(17);
+	var constants = __webpack_require__(18);
+	var globals = __webpack_require__(31);
+	var packageObject = __webpack_require__(32);
+	var util = __webpack_require__(33);
 	
 	var CARRIER_TRACER_STATE_PREFIX = 'ot-tracer-';
 	var CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
@@ -145,7 +145,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function Tracer(opts) {
 	        _classCallCheck(this, Tracer);
 	
-	        var _this = _possibleConstructorReturn(this, (Tracer.__proto__ || Object.getPrototypeOf(Tracer)).call(this));
+	        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Tracer).call(this));
 	
 	        _this._delegateEventEmitterMethods();
 	
@@ -237,7 +237,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _this._flushIsActive = false;
 	
 	        // Built-in plugins
-	        _this.addPlugin(__webpack_require__(24));
+	        _this.addPlugin(__webpack_require__(34));
 	
 	        // Initialize the platform options after the built-in plugins in
 	        // case any of those options affect the built-ins.
@@ -618,15 +618,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	
 	            if (this.verbosity() >= 3) {
-	                var optionsString = '';
-	                var count = 0;
-	                (0, _each3.default)(modified, function (val, key) {
-	                    optionsString += '\t' + JSON.stringify(key) + ': ' + JSON.stringify(val.newValue) + '\n';
-	                    count++;
-	                });
-	                if (count > 0) {
-	                    this._debug('Options modified:\n' + optionsString);
-	                }
+	                (function () {
+	                    var optionsString = '';
+	                    var count = 0;
+	                    (0, _each3.default)(modified, function (val, key) {
+	                        optionsString += '\t' + JSON.stringify(key) + ': ' + JSON.stringify(val.newValue) + '\n';
+	                        count++;
+	                    });
+	                    if (count > 0) {
+	                        _this4._debug('Options modified:\n' + optionsString);
+	                    }
+	                })();
 	            }
 	            this.emit('options', modified, this._options, this);
 	        }
@@ -747,52 +749,54 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	            // See if the Thrift data can be initialized
 	            if (this._options.access_token.length > 0 && this._options.component_name.length > 0) {
-	                this._runtimeGUID = this._platform.runtimeGUID(this._options.component_name);
+	                (function () {
+	                    _this5._runtimeGUID = _this5._platform.runtimeGUID(_this5._options.component_name);
 	
-	                this._thriftAuth = new _platform_abstraction_layer.crouton_thrift.Auth({
-	                    access_token: this._options.access_token
-	                });
+	                    _this5._thriftAuth = new _platform_abstraction_layer.crouton_thrift.Auth({
+	                        access_token: _this5._options.access_token
+	                    });
 	
-	                //
-	                // Assemble the tracer tags from the user-specified and automatic,
-	                // internal tags.
-	                //
-	                var tags = {};
-	                (0, _each3.default)(this._options.tags, function (value, key) {
-	                    if (typeof value !== 'string') {
-	                        _this5._error('Tracer tag value is not a string: key=' + key);
-	                        return;
-	                    }
-	                    tags[key] = value;
-	                });
-	                tags['lightstep.tracer_version'] = packageObject.version;
-	                var platformTags = this._platform.tracerTags();
-	                (0, _each3.default)(platformTags, function (val, key) {
-	                    tags[key] = val;
-	                });
+	                    //
+	                    // Assemble the tracer tags from the user-specified and automatic,
+	                    // internal tags.
+	                    //
+	                    var tags = {};
+	                    (0, _each3.default)(_this5._options.tags, function (value, key) {
+	                        if (typeof value !== 'string') {
+	                            _this5._error('Tracer tag value is not a string: key=' + key);
+	                            return;
+	                        }
+	                        tags[key] = value;
+	                    });
+	                    tags['lightstep.tracer_version'] = packageObject.version;
+	                    var platformTags = _this5._platform.tracerTags();
+	                    (0, _each3.default)(platformTags, function (val, key) {
+	                        tags[key] = val;
+	                    });
 	
-	                var thriftAttrs = [];
-	                (0, _each3.default)(tags, function (val, key) {
-	                    thriftAttrs.push(new _platform_abstraction_layer.crouton_thrift.KeyValue({
-	                        Key: coerce.toString(key),
-	                        Value: coerce.toString(val)
-	                    }));
-	                });
+	                    var thriftAttrs = [];
+	                    (0, _each3.default)(tags, function (val, key) {
+	                        thriftAttrs.push(new _platform_abstraction_layer.crouton_thrift.KeyValue({
+	                            Key: coerce.toString(key),
+	                            Value: coerce.toString(val)
+	                        }));
+	                    });
 	
-	                // NOTE: for legacy reasons, the Thrift field is called "group_name"
-	                // but is semantically equivalen to the "component_name"
-	                this._thriftRuntime = new _platform_abstraction_layer.crouton_thrift.Runtime({
-	                    guid: this._runtimeGUID,
-	                    start_micros: this._startMicros,
-	                    group_name: this._options.component_name,
-	                    attrs: thriftAttrs
-	                });
+	                    // NOTE: for legacy reasons, the Thrift field is called "group_name"
+	                    // but is semantically equivalen to the "component_name"
+	                    _this5._thriftRuntime = new _platform_abstraction_layer.crouton_thrift.Runtime({
+	                        guid: _this5._runtimeGUID,
+	                        start_micros: _this5._startMicros,
+	                        group_name: _this5._options.component_name,
+	                        attrs: thriftAttrs
+	                    });
 	
-	                this._info('Initializing thrift reporting data', {
-	                    component_name: this._options.component_name,
-	                    access_token: this._thriftAuth.access_token
-	                });
-	                this.emit('reporting_initialized');
+	                    _this5._info('Initializing thrift reporting data', {
+	                        component_name: _this5._options.component_name,
+	                        access_token: _this5._thriftAuth.access_token
+	                    });
+	                    _this5.emit('reporting_initialized');
+	                })();
 	            }
 	        }
 	
@@ -1453,8 +1457,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 	
-	var has = Object.prototype.hasOwnProperty;
-	
 	//
 	// We store our EE objects in a plain object whose properties are event names.
 	// If `Object.create(null)` is not supported we prefix the event names with a
@@ -1470,7 +1472,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *
 	 * @param {Function} fn Event handler to be called.
 	 * @param {Mixed} context Context for function execution.
-	 * @param {Boolean} [once=false] Only emit once
+	 * @param {Boolean} once Only emit once
 	 * @api private
 	 */
 	function EE(fn, context, once) {
@@ -1489,37 +1491,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	function EventEmitter() { /* Nothing to set */ }
 	
 	/**
-	 * Hold the assigned EventEmitters by name.
+	 * Holds the assigned EventEmitters by name.
 	 *
 	 * @type {Object}
 	 * @private
 	 */
 	EventEmitter.prototype._events = undefined;
-	
-	/**
-	 * Return an array listing the events for which the emitter has registered
-	 * listeners.
-	 *
-	 * @returns {Array}
-	 * @api public
-	 */
-	EventEmitter.prototype.eventNames = function eventNames() {
-	  var events = this._events
-	    , names = []
-	    , name;
-	
-	  if (!events) return names;
-	
-	  for (name in events) {
-	    if (has.call(events, name)) names.push(prefix ? name.slice(1) : name);
-	  }
-	
-	  if (Object.getOwnPropertySymbols) {
-	    return names.concat(Object.getOwnPropertySymbols(events));
-	  }
-	
-	  return names;
-	};
 	
 	/**
 	 * Return a list of assigned event listeners.
@@ -1606,8 +1583,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Register a new EventListener for the given event.
 	 *
 	 * @param {String} event Name of the event.
-	 * @param {Function} fn Callback function.
-	 * @param {Mixed} [context=this] The context of the function.
+	 * @param {Functon} fn Callback function.
+	 * @param {Mixed} context The context of the function.
 	 * @api public
 	 */
 	EventEmitter.prototype.on = function on(event, fn, context) {
@@ -1631,7 +1608,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *
 	 * @param {String} event Name of the event.
 	 * @param {Function} fn Callback function.
-	 * @param {Mixed} [context=this] The context of the function.
+	 * @param {Mixed} context The context of the function.
 	 * @api public
 	 */
 	EventEmitter.prototype.once = function once(event, fn, context) {
@@ -1744,9 +1721,84 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 3 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	module.exports=function(e){function t(r){if(n[r])return n[r].exports;var i=n[r]={exports:{},id:r,loaded:!1};return e[r].call(i.exports,i,i.exports,t),i.loaded=!0,i.exports}var n={};return t.m=e,t.c=n,t.p="",t(0)}([function(e,t,n){"use strict";e.exports=n(1)},function(e,t,n){"use strict";function r(e){return e&&e.__esModule?e:{"default":e}}var i=n(2),u=r(i);e.exports=new u["default"]},function(e,t,n){"use strict";function r(e){if(e&&e.__esModule)return e;var t={};if(null!=e)for(var n in e)Object.prototype.hasOwnProperty.call(e,n)&&(t[n]=e[n]);return t["default"]=e,t}function i(e){return e&&e.__esModule?e:{"default":e}}function u(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}function o(e,t){if(!e)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return!t||"object"!=typeof t&&"function"!=typeof t?e:t}function a(e,t){if("function"!=typeof t&&null!==t)throw new TypeError("Super expression must either be null or a function, not "+typeof t);e.prototype=Object.create(t&&t.prototype,{constructor:{value:e,enumerable:!1,writable:!0,configurable:!0}}),t&&(Object.setPrototypeOf?Object.setPrototypeOf(e,t):e.__proto__=t)}Object.defineProperty(t,"__esModule",{value:!0});var f=function(){function e(e,t){for(var n=0;n<t.length;n++){var r=t[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(e,r.key,r)}}return function(t,n,r){return n&&e(t.prototype,n),r&&e(t,r),t}}(),l=n(3),c=i(l),s=n(6),p=r(s),d=n(8),h=i(d),_=n(7),y=i(_),v=function(e){function t(){u(this,t);var e=o(this,Object.getPrototypeOf(t).call(this));for(var n in p)e[n]=p[n];return e.Reference=y["default"],e.BinaryCarrier=h["default"],e}return a(t,e),f(t,[{key:"initGlobalTracer",value:function(e){this._imp=e,e&&e.setInterface(this)}},{key:"initNewTracer",value:function(e){var t=new c["default"](e);return e&&e.setInterface(this),t}}]),t}(c["default"]);t["default"]=v,e.exports=t["default"]},function(e,t,n){"use strict";function r(e){return e&&e.__esModule?e:{"default":e}}function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}Object.defineProperty(t,"__esModule",{value:!0});var u=function(){function e(e,t){for(var n=0;n<t.length;n++){var r=t[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(e,r.key,r)}}return function(t,n,r){return n&&e(t.prototype,n),r&&e(t,r),t}}(),o=n(4),a=r(o),f=n(5),l=r(f),c=n(6),s=r(c),p=n(7),d=r(p),h=function(){function e(t){i(this,e),this._imp=t||null}return u(e,[{key:"startSpan",value:function(e,t){var n=null;if(this._imp){if(1===arguments.length?t="string"==typeof e?{operationName:e}:e:t.operationName=e,t.childOf){var r=this.childOf(t.childOf);t.references?t.references.push(r):t.references=[r],delete t.childOf}n=this._imp.startSpan(t)}return new a["default"](n)}},{key:"childOf",value:function(e){return new d["default"](s["default"].REFERENCE_CHILD_OF,e)}},{key:"followsFrom",value:function(e){return new d["default"](s["default"].REFERENCE_FOLLOWS_FROM,e)}},{key:"inject",value:function(e,t,n){this._imp&&(e instanceof a["default"]&&(e=e.context()),this._imp.inject(e._imp,t,n))}},{key:"extract",value:function(e,t){var n=null;return this._imp&&(n=this._imp.extract(e,t)),null!==n?new l["default"](n):null}},{key:"flush",value:function(e){return this._imp?void this._imp.flush(e):void e(null)}}]),u(e,[{key:"imp",value:function(){return this._imp}}]),e}();t["default"]=h,e.exports=t["default"]},function(e,t,n){"use strict";function r(e){return e&&e.__esModule?e:{"default":e}}function i(e,t,n){return t in e?Object.defineProperty(e,t,{value:n,enumerable:!0,configurable:!0,writable:!0}):e[t]=n,e}function u(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}Object.defineProperty(t,"__esModule",{value:!0});var o=function(){function e(e,t){for(var n=0;n<t.length;n++){var r=t[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(e,r.key,r)}}return function(t,n,r){return n&&e(t.prototype,n),r&&e(t,r),t}}(),a=n(3),f=r(a),l=n(5),c=r(l),s=n(1),p=function(){function e(t){u(this,e),this._imp=t}return o(e,[{key:"context",value:function(){var e=null;return this._imp&&(e=this._imp.context()),new c["default"](e)}},{key:"tracer",value:function(){return this._imp?new f["default"](this._imp.tracer()):s}},{key:"setOperationName",value:function(e){return this._imp&&this._imp.setOperationName(e),this}},{key:"setTag",value:function(e,t){return this.addTags(i({},e,t)),this}},{key:"addTags",value:function(e){if(this._imp)return this._imp.addTags(e),this}},{key:"log",value:function(e){if(this._imp)return this._imp.log(e),this}},{key:"logEvent",value:function(e,t){return this.log({event:e,payload:t})}},{key:"finish",value:function(e){this._imp&&this._imp.finish(e)}}]),o(e,[{key:"imp",value:function(){return this._imp}}]),e}();t["default"]=p,e.exports=t["default"]},function(e,t,n){"use strict";function r(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}Object.defineProperty(t,"__esModule",{value:!0});var i=function(){function e(e,t){for(var n=0;n<t.length;n++){var r=t[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(e,r.key,r)}}return function(t,n,r){return n&&e(t.prototype,n),r&&e(t,r),t}}(),u=function(){function e(t){r(this,e),this._imp=t}return i(e,[{key:"setBaggageItem",value:function(e,t){this._imp&&this._imp.setBaggageItem(e,t)}},{key:"getBaggageItem",value:function(e){if(this._imp)return this._imp.getBaggageItem(e)}}]),i(e,[{key:"imp",value:function(){return this._imp}}]),e}();t["default"]=u,e.exports=t["default"]},function(e,t){"use strict";e.exports={FORMAT_BINARY:"binary",FORMAT_TEXT_MAP:"text_map",FORMAT_HTTP_HEADERS:"http_headers",REFERENCE_CHILD_OF:"child_of",REFERENCE_FOLLOWS_FROM:"follows_from"}},function(e,t,n){"use strict";function r(e){return e&&e.__esModule?e:{"default":e}}function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}Object.defineProperty(t,"__esModule",{value:!0});var u=function(){function e(e,t){for(var n=0;n<t.length;n++){var r=t[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(e,r.key,r)}}return function(t,n,r){return n&&e(t.prototype,n),r&&e(t,r),t}}(),o=n(4),a=r(o),f=n(5),l=(r(f),function(){function e(t,n){i(this,e),this._type=t,this._referencedContext=n instanceof a["default"]?n.context():n}return u(e,[{key:"type",value:function(){return this._type}},{key:"referencedContext",value:function(){return this._referencedContext}}]),e}());t["default"]=l,e.exports=t["default"]},function(e,t){"use strict";function n(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}Object.defineProperty(t,"__esModule",{value:!0});var r=function i(e){n(this,i),this.buffer=e};t["default"]=r,e.exports=t["default"]}]);
+	'use strict';
+	
+	var _global_tracer = __webpack_require__(4);
+	
+	var GlobalTracer = _interopRequireWildcard(_global_tracer);
+	
+	var _constants = __webpack_require__(9);
+	
+	var Constants = _interopRequireWildcard(_constants);
+	
+	var _functions = __webpack_require__(10);
+	
+	var Functions = _interopRequireWildcard(_functions);
+	
+	var _noop = __webpack_require__(7);
+	
+	var Noop = _interopRequireWildcard(_noop);
+	
+	var _tags = __webpack_require__(12);
+	
+	var Tags = _interopRequireWildcard(_tags);
+	
+	var _binary_carrier = __webpack_require__(13);
+	
+	var _binary_carrier2 = _interopRequireDefault(_binary_carrier);
+	
+	var _reference = __webpack_require__(11);
+	
+	var _reference2 = _interopRequireDefault(_reference);
+	
+	var _span_context = __webpack_require__(8);
+	
+	var _span_context2 = _interopRequireDefault(_span_context);
+	
+	var _span = __webpack_require__(6);
+	
+	var _span2 = _interopRequireDefault(_span);
+	
+	var _tracer = __webpack_require__(5);
+	
+	var _tracer2 = _interopRequireDefault(_tracer);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	// Object.assign() is not available on Node v0.12, so implement a similar
+	// function here (subset of a proper polyfill).
+	function _extend(target) {
+	    for (var index = 1; index < arguments.length; index++) {
+	        var source = arguments[index];
+	        for (var key in source) {
+	            // eslint-disable-line no-restricted-syntax
+	            if (source.hasOwnProperty(key)) {
+	                target[key] = source[key];
+	            }
+	        }
+	    }
+	    return target;
+	}
+	
+	// Use `module.exports` rather than `export` to avoid the need to use `.default`
+	// when requiring the package in ES5 code.
+	module.exports = _extend({
+	    BinaryCarrier: _binary_carrier2.default,
+	    Reference: _reference2.default,
+	    SpanContext: _span_context2.default,
+	    Span: _span2.default,
+	    Tracer: _tracer2.default,
+	    Tags: Tags
+	}, Constants, Functions, GlobalTracer);
+	
+	// Initialize the noops last to avoid a dependecy cycle between the classes.
+	Noop.initialize();
+	
+	//# sourceMappingURL=index.js.map
 
 /***/ },
 /* 4 */
@@ -1760,7 +1812,1056 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _each2 = __webpack_require__(5);
+	exports.initGlobalTracer = initGlobalTracer;
+	exports.globalTracer = globalTracer;
+	
+	var _tracer = __webpack_require__(5);
+	
+	var _tracer2 = _interopRequireDefault(_tracer);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var noopTracer = new _tracer2.default();
+	var _globalTracer = null;
+	
+	// Allows direct importing/requiring of the global tracer:
+	//
+	// let globalTracer = require('opentracing/global');
+	//      OR
+	// import globalTracer from 'opentracing/global';
+	//
+	// Acts a bridge to the global tracer that can be safely called before the
+	// global tracer is initialized. The purpose of the delegation is to avoid the
+	// sometimes nearly intractible initialization order problems that can arise in
+	// applications with a complex set of dependencies, while also avoiding the
+	// case where
+	
+	var GlobalTracerDelegate = function (_Tracer) {
+	    _inherits(GlobalTracerDelegate, _Tracer);
+	
+	    function GlobalTracerDelegate() {
+	        _classCallCheck(this, GlobalTracerDelegate);
+	
+	        return _possibleConstructorReturn(this, (GlobalTracerDelegate.__proto__ || Object.getPrototypeOf(GlobalTracerDelegate)).apply(this, arguments));
+	    }
+	
+	    _createClass(GlobalTracerDelegate, [{
+	        key: 'startSpan',
+	        value: function startSpan() {
+	            var tracer = _globalTracer || noopTracer;
+	            return tracer.startSpan.apply(tracer, arguments);
+	        }
+	    }, {
+	        key: 'inject',
+	        value: function inject() {
+	            var tracer = _globalTracer || noopTracer;
+	            return tracer.inject.apply(tracer, arguments);
+	        }
+	    }, {
+	        key: 'extract',
+	        value: function extract() {
+	            var tracer = _globalTracer || noopTracer;
+	            return tracer.extract.apply(tracer, arguments);
+	        }
+	    }]);
+	
+	    return GlobalTracerDelegate;
+	}(_tracer2.default);
+	
+	var globalTracerDelegate = new GlobalTracerDelegate();
+	
+	/**
+	 * Set the global Tracer.
+	 *
+	 * The behavior is undefined if this function is called more than once.
+	 *
+	 * @param {Tracer} tracer - the Tracer implementation
+	 */
+	function initGlobalTracer(tracer) {
+	    _globalTracer = tracer;
+	}
+	
+	/**
+	 * Returns the global tracer.
+	 */
+	function globalTracer() {
+	    // Return the delegate.  Since the global tracer is largely a convenience
+	    // (the user can always create their own tracers), the delegate is used to
+	    // give the added convenience of not needing to worry about initialization
+	    // order.
+	    return globalTracerDelegate;
+	}
+	
+	//# sourceMappingURL=global_tracer.js.map
+
+/***/ },
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _span = __webpack_require__(6);
+	
+	var _span2 = _interopRequireDefault(_span);
+	
+	var _span_context = __webpack_require__(8);
+	
+	var _span_context2 = _interopRequireDefault(_span_context);
+	
+	var _constants = __webpack_require__(9);
+	
+	var Constants = _interopRequireWildcard(_constants);
+	
+	var _functions = __webpack_require__(10);
+	
+	var Functions = _interopRequireWildcard(_functions);
+	
+	var _noop = __webpack_require__(7);
+	
+	var Noop = _interopRequireWildcard(_noop);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	/**
+	 * Tracer is the entry-point between the instrumentation API and the tracing
+	 * implementation.
+	 *
+	 * The default object acts as a no-op implementation.
+	 *
+	 * Note to implementators: derived classes can choose to directly implement the
+	 * methods in the "OpenTracing API methods" section, or optionally the subset of
+	 * underscore-prefixed methods to pick up the argument checking and handling
+	 * automatically from the base class.
+	 */
+	var Tracer = function () {
+	    function Tracer() {
+	        _classCallCheck(this, Tracer);
+	    }
+	
+	    _createClass(Tracer, [{
+	        key: 'startSpan',
+	
+	
+	        // ---------------------------------------------------------------------- //
+	        // OpenTracing API methods
+	        // ---------------------------------------------------------------------- //
+	
+	        /**
+	         * Starts and returns a new Span representing a logical unit of work.
+	         *
+	         * For example:
+	         *
+	         *     // Start a new (parentless) root Span:
+	         *     var parent = Tracer.startSpan('DoWork');
+	         *
+	         *     // Start a new (child) Span:
+	         *     var child = Tracer.startSpan('Subroutine', {
+	         *         childOf: parent.context(),
+	         *     });
+	         *
+	         * @param {string} name - the name of the operation.
+	         * @param {object} [fields] - the fields to set on the newly created span.
+	         * @param {string} [fields.operationName] - the name to use for the newly
+	         *        created span. Required if called with a single argument.
+	         * @param {SpanContext} [fields.childOf] - a parent SpanContext (or Span,
+	         *        for convenience) that the newly-started span will be the child of
+	         *        (per REFERENCE_CHILD_OF). If specified, `fields.references` must
+	         *        be unspecified.
+	         * @param {array} [fields.references] - an array of Reference instances,
+	         *        each pointing to a causal parent SpanContext. If specified,
+	         *        `fields.childOf` must be unspecified.
+	         * @param {object} [fields.tags] - set of key-value pairs which will be set
+	         *        as tags on the newly created Span. Ownership of the object is
+	         *        passed to the created span for efficiency reasons (the caller
+	         *        should not modify this object after calling startSpan).
+	         * @param {number} [fields.startTime] - a manually specified start time for
+	         *        the created Span object. The time should be specified in
+	         *        milliseconds as Unix timestamp. Decimal value are supported
+	         *        to represent time values with sub-millisecond accuracy.
+	         * @return {Span} - a new Span object.
+	         */
+	        value: function startSpan(name, fields) {
+	
+	            // Convert fields.childOf to fields.references as needed.
+	            fields = fields || {};
+	            // Debug-only runtime checks on the arguments
+	
+	            if (fields.childOf) {
+	                // Convert from a Span or a SpanContext into a Reference.
+	                var childOf = Functions.childOf(fields.childOf);
+	                if (fields.references) {
+	                    fields.references.push(childOf);
+	                } else {
+	                    fields.references = [childOf];
+	                }
+	                delete fields.childOf;
+	            }
+	            return this._startSpan(name, fields);
+	        }
+	
+	        /**
+	         * Injects the given SpanContext instance for cross-process propagation
+	         * within `carrier`. The expected type of `carrier` depends on the value of
+	         * `format.
+	         *
+	         * OpenTracing defines a common set of `format` values (see
+	         * FORMAT_TEXT_MAP, FORMAT_HTTP_HEADERS, and FORMAT_BINARY), and each has
+	         * an expected carrier type.
+	         *
+	         * Consider this pseudocode example:
+	         *
+	         *     var clientSpan = ...;
+	         *     ...
+	         *     // Inject clientSpan into a text carrier.
+	         *     var headersCarrier = {};
+	         *     Tracer.inject(clientSpan.context(), Tracer.FORMAT_HTTP_HEADERS, headersCarrier);
+	         *     // Incorporate the textCarrier into the outbound HTTP request header
+	         *     // map.
+	         *     Object.assign(outboundHTTPReq.headers, headersCarrier);
+	         *     // ... send the httpReq
+	         *
+	         * @param  {SpanContext} spanContext - the SpanContext to inject into the
+	         *         carrier object. As a convenience, a Span instance may be passed
+	         *         in instead (in which case its .context() is used for the
+	         *         inject()).
+	         * @param  {string} format - the format of the carrier.
+	         * @param  {any} carrier - see the documentation for the chosen `format`
+	         *         for a description of the carrier object.
+	         */
+	
+	    }, {
+	        key: 'inject',
+	        value: function inject(spanContext, format, carrier) {
+	
+	            // Allow the user to pass a Span instead of a SpanContext
+	            if (spanContext instanceof _span2.default) {
+	                spanContext = spanContext.context();
+	            }
+	            // Debug-only runtime checks on the arguments
+	
+	            return this._inject(spanContext, format, carrier);
+	        }
+	
+	        /**
+	         * Returns a SpanContext instance extracted from `carrier` in the given
+	         * `format`.
+	         *
+	         * OpenTracing defines a common set of `format` values (see
+	         * FORMAT_TEXT_MAP, FORMAT_HTTP_HEADERS, and FORMAT_BINARY), and each has
+	         * an expected carrier type.
+	         *
+	         * Consider this pseudocode example:
+	         *
+	         *     // Use the inbound HTTP request's headers as a text map carrier.
+	         *     var headersCarrier = inboundHTTPReq.headers;
+	         *     var wireCtx = Tracer.extract(Tracer.FORMAT_HTTP_HEADERS, headersCarrier);
+	         *     var serverSpan = Tracer.startSpan('...', { childOf : wireCtx });
+	         *
+	         * @param  {string} format - the format of the carrier.
+	         * @param  {any} carrier - the type of the carrier object is determined by
+	         *         the format.
+	         * @return {SpanContext}
+	         *         The extracted SpanContext, or null if no such SpanContext could
+	         *         be found in `carrier`
+	         */
+	
+	    }, {
+	        key: 'extract',
+	        value: function extract(format, carrier) {
+	            return this._extract(format, carrier);
+	            // Debug-only runtime checks on the arguments
+	        }
+	
+	        // ---------------------------------------------------------------------- //
+	        // Derived classes can choose to implement the below
+	        // ---------------------------------------------------------------------- //
+	
+	        // NOTE: the input to this method is *always* an associative array. The
+	        // public-facing startSpan() method normalizes the arguments so that
+	        // all N implementations do not need to worry about variations in the call
+	        // signature.
+	        //
+	        // The default behavior returns a no-op span.
+	
+	    }, {
+	        key: '_startSpan',
+	        value: function _startSpan(name, fields) {
+	            return Noop.span;
+	        }
+	
+	        // The default behavior is a no-op.
+	
+	    }, {
+	        key: '_inject',
+	        value: function _inject(spanContext, format, carrier) {}
+	
+	        // The default behavior is to return null.
+	
+	    }, {
+	        key: '_extract',
+	        value: function _extract(format, carrier) {
+	            return Noop.spanContext;
+	        }
+	    }]);
+	
+	    return Tracer;
+	}();
+	
+	exports.default = Tracer;
+	
+	//# sourceMappingURL=tracer.js.map
+
+/***/ },
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _noop = __webpack_require__(7);
+	
+	var noop = _interopRequireWildcard(_noop);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	/**
+	 * Span represents a logical unit of work as part of a broader Trace. Examples
+	 * of span might include remote procedure calls or a in-process function calls
+	 * to sub-components. A Trace has a single, top-level "root" Span that in turn
+	 * may have zero or more child Spans, which in turn may have children.
+	 */
+	var Span = function () {
+	    function Span() {
+	        _classCallCheck(this, Span);
+	    }
+	
+	    _createClass(Span, [{
+	        key: 'context',
+	
+	
+	        // ---------------------------------------------------------------------- //
+	        // OpenTracing API methods
+	        // ---------------------------------------------------------------------- //
+	
+	        /**
+	         * Returns the SpanContext object associated with this Span.
+	         *
+	         * @return {SpanContext}
+	         */
+	        value: function context() {
+	
+	            return this._context();
+	            // Debug-only runtime checks on the arguments
+	        }
+	
+	        /**
+	         * Returns the Tracer object used to create this Span.
+	         *
+	         * @return {Tracer}
+	         */
+	
+	    }, {
+	        key: 'tracer',
+	        value: function tracer() {
+	
+	            return this._tracer();
+	            // Debug-only runtime checks on the arguments
+	        }
+	
+	        /**
+	         * Sets the string name for the logical operation this span represents.
+	         *
+	         * @param {string} name
+	         */
+	
+	    }, {
+	        key: 'setOperationName',
+	        value: function setOperationName(name) {
+	
+	            this._setOperationName(name);
+	            // Debug-only runtime checks on the arguments
+	
+	            return this;
+	        }
+	
+	        /**
+	         * Sets a key:value pair on this Span that also propagates to future
+	         * children of the associated Span.
+	         *
+	         * setBaggageItem() enables powerful functionality given a full-stack
+	         * opentracing integration (e.g., arbitrary application data from a web
+	         * client can make it, transparently, all the way into the depths of a
+	         * storage system), and with it some powerful costs: use this feature with
+	         * care.
+	         *
+	         * IMPORTANT NOTE #1: setBaggageItem() will only propagate baggage items to
+	         * *future* causal descendants of the associated Span.
+	         *
+	         * IMPORTANT NOTE #2: Use this thoughtfully and with care. Every key and
+	         * value is copied into every local *and remote* child of the associated
+	         * Span, and that can add up to a lot of network and cpu overhead.
+	         *
+	         * @param {string} key
+	         * @param {string} value
+	         */
+	
+	    }, {
+	        key: 'setBaggageItem',
+	        value: function setBaggageItem(key, value) {
+	
+	            this._setBaggageItem(key, value);
+	            // Debug-only runtime checks on the arguments
+	
+	            return this;
+	        }
+	
+	        /**
+	         * Returns the value for a baggage item given its key.
+	         *
+	         * @param  {string} key
+	         *         The key for the given trace attribute.
+	         * @return {string}
+	         *         String value for the given key, or undefined if the key does not
+	         *         correspond to a set trace attribute.
+	         */
+	
+	    }, {
+	        key: 'getBaggageItem',
+	        value: function getBaggageItem(key) {
+	
+	            return this._getBaggageItem(key);
+	            // Debug-only runtime checks on the arguments
+	        }
+	
+	        /**
+	         * Adds a single tag to the span.  See `addTags()` for details.
+	         *
+	         * @param {string} key
+	         * @param {any} value
+	         */
+	
+	    }, {
+	        key: 'setTag',
+	        value: function setTag(key, value) {
+	
+	            // NOTE: the call is normalized to a call to _addTags()
+	            this._addTags(_defineProperty({}, key, value));
+	            // Debug-only runtime checks on the arguments
+	
+	            return this;
+	        }
+	
+	        /**
+	         * Adds the given key value pairs to the set of span tags.
+	         *
+	         * Multiple calls to addTags() results in the tags being the superset of
+	         * all calls.
+	         *
+	         * The behavior of setting the same key multiple times on the same span
+	         * is undefined.
+	         *
+	         * The supported type of the values is implementation-dependent.
+	         * Implementations are expected to safely handle all types of values but
+	         * may choose to ignore unrecognized / unhandle-able values (e.g. objects
+	         * with cyclic references, function objects).
+	         *
+	         * @return {[type]} [description]
+	         */
+	
+	    }, {
+	        key: 'addTags',
+	        value: function addTags(keyValueMap) {
+	
+	            this._addTags(keyValueMap);
+	            // Debug-only runtime checks on the arguments
+	
+	            return this;
+	        }
+	
+	        /**
+	         * Add a log record to this Span, optionally at a user-provided timestamp.
+	         *
+	         * For example:
+	         *
+	         *     span.log({
+	         *         size: rpc.size(),  // numeric value
+	         *         URI: rpc.URI(),  // string value
+	         *         payload: rpc.payload(),  // Object value
+	         *         "keys can be arbitrary strings": rpc.foo(),
+	         *     });
+	         *
+	         *     span.log({
+	         *         "error.description": error.description(),  // numeric value
+	         *     }, error.timestampMillis());
+	         *
+	         * @param {object} keyValuePairs
+	         *        An object mapping string keys to arbitrary value types. All
+	         *        Tracer implementations should support bool, string, and numeric
+	         *        value types, and some may also support Object values.
+	         * @param {number} timestamp
+	         *        An optional parameter specifying the timestamp in milliseconds
+	         *        since the Unix epoch. Fractional values are allowed so that
+	         *        timestamps with sub-millisecond accuracy can be represented. If
+	         *        not specified, the implementation is expected to use its notion
+	         *        of the current time of the call.
+	         */
+	
+	    }, {
+	        key: 'log',
+	        value: function log(keyValuePairs, timestamp) {
+	
+	            this._log(keyValuePairs, timestamp);
+	            // Debug-only runtime checks on the arguments
+	
+	            return this;
+	        }
+	
+	        /**
+	         * DEPRECATED
+	         */
+	
+	    }, {
+	        key: 'logEvent',
+	        value: function logEvent(eventName, payload) {
+	
+	            return this._log({
+	                event: eventName,
+	                payload: payload
+	            });
+	            // Debug-only runtime checks on the arguments
+	        }
+	
+	        /**
+	         * Sets the end timestamp and finalizes Span state.
+	         *
+	         * With the exception of calls to Span.context() (which are always allowed),
+	         * finish() must be the last call made to any span instance, and to do
+	         * otherwise leads to undefined behavior.
+	         *
+	         * @param  {number} finishTime
+	         *         Optional finish time in milliseconds as a Unix timestamp. Decimal
+	         *         values are supported for timestamps with sub-millisecond accuracy.
+	         *         If not specified, the current time (as defined by the
+	         *         implementation) will be used.
+	         */
+	
+	    }, {
+	        key: 'finish',
+	        value: function finish(finishTime) {
+	
+	            this._finish(finishTime);
+	
+	            // Do not return `this`. The Span generally should not be used after it
+	            // is finished so chaining is not desired in this context.
+	
+	            // Debug-only runtime checks on the arguments
+	        }
+	
+	        // ---------------------------------------------------------------------- //
+	        // Derived classes can choose to implement the below
+	        // ---------------------------------------------------------------------- //
+	
+	        // By default returns a no-op SpanContext.
+	
+	    }, {
+	        key: '_context',
+	        value: function _context() {
+	            return noop.spanContext;
+	        }
+	
+	        // By default returns a no-op tracer.
+	        //
+	        // The base class could store the tracer that created it, but it does not
+	        // in order to ensure the no-op span implementation has zero members,
+	        // which allows V8 to aggressively optimize calls to such objects.
+	
+	    }, {
+	        key: '_tracer',
+	        value: function _tracer() {
+	            return noop.tracer;
+	        }
+	
+	        // By default does nothing
+	
+	    }, {
+	        key: '_setOperationName',
+	        value: function _setOperationName(name) {}
+	
+	        // By default does nothing
+	
+	    }, {
+	        key: '_setBaggageItem',
+	        value: function _setBaggageItem(key, value) {}
+	
+	        // By default does nothing
+	
+	    }, {
+	        key: '_getBaggageItem',
+	        value: function _getBaggageItem(key) {}
+	
+	        // By default does nothing
+	        //
+	        // NOTE: both setTag() and addTags() map to this function. keyValuePairs
+	        // will always be an associative array.
+	
+	    }, {
+	        key: '_addTags',
+	        value: function _addTags(keyValuePairs) {}
+	
+	        // By default does nothing
+	
+	    }, {
+	        key: '_log',
+	        value: function _log(keyValuePairs, timestamp) {}
+	
+	        // By default does nothing
+	        //
+	        // finishTime is expected to be either a number or undefined.
+	
+	    }, {
+	        key: '_finish',
+	        value: function _finish(finishTime) {}
+	    }]);
+	
+	    return Span;
+	}();
+	
+	exports.default = Span;
+	
+	//# sourceMappingURL=span.js.map
+
+/***/ },
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.span = exports.spanContext = exports.tracer = undefined;
+	exports.initialize = initialize;
+	
+	var _tracer = __webpack_require__(5);
+	
+	var _tracer2 = _interopRequireDefault(_tracer);
+	
+	var _span_context = __webpack_require__(8);
+	
+	var _span_context2 = _interopRequireDefault(_span_context);
+	
+	var _span = __webpack_require__(6);
+	
+	var _span2 = _interopRequireDefault(_span);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	/* eslint-disable import/no-mutable-exports */
+	var tracer = exports.tracer = null;
+	var spanContext = exports.spanContext = null;
+	var span = exports.span = null;
+	/* eslint-enable import/no-mutable-exports */
+	
+	// Deferred initialization to avoid a dependency cycle where Tracer depends on
+	// Span which depends on the noop tracer.
+	function initialize() {
+	    exports.tracer = tracer = new _tracer2.default();
+	    exports.span = span = new _span2.default();
+	    exports.spanContext = spanContext = new _span_context2.default();
+	}
+	
+	//# sourceMappingURL=noop.js.map
+
+/***/ },
+/* 8 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	/**
+	 * SpanContext represents Span state that must propagate to descendant Spans
+	 * and across process boundaries.
+	 *
+	 * SpanContext is logically divided into two pieces: the user-level "Baggage"
+	 * (see setBaggageItem and getBaggageItem) that propagates across Span
+	 * boundaries and any Tracer-implementation-specific fields that are needed to
+	 * identify or otherwise contextualize the associated Span instance (e.g., a
+	 * <trace_id, span_id, sampled> tuple).
+	 */
+	var SpanContext = function SpanContext() {
+	  _classCallCheck(this, SpanContext);
+	};
+	
+	exports.default = SpanContext;
+	
+	//# sourceMappingURL=span_context.js.map
+
+/***/ },
+/* 9 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	/**
+	 * The FORMAT_BINARY format represents SpanContexts in an opaque binary
+	 * carrier.
+	 *
+	 * Tracer.inject() will set the buffer field to an Array-like (Array,
+	 * ArrayBuffer, or TypedBuffer) object containing the injected binary data.
+	 * Any valid Object can be used as long as the buffer field of the object
+	 * can be set.
+	 *
+	 * Tracer.extract() will look for `carrier.buffer`, and that field is
+	 * expected to be an Array-like object (Array, ArrayBuffer, or
+	 * TypedBuffer).
+	 */
+	var FORMAT_BINARY = exports.FORMAT_BINARY = 'binary';
+	
+	/**
+	 * The FORMAT_TEXT_MAP format represents SpanContexts using a
+	 * string->string map (backed by a Javascript Object) as a carrier.
+	 *
+	 * NOTE: Unlike FORMAT_HTTP_HEADERS, FORMAT_TEXT_MAP places no restrictions
+	 * on the characters used in either the keys or the values of the map
+	 * entries.
+	 *
+	 * The FORMAT_TEXT_MAP carrier map may contain unrelated data (e.g.,
+	 * arbitrary gRPC metadata); as such, the Tracer implementation should use
+	 * a prefix or other convention to distinguish Tracer-specific key:value
+	 * pairs.
+	 */
+	var FORMAT_TEXT_MAP = exports.FORMAT_TEXT_MAP = 'text_map';
+	
+	/**
+	 * The FORMAT_HTTP_HEADERS format represents SpanContexts using a
+	 * character-restricted string->string map (backed by a Javascript Object)
+	 * as a carrier.
+	 *
+	 * Keys and values in the FORMAT_HTTP_HEADERS carrier must be suitable for
+	 * use as HTTP headers (without modification or further escaping). That is,
+	 * the keys have a greatly restricted character set, casing for the keys
+	 * may not be preserved by various intermediaries, and the values should be
+	 * URL-escaped.
+	 *
+	 * The FORMAT_HTTP_HEADERS carrier map may contain unrelated data (e.g.,
+	 * arbitrary HTTP headers); as such, the Tracer implementation should use a
+	 * prefix or other convention to distinguish Tracer-specific key:value
+	 * pairs.
+	 */
+	var FORMAT_HTTP_HEADERS = exports.FORMAT_HTTP_HEADERS = 'http_headers';
+	
+	/**
+	 * A Span may be the "child of" a parent Span. In a “child of” reference,
+	 * the parent Span depends on the child Span in some capacity.
+	 *
+	 * See more about reference types at http://opentracing.io/spec/
+	 */
+	var REFERENCE_CHILD_OF = exports.REFERENCE_CHILD_OF = 'child_of';
+	
+	/**
+	 * Some parent Spans do not depend in any way on the result of their child
+	 * Spans. In these cases, we say merely that the child Span “follows from”
+	 * the parent Span in a causal sense.
+	 *
+	 * See more about reference types at http://opentracing.io/spec/
+	 */
+	var REFERENCE_FOLLOWS_FROM = exports.REFERENCE_FOLLOWS_FROM = 'follows_from';
+	
+	//# sourceMappingURL=constants.js.map
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.childOf = childOf;
+	exports.followsFrom = followsFrom;
+	
+	var _constants = __webpack_require__(9);
+	
+	var Constants = _interopRequireWildcard(_constants);
+	
+	var _span = __webpack_require__(6);
+	
+	var _span2 = _interopRequireDefault(_span);
+	
+	var _reference = __webpack_require__(11);
+	
+	var _reference2 = _interopRequireDefault(_reference);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	/**
+	 * Return a new REFERENCE_CHILD_OF reference.
+	 *
+	 * @param {SpanContext} spanContext - the parent SpanContext instance to
+	 *        reference.
+	 * @return a REFERENCE_CHILD_OF reference pointing to `spanContext`
+	 */
+	function childOf(spanContext) {
+	    // Allow the user to pass a Span instead of a SpanContext
+	    if (spanContext instanceof _span2.default) {
+	        spanContext = spanContext.context();
+	    }
+	    return new _reference2.default(Constants.REFERENCE_CHILD_OF, spanContext);
+	}
+	
+	/**
+	 * Return a new REFERENCE_FOLLOWS_FROM reference.
+	 *
+	 * @param {SpanContext} spanContext - the parent SpanContext instance to
+	 *        reference.
+	 * @return a REFERENCE_FOLLOWS_FROM reference pointing to `spanContext`
+	 */
+	function followsFrom(spanContext) {
+	    // Allow the user to pass a Span instead of a SpanContext
+	    if (spanContext instanceof _span2.default) {
+	        spanContext = spanContext.context();
+	    }
+	    return new _reference2.default(Constants.REFERENCE_FOLLOWS_FROM, spanContext);
+	}
+	
+	//# sourceMappingURL=functions.js.map
+
+/***/ },
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _span = __webpack_require__(6);
+	
+	var _span2 = _interopRequireDefault(_span);
+	
+	var _span_context = __webpack_require__(8);
+	
+	var _span_context2 = _interopRequireDefault(_span_context);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	/**
+	 * Reference pairs a reference type constant (e.g., REFERENCE_CHILD_OF or
+	 * REFERENCE_FOLLOWS_FROM) with the SpanContext it points to.
+	 *
+	 * See the exported childOf() and followsFrom() functions at the package level.
+	 */
+	var Reference = function () {
+	    _createClass(Reference, [{
+	        key: 'type',
+	
+	
+	        /**
+	         * @return {string} The Reference type (e.g., REFERENCE_CHILD_OF or
+	         *         REFERENCE_FOLLOWS_FROM).
+	         */
+	        value: function type() {
+	            return this._type;
+	        }
+	
+	        /**
+	         * @return {SpanContext} The SpanContext being referred to (e.g., the
+	         *         parent in a REFERENCE_CHILD_OF Reference).
+	         */
+	
+	    }, {
+	        key: 'referencedContext',
+	        value: function referencedContext() {
+	            return this._referencedContext;
+	        }
+	
+	        /**
+	         * Initialize a new Reference instance.
+	         *
+	         * @param {string} type - the Reference type constant (e.g.,
+	         *        REFERENCE_CHILD_OF or REFERENCE_FOLLOWS_FROM).
+	         * @param {SpanContext} referencedContext - the SpanContext being referred
+	         *        to. As a convenience, a Span instance may be passed in instead
+	         *        (in which case its .context() is used here).
+	         */
+	
+	    }]);
+	
+	    function Reference(type, referencedContext) {
+	        _classCallCheck(this, Reference);
+	
+	        this._type = type;
+	        this._referencedContext = referencedContext instanceof _span2.default ? referencedContext.context() : referencedContext;
+	    }
+	
+	    return Reference;
+	}();
+	
+	exports.default = Reference;
+	
+	//# sourceMappingURL=reference.js.map
+
+/***/ },
+/* 12 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	module.exports = {
+	
+	    /** ------------------------------------------------------------------------
+	    * SPAN_KIND hints at relationship between spans, e.g. client/server
+	    * --------------------------------------------------------------------------*/
+	    SPAN_KIND: 'span.kind',
+	
+	    // Marks a span representing the client-side of an RPC or other remote call
+	    SPAN_KIND_RPC_CLIENT: 'client',
+	
+	    // Marks a span representing the server-side of an RPC or other remote call
+	    SPAN_KIND_RPC_SERVER: 'server',
+	
+	    /** ------------------------------------------------------------------------
+	    * ERROR (boolean) indicates whether a Span ended in an error state.
+	    * --------------------------------------------------------------------------*/
+	    ERROR: 'error',
+	
+	    /** ------------------------------------------------------------------------
+	    * COMPONENT (string) ia s low-cardinality identifier of the module, library,
+	    * or package that is generating a span.
+	    * --------------------------------------------------------------------------*/
+	    COMPONENT: 'component',
+	
+	    /** ------------------------------------------------------------------------
+	    * SAMPLING_PRIORITY (number) determines the priority of sampling this Span.
+	    * --------------------------------------------------------------------------*/
+	    SAMPLING_PRIORITY: 'sampling.priority',
+	
+	    /** ------------------------------------------------------------------------
+	    * PEER_* tags can be emitted by either client-side of server-side to describe
+	    * the other side/service in a peer-to-peer communications, like an RPC call.
+	    * ---------------------------------------------------------------------------*/
+	
+	    // PEER_SERVICE (string) records the service name of the peer
+	    PEER_SERVICE: 'peer.service',
+	
+	    // PEER_HOSTNAME records the host name of the peer
+	    PEER_HOSTNAME: 'peer.hostname',
+	
+	    // PEER_HOST_IPV4 (number) records IP v4 host address of the peer
+	    PEER_HOST_IPV4: 'peer.ipv4',
+	
+	    // PEER_HOST_IPV6 (string) records IP v6 host address of the peer
+	    PEER_HOST_IPV6: 'peer.ipv6',
+	
+	    // PEER_PORT (number) records port number of the peer
+	    PEER_PORT: 'peer.port',
+	
+	    /** ------------------------------------------------------------------------
+	    * HTTP tags
+	    * ---------------------------------------------------------------------------*/
+	
+	    // HTTP_URL (string) should be the URL of the request being handled in this
+	    // segment of the trace, in standard URI format. The protocol is optional.
+	    HTTP_URL: 'http.url',
+	
+	    // HTTP_METHOD (string) is the HTTP method of the request.
+	    // Both upper/lower case values are allowed.
+	    HTTP_METHOD: 'http.method',
+	
+	    // HTTP_STATUS_CODE (number) is the numeric HTTP status code (200, 404, etc)
+	    // of the HTTP response.
+	    HTTP_STATUS_CODE: 'http.status_code'
+	};
+	
+	//# sourceMappingURL=tags.js.map
+
+/***/ },
+/* 13 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	/**
+	 * Convenience class to use as a binary carrier.
+	 *
+	 * Any valid Object with a field named `buffer` may be used as a binary carrier;
+	 * this class is only one such type of object that can be used.
+	 */
+	var BinaryCarrier = function BinaryCarrier(binaryData) {
+	    _classCallCheck(this, BinaryCarrier);
+	
+	    this._buffer = binaryData;
+	};
+	
+	exports.default = BinaryCarrier;
+	
+	//# sourceMappingURL=binary_carrier.js.map
+
+/***/ },
+/* 14 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _each2 = __webpack_require__(15);
 	
 	var _each3 = _interopRequireDefault(_each2);
 	
@@ -1824,7 +2925,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ },
-/* 5 */
+/* 15 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1850,7 +2951,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ },
-/* 6 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1861,15 +2962,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _coerce = __webpack_require__(7);
+	var _coerce = __webpack_require__(17);
 	
 	var coerce = _interopRequireWildcard(_coerce);
 	
-	var _constants = __webpack_require__(8);
+	var _constants = __webpack_require__(18);
 	
 	var constants = _interopRequireWildcard(_constants);
 	
-	var _each2 = __webpack_require__(5);
+	var _each2 = __webpack_require__(15);
 	
 	var _each3 = _interopRequireDefault(_each2);
 	
@@ -1877,7 +2978,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _opentracing2 = _interopRequireDefault(_opentracing);
 	
-	var _platform_abstraction_layer = __webpack_require__(9);
+	var _platform_abstraction_layer = __webpack_require__(19);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -1991,7 +3092,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function SpanImp(tracer, name, spanContext) {
 	        _classCallCheck(this, SpanImp);
 	
-	        var _this = _possibleConstructorReturn(this, (SpanImp.__proto__ || Object.getPrototypeOf(SpanImp)).call(this));
+	        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(SpanImp).call(this));
 	
 	        console.assert(typeof tracer === 'object', 'Invalid runtime'); // eslint-disable-line no-console
 	
@@ -2156,7 +3257,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ },
-/* 7 */
+/* 17 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2180,7 +3281,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 8 */
+/* 18 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2214,7 +3315,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var JOIN_ID_PREFIX = exports.JOIN_ID_PREFIX = 'join:';
 
 /***/ },
-/* 9 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2226,10 +3327,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	// general differences in the platforms.
 	if (true) {
 	    module.exports = {
-	        Platform: __webpack_require__(10),
-	        Transport: __webpack_require__(15),
-	        thrift: __webpack_require__(16),
-	        crouton_thrift: __webpack_require__(18)
+	        Platform: __webpack_require__(20),
+	        Transport: __webpack_require__(25),
+	        thrift: __webpack_require__(26),
+	        crouton_thrift: __webpack_require__(28)
 	    };
 	} else {
 	    module.exports = {
@@ -2241,7 +3342,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 10 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2250,8 +3351,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
-	var optionsParser = __webpack_require__(11);
-	var util = __webpack_require__(12);
+	var optionsParser = __webpack_require__(21);
+	var util = __webpack_require__(22);
 	
 	var kRuntimeGUIDCookiePrefix = 'lightstep_guid';
 	var kSessionIDCookieKey = 'lightstep_session_id';
@@ -2260,10 +3361,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	var nowMicrosImp = function () {
 	    // Is a hi-res timer available?
 	    if (window.performance && window.performance.now && window.performance.timing && window.performance.timing.navigationStart) {
-	        var start = performance.timing.navigationStart;
-	        return function () {
-	            return Math.floor((start + performance.now()) * 1000.0);
-	        };
+	        var _ret = function () {
+	            var start = performance.timing.navigationStart;
+	            return {
+	                v: function () {
+	                    return Math.floor((start + performance.now()) * 1000.0);
+	                }
+	            };
+	        }();
+	
+	        if (typeof _ret === "object") return _ret.v;
 	    }
 	    // The low-res timer is the best we can do
 	    return function () {
@@ -2336,7 +3443,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'plugins',
 	        value: function plugins(opts) {
-	            return [__webpack_require__(13), __webpack_require__(14)];
+	            return [__webpack_require__(23), __webpack_require__(24)];
 	        }
 	    }, {
 	        key: 'options',
@@ -2415,7 +3522,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = PlatformBrowser;
 
 /***/ },
-/* 11 */
+/* 21 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2543,7 +3650,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 12 */
+/* 22 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2568,14 +3675,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 13 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _each2 = __webpack_require__(5);
+	var _each2 = __webpack_require__(15);
 	
 	var _each3 = _interopRequireDefault(_each2);
 	
@@ -2953,14 +4060,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = new InstrumentXHR();
 
 /***/ },
-/* 14 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _each2 = __webpack_require__(5);
+	var _each2 = __webpack_require__(15);
 	
 	var _each3 = _interopRequireDefault(_each2);
 	
@@ -3141,7 +4248,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = new InstrumentPageLoad();
 
 /***/ },
-/* 15 */
+/* 25 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -3250,15 +4357,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ },
-/* 16 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	module.exports = __webpack_require__(17).Thrift;
+	module.exports = __webpack_require__(27).Thrift;
 
 /***/ },
-/* 17 */
+/* 27 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -4948,22 +6055,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	})();
 
 /***/ },
-/* 18 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	module.exports = __webpack_require__(17).crouton_thrift;
+	module.exports = __webpack_require__(27).crouton_thrift;
 
 /***/ },
-/* 19 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _each2 = __webpack_require__(5);
+	var _each2 = __webpack_require__(15);
 	
 	var _each3 = _interopRequireDefault(_each2);
 	
@@ -5129,20 +6236,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = ClockState;
 
 /***/ },
-/* 20 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _platform_abstraction_layer = __webpack_require__(9);
+	var _platform_abstraction_layer = __webpack_require__(19);
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
 	// eslint-disable-line camelcase
-	var constants = __webpack_require__(8);
-	var coerce = __webpack_require__(7);
+	var constants = __webpack_require__(18);
+	var coerce = __webpack_require__(17);
 	
 	// Facade on the thrift log data structure to make constructing log records more
 	// convenient.
@@ -5248,14 +6355,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = LogBuilder;
 
 /***/ },
-/* 21 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _each2 = __webpack_require__(5);
+	var _each2 = __webpack_require__(15);
 	
 	var _each3 = _interopRequireDefault(_each2);
 	
@@ -5287,7 +6394,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = new PackageGlobals();
 
 /***/ },
-/* 22 */
+/* 32 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -5306,54 +6413,54 @@ return /******/ (function(modules) { // webpackBootstrap
 			"url": "http://github.com/lightstep/lightstep-tracer-javascript.git"
 		},
 		"dependencies": {
-			"async": "^1.5.0",
-			"eventemitter3": "^1.1.1",
-			"source-map-support": "^0.3.3",
+			"async": "1.5.0",
+			"eventemitter3": "1.1.1",
+			"source-map-support": "0.3.3",
 			"thrift": "0.9.2"
 		},
 		"devDependencies": {
-			"babel-cli": "^6.14.0",
-			"babel-core": "^6.3.26",
-			"babel-loader": "^6.2.0",
-			"babel-plugin-add-module-exports": "^0.1.2",
-			"babel-plugin-check-es2015-constants": "^6.7.2",
-			"babel-plugin-transform-es2015-arrow-functions": "^6.5.2",
-			"babel-plugin-transform-es2015-block-scoped-functions": "^6.6.5",
-			"babel-plugin-transform-es2015-block-scoping": "^6.7.1",
-			"babel-plugin-transform-es2015-classes": "^6.6.5",
-			"babel-plugin-transform-es2015-computed-properties": "^6.6.5",
-			"babel-plugin-transform-es2015-destructuring": "^6.6.5",
-			"babel-plugin-transform-es2015-duplicate-keys": "^6.6.4",
-			"babel-plugin-transform-es2015-literals": "^6.5.0",
-			"babel-plugin-transform-es2015-modules-commonjs": "^6.7.4",
-			"babel-plugin-transform-es2015-object-super": "^6.6.5",
-			"babel-plugin-transform-es2015-parameters": "^6.7.0",
-			"babel-plugin-transform-es2015-spread": "^6.6.5",
-			"babel-plugin-transform-es2015-sticky-regex": "^6.5.0",
-			"babel-plugin-transform-es2015-template-literals": "^6.6.5",
-			"babel-plugin-transform-es2015-unicode-regex": "^6.5.0",
-			"babel-polyfill": "^6.3.14",
-			"babel-preset-es2015": "^6.3.13",
-			"chai": "^3.4.1",
-			"clone": "^1.0.2",
-			"colors": "^1.1.2",
-			"eslint": "^2.4.0",
-			"eslint-config-airbnb": "^6.2.0",
-			"eslint-plugin-react": "^4.2.3",
-			"istanbul": "^0.4.4",
-			"json-loader": "^0.5.4",
-			"mocha": "^2.3.4",
+			"babel-cli": "6.14.0",
+			"babel-core": "6.3.26",
+			"babel-loader": "6.2.0",
+			"babel-plugin-add-module-exports": "0.1.2",
+			"babel-plugin-check-es2015-constants": "6.7.2",
+			"babel-plugin-transform-es2015-arrow-functions": "6.5.2",
+			"babel-plugin-transform-es2015-block-scoped-functions": "6.6.5",
+			"babel-plugin-transform-es2015-block-scoping": "6.7.1",
+			"babel-plugin-transform-es2015-classes": "6.6.5",
+			"babel-plugin-transform-es2015-computed-properties": "6.6.5",
+			"babel-plugin-transform-es2015-destructuring": "6.6.5",
+			"babel-plugin-transform-es2015-duplicate-keys": "6.6.4",
+			"babel-plugin-transform-es2015-literals": "6.5.0",
+			"babel-plugin-transform-es2015-modules-commonjs": "6.7.4",
+			"babel-plugin-transform-es2015-object-super": "6.6.5",
+			"babel-plugin-transform-es2015-parameters": "6.7.0",
+			"babel-plugin-transform-es2015-spread": "6.6.5",
+			"babel-plugin-transform-es2015-sticky-regex": "6.5.0",
+			"babel-plugin-transform-es2015-template-literals": "6.6.5",
+			"babel-plugin-transform-es2015-unicode-regex": "6.5.0",
+			"babel-polyfill": "6.3.14",
+			"babel-preset-es2015": "6.3.13",
+			"chai": "3.4.1",
+			"clone": "1.0.2",
+			"colors": "1.1.2",
+			"eslint": "2.4.0",
+			"eslint-config-airbnb": "6.2.0",
+			"eslint-plugin-react": "4.2.3",
+			"istanbul": "0.4.4",
+			"json-loader": "0.5.4",
+			"mocha": "2.3.4",
 			"opentracing": "0.13.0",
-			"shelljs": "^0.5.3",
-			"sprintf-js": "^1.0.3",
-			"underscore": "^1.8.3",
+			"shelljs": "0.5.3",
+			"sprintf-js": "1.0.3",
+			"underscore": "1.8.3",
 			"watch-trigger": "0.0.5",
-			"webpack": "^1.12.9"
+			"webpack": "1.12.9"
 		}
 	};
 
 /***/ },
-/* 23 */
+/* 33 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -5393,7 +6500,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ },
-/* 24 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -5402,7 +6509,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
-	var constants = __webpack_require__(8);
+	var constants = __webpack_require__(18);
 	
 	var LogToConsole = function () {
 	    function LogToConsole() {
