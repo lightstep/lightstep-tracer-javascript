@@ -1,15 +1,15 @@
 'use strict';
 
 const Suite = require('sc-benchmark').Suite;
-const OpenTracing = require('opentracing');
-const LightStep = require('..');
+const opentracing = require('opentracing');
+const lightstep = require('..');
 
 
 function createNoopTracer() {
-    return OpenTracing.initNewTracer(null);
+    return new opentracing.Tracer();
 }
 function createNonReportingTracer() {
-    return OpenTracing.initNewTracer(LightStep.tracer({
+    return new opentracing.Tracer(new lightstep.Tracer({
         component_name         : 'lightstep-tracer/benchmarks',
         access_token           : 'unused',
         disable_reporting_loop : true,
@@ -85,25 +85,12 @@ for (let setup of setups) {
         }
     });
 
-    if (setup.name === 'ls') {
-        // Test without the OT interface indirection
-        s.bench(`startSpan imp (${setup.name})`, (N, t) => {
-            let tracer = createNonReportingTracer();
-            let tracerImp = tracer.imp();
-            t.start();
-            for (let i = 0; i < N; i++) {
-                let spanImp = tracerImp.startSpan('test');
-                spanImp.finish();
-            }
-        });
-    }
-
     s.bench(`span with logs (${setup.name})`, (N, t) => {
         let tracer = setup.makeTracer();
         t.start();
         for (let i = 0; i < N; i++) {
             let span = tracer.startSpan('test');
-            span.logEvent('Hello world!');
+            span.log({ event : 'log', message : 'Hello world!' });
             span.finish();
         }
     });
@@ -114,27 +101,11 @@ for (let setup of setups) {
         for (let i = 0; i < N; i++) {
             let span = tracer.startSpan('test');
             for (let j = 0; j < 100; j++) {
-                span.logEvent('Hello world!');
+                span.log({ event : 'log', message : 'Hello world!' });
             }
             span.finish();
         }
     });
-
-    if (setup.name === 'ls') {
-        // Test without the OT interface indirection
-        s.bench(`span with 100 logs imp (${setup.name})`, (N, t) => {
-            let tracer = createNonReportingTracer();
-            let tracerImp = tracer.imp();
-            t.start();
-            for (let i = 0; i < N; i++) {
-                let spanImp = tracerImp.startSpan('test');
-                for (let j = 0; j < 100; j++) {
-                    spanImp.log({ event: 'Hello world!' });
-                }
-                spanImp.finish();
-            }
-        });
-    }
 
     s.bench(`log with payload (${setup.name})`, (N, t) => {
         let tracer = setup.makeTracer();
@@ -142,7 +113,7 @@ for (let setup of setups) {
         t.start();
         for (let i = 0; i < N; i++) {
             let span = tracer.startSpan('test');
-            span.logEvent('Hello world!', payload);
+            span.log({ event : 'log', message : 'Hello world!', payload : payload });
             span.finish();
         }
     });

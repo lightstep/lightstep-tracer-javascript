@@ -37,12 +37,10 @@ export default class SpanImp extends opentracing.Span {
             return;
         }
 
-        let tsMicros = null;
-        if (timestamp) {
-            tsMicros = timestamp * 1000;
-        } else {
-            tsMicros = self._tracerImp._platform.nowMicros();
-        }
+        let tsMicros = timestamp ?
+            (timestamp * 1000) :
+            self._tracerImp._platform.nowMicros();
+
         let fields = [];
         _each(keyValuePairs, (value, key) => {
             if (!key || !value) {
