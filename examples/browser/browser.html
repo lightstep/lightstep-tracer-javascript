@@ -83,10 +83,10 @@
 
             // Start the outer operation span
             var span = opentracing.globalTracer().startSpan('printUserInfo');
-            span.logEvent('query_started');
+            span.log({ event : 'query_started' });
 
             queryUserInfo(span, username, function(err, user) {
-                span.logEvent('query_finished', user);
+                span.log({ event : 'query_finished', user : user });
 
                 var text = '';
                 text += 'User: ' + user.login + '\n';
@@ -105,9 +105,10 @@
                 // the public GitHub APIs can be queried!
                 httpGet(span, 'https://api.github.com/rate_limit', function (err, json) {
                     if (!err) {
-                        span.logEvent('rate_limit', json);
+                        span.log({ event : 'rate_limit', response : json });
                     } else {
-                        span.logEvent('error', err);
+                        span.setTag('error', true);
+                        span.log({ event : 'error', 'error.object' : err });
                     }
                     span.finish();
 
@@ -198,7 +199,8 @@
                     var parsedJSON, err;
                     if (xhr.status === OK) {
                         var bodyBuffer = xhr.responseText;
-                        span.logEvent('response_end', {
+                        span.log({
+                            event  : 'response_end',
                             body   : bodyBuffer,
                             length : bodyBuffer.length,
                         });
@@ -206,11 +208,12 @@
                         try {
                             parsedJSON = JSON.parse(bodyBuffer);
                         } catch (exception) {
-                            err = {
-                                buffer    : bodyBuffer,
-                                exception : exception,
-                            };
-                            span.logEvent('error', err);
+                            span.setTag('error', true);
+                            span.log({
+                                event : 'error',
+                                'error.object' : exception,
+                                buffer : bodyBuffer,
+                             });
                         }
                     } else {
                         // An error occurred during the request.

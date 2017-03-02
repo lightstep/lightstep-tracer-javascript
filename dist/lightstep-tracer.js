@@ -3034,12 +3034,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return;
 	            }
 	
-	            var tsMicros = null;
-	            if (timestamp) {
-	                tsMicros = timestamp * 1000;
-	            } else {
-	                tsMicros = self._tracerImp._platform.nowMicros();
-	            }
+	            var tsMicros = timestamp ? timestamp * 1000 : self._tracerImp._platform.nowMicros();
+	
 	            var fields = [];
 	            (0, _each3.default)(keyValuePairs, function (value, key) {
 	                if (!key || !value) {

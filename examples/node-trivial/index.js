@@ -10,12 +10,13 @@ var tracer = new lightstep.Tracer({
 var span = tracer.startSpan('trivial_span');
 setTimeout(function() {
     span.log({
-        foo: 'foo string',
-        'bar bar': 'two words',
-        number: 42,
-        floaty: 4.2,
-        obj: {
-            'baz': 'boo',
+        event    : 'log_event',
+        my_field : 'a string',
+        'generic string' : 'two words',
+        number   : 42,
+        float    : 4.2,
+        obj      : {
+            'property': 'value',
         },
     });
 }, 100);

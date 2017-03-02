@@ -51,11 +51,15 @@ function printUserInfo(username) {
 
     // Start the outer operation span
     var span = opentracing.globalTracer().startSpan('printUserInfo');
-    span.log({event : 'query_started'});
+    span.log({ event : 'query_started' });
 
     queryUserInfo(span, username, function(err, user) {
         if (err) {
-            span.log({error : err});
+            span.setTag('error', true);
+            span.log({
+                event : 'error',
+                'error.object' : err,
+            });
             span.finish();
             return;
         }
@@ -78,11 +82,17 @@ function printUserInfo(username) {
         // Lastly, log the remaining rate limit data to see how many more times
         // the public GitHub APIs can be queried!
         httpGet(span, 'http://api.github.com/rate_limit', function (err, json) {
+            if (err) {
+                span.setTag('error', true);
+                span.log({
+                    event : 'error',
+                    'error.object' : err,
+                });
+            }
             span.log({
                 event : 'rate_limit',
-                error : err,
                 json  : json,
-            })
+            });
             span.finish();
 
             // Generate a LightStep-specific URL
@@ -186,9 +196,9 @@ function httpGet(parentSpan, urlString, callback) {
         // Create a span representing the https request
         span.setTag('url', urlString);
         span.log({
+            event : 'options',
             'options': options,
         });
-
         return http.get(options, function(response) {
             var bodyBuffer = '';
             response.on('data', function(chunk) {
@@ -208,15 +218,22 @@ function httpGet(parentSpan, urlString, callback) {
                         buffer    : bodyBuffer,
                         exception : exception,
                     };
-                    span.log({'error': err});
+                    span.setTag('error', true);
+                    span.log({
+                        event : 'error',
+                        'error.object': err,
+                    });
                 }
 
                 callbackWrapper(err, parsedJSON);
             });
         });
-
     } catch (exception) {
-        span.log({'exception': exception});
+        span.setTag('error', true);
+        span.log({
+            event : 'error',
+            'error.object': exception,
+        });
         callbackWrapper(exception, null);
     }
 }

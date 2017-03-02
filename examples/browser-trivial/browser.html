@@ -42,7 +42,7 @@
 
         var span = opentracing.globalTracer().startSpan('trivial_span');
         setTimeout(function() {
-            span.logEvent('log_event');
+            span.log({ event : 'log_event' });
         }, 100);
         setTimeout(function() {
             span.finish();
