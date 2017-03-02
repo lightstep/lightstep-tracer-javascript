@@ -9,13 +9,13 @@ function createNoopTracer() {
     return new opentracing.Tracer();
 }
 function createNonReportingTracer() {
-    return new opentracing.Tracer(new lightstep.Tracer({
+    return new lightstep.Tracer({
         component_name         : 'lightstep-tracer/benchmarks',
         access_token           : 'unused',
         disable_reporting_loop : true,
         disable_report_on_exit : true,
         collector_host         : 'example.com',
-    }));
+    });
 }
 function createNestedObject(n) {
     if (n === 0) {
@@ -90,7 +90,7 @@ for (let setup of setups) {
         t.start();
         for (let i = 0; i < N; i++) {
             let span = tracer.startSpan('test');
-            span.log({ event : 'log', message : 'Hello world!' });
+            span.log({ message : 'Hello world!' });
             span.finish();
         }
     });
@@ -101,7 +101,7 @@ for (let setup of setups) {
         for (let i = 0; i < N; i++) {
             let span = tracer.startSpan('test');
             for (let j = 0; j < 100; j++) {
-                span.log({ event : 'log', message : 'Hello world!' });
+                span.log({ message : 'Hello world!' });
             }
             span.finish();
         }
@@ -113,7 +113,7 @@ for (let setup of setups) {
         t.start();
         for (let i = 0; i < N; i++) {
             let span = tracer.startSpan('test');
-            span.log({ event : 'log', message : 'Hello world!', payload : payload });
+            span.log({ message : 'Hello world!', payload : payload });
             span.finish();
         }
     });
