@@ -7,7 +7,7 @@ export default function _each(obj, cb) {
         return;
     }
     for (let key in obj) {
-        if (obj.hasOwnProperty(key)) {
+        if (hasOwnProperty.call(obj, key)) {
             cb(obj[key], key);
         }
     }
