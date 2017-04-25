@@ -1,6 +1,6 @@
-import https from 'https';
-import http from 'http';
-import zlib from 'zlib';
+import * as https from 'https';
+import * as http from 'http';
+import * as zlib from 'zlib';
 
 const kMaxDetailedErrorFrequencyMs = 30000;
 const kMaxStringLength = 2048;

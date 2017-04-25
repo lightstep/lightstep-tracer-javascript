@@ -3,7 +3,7 @@
 //============================================================================//
 
 import EventEmitter from 'eventemitter3';
-import opentracing from 'opentracing';
+import * as opentracing from 'opentracing';
 
 import SpanContextImp from './span_context_imp';
 import SpanImp from './span_imp';
