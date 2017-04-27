@@ -89,7 +89,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _opentracing = __webpack_require__(3);
 	
-	var _opentracing2 = _interopRequireDefault(_opentracing);
+	var opentracing = _interopRequireWildcard(_opentracing);
 	
 	var _span_context_imp = __webpack_require__(14);
 	
@@ -104,6 +104,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _each3 = _interopRequireDefault(_each2);
 	
 	var _platform_abstraction_layer = __webpack_require__(19);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -164,7 +166,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _this._optionDescs = [];
 	        _this._makeOptionsTable();
 	
-	        _this._opentracing = _opentracing2.default;
+	        _this._opentracing = opentracing;
 	        if (opts.opentracing_module) {
 	            _this._opentracing = opts.opentracing_module;
 	        }
@@ -1446,7 +1448,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }]);
 	
 	    return Tracer;
-	}(_opentracing2.default.Tracer);
+	}(opentracing.Tracer);
 	
 	exports.default = Tracer;
 	module.exports = exports['default'];
@@ -2943,7 +2945,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return;
 	    }
 	    for (var key in obj) {
-	        if (obj.hasOwnProperty(key)) {
+	        if (hasOwnProperty.call(obj, key)) {
 	            cb(obj[key], key);
 	        }
 	    }
@@ -2976,7 +2978,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _opentracing = __webpack_require__(3);
 	
-	var _opentracing2 = _interopRequireDefault(_opentracing);
+	var opentracing = _interopRequireWildcard(_opentracing);
 	
 	var _platform_abstraction_layer = __webpack_require__(19);
 	
@@ -3247,7 +3249,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }]);
 	
 	    return SpanImp;
-	}(_opentracing2.default.Span);
+	}(opentracing.Span);
 	
 	exports.default = SpanImp;
 	module.exports = exports['default'];
@@ -6446,7 +6448,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			"istanbul": "0.4.4",
 			"json-loader": "0.5.4",
 			"mocha": "2.3.4",
-			"opentracing": "0.13.0",
+			"opentracing": "0.14.0",
 			"shelljs": "0.5.3",
 			"sprintf-js": "1.0.3",
 			"underscore": "1.8.3",

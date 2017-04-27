@@ -1,7 +1,7 @@
 import * as coerce from './coerce.js';
 import * as constants from '../constants';
 import _each from '../_each';
-import opentracing from 'opentracing';
+import * as opentracing from 'opentracing';
 import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
 
 export default class SpanImp extends opentracing.Span {
