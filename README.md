@@ -72,7 +72,7 @@ The OpenTracing standard JavaScript API is [documented here](https://doc.esdoc.o
 
 **Browser-specific initialization options**
 
-* `instrument_page_load` `bool` - The functionality works for short-page visits in a "traditional" multi-page website. However, for a single-page web app where a visit to a single "page" can creates a long-lived single span for the entire session. False: automatic disables instrumentation. Defaults to true. This must be set at initialization, changes after initialization will have no effect.
+* `instrument_page_load` `bool` - creates a long-lived single span for the entire session and recommended for short-page visits in a "traditional" multi-page website. However, for a single-page web app where a visit to a single "page" can creates a wrong single span it's recommend to disable it. False: automatic disables instrumentation. Defaults to true. This must be set at initialization, changes after initialization will have no effect.
 
 * `xhr_instrumentation` `bool` - if false, disables automatic instrumentation of XMLHttpRequests (XHRs). This must be set at initialization; changes after initialization will have no effect. Defaults to false.  
 
