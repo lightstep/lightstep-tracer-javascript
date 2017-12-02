@@ -72,6 +72,8 @@ The OpenTracing standard JavaScript API is [documented here](https://doc.esdoc.o
 
 **Browser-specific initialization options**
 
+* `instrument_page_load` `bool` - The functionality works for short-page visits in a "traditional" multi-page website. However, for a single-page web app where a visit to a single "page" can creates a long-lived single span for the entire session. False: automatic disables instrumentation. Defaults to true. This must be set at initialization, changes after initialization will have no effect.
+
 * `xhr_instrumentation` `bool` - if false, disables automatic instrumentation of XMLHttpRequests (XHRs). This must be set at initialization; changes after initialization will have no effect. Defaults to false.  
 
 * `xhr_url_inclusion_patterns` `RegExp[]` - an array of regular expressions used to whitelist URLs for `XMLHttpRequest` auto-instrumentation. The default value is wildcard matching all strings. For a given URL to be instrumented, it must match at least one regular expression in `xhr_url_inclusion_patterns` and not match any regular expressions in `xhr_url_exclusion_patterns`.
