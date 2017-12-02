@@ -11,6 +11,7 @@ class InstrumentPageLoad {
     }
 
     addOptions(tracerImp) {
+        tracerImp.addOption('instrument_page_load', { type : 'bool', defaultValue : true });
     }
 
     start(tracerImp) {
@@ -22,8 +23,12 @@ class InstrumentPageLoad {
         if (typeof window !== 'object' || typeof document !== 'object') {
             return;
         }
-        this._ensureSpanStarted(tracerImp);
-        document.addEventListener('readystatechange', this._handleReadyStateChange.bind(this));
+
+        const currentOptions = tracerImp.options();
+        if (currentOptions.instrument_page_load) {
+            this._ensureSpanStarted(tracerImp);
+            document.addEventListener('readystatechange', this._handleReadyStateChange.bind(this));
+        }
     }
 
     stop() {
