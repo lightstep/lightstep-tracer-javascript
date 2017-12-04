@@ -91,9 +91,12 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
 
     // NOTE: this is a little inelegant as this is hard-coding support for a
     // "plug-in" option.
-    let xhrInstrumentation = dataset.xhr_instrumentation;
-    if (typeof xhrInstrumentation === 'string' && xhrInstrumentation === 'true') {
+    if (typeof dataset.xhr_instrumentation === 'string' && dataset.xhr_instrumentation === 'true') {
         opts.xhr_instrumentation = true;
+    }
+
+    if (typeof dataset.instrument_page_load === 'string' && dataset.instrument_page_load === 'true') {
+        opts.instrument_page_load = true;
     }
 };
 
