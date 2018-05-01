@@ -3693,12 +3693,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    proxied.setRequestHeader.call(_this, key, headersCarrier[key]);
 	                });
 	
-	                // const headersCarrier = {};
-	                // tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
-	                // for (const [key, value] of Object.entries(headersCarrier)) {
-	                //     proxied.setRequestHeader.call(this, key, value);
-	                // }
-	
 	                return proxied.send.apply(this, arguments);
 	            };
 	        }
