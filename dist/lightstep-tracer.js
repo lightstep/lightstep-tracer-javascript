@@ -3788,7 +3788,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'addOptions',
 	        value: function addOptions(tracerImp) {
-	            tracerImp.addOption('instrument_page_load', { type: 'bool', defaultValue: true });
+	            tracerImp.addOption('instrument_page_load', { type: 'bool', defaultValue: false });
 	        }
 	    }, {
 	        key: 'start',
