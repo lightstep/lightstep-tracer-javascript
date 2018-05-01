@@ -15,7 +15,10 @@ app.get('/', (req, res) => {
 
 app.get('/test_endpoint', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    res.send(JSON.stringify({ "body": "hello, how are you?"  }));
+    res.send(JSON.stringify({ body : 'hello, how are you?' }));
 });
 
-app.listen(8081, () => console.log('Server listening on port 8081'));
+app.listen(8081, () => {
+    // eslint-disable-next-line no-console
+    console.log('Server listening on port 8081');
+});
