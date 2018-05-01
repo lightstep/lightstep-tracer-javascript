@@ -3364,6 +3364,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _each3 = _interopRequireDefault(_each2);
 	
+	var _opentracing = __webpack_require__(3);
+	
+	var opentracing = _interopRequireWildcard(_opentracing);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -3681,14 +3687,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                // Add Open-Tracing headers
 	                var headersCarrier = {};
-	                Tracer.inject(span.context(), tracer.FORMAT_HTTP_HEADERS, headersCarrier);
+	                tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
 	                for (var _ref3 of Object.entries(headersCarrier)) {
 	                    var _ref2 = _slicedToArray(_ref3, 2);
 	
 	                    var key = _ref2[0];
 	                    var value = _ref2[1];
 	
-	                    proxied.setRequestHeader.apply(key, value);
+	                    proxied.setRequestHeader.call(this, key, value);
 	                }
 	
 	                return proxied.send.apply(this, arguments);

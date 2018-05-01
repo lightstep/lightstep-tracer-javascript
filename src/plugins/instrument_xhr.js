@@ -1,4 +1,5 @@
 import _each from '../_each';
+import * as opentracing from 'opentracing';
 
 // Capture the proxied values on script load (i.e. ASAP) in case there are
 // multiple layers of instrumentation.
@@ -293,9 +294,9 @@ class InstrumentXHR {
 
             // Add Open-Tracing headers
             const headersCarrier = {};
-            Tracer.inject(span.context(), tracer.FORMAT_HTTP_HEADERS, headersCarrier);
+            tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
             for (const [key, value] of Object.entries(headersCarrier)) {
-                proxied.setRequestHeader.apply(key, value);
+                proxied.setRequestHeader.call(this, key, value);
             }
 
             return proxied.send.apply(this, arguments);
