@@ -48,6 +48,7 @@
     "eslint": "2.4.0",
     "eslint-config-airbnb": "6.2.0",
     "eslint-plugin-react": "4.2.3",
+    "express": "^4.16.3",
     "istanbul": "0.4.4",
     "json-loader": "0.5.4",
     "mocha": "2.3.4",

@@ -295,12 +295,11 @@ class InstrumentXHR {
             // Add Open-Tracing headers
             const headersCarrier = {};
             tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
-            const entries = Object.entries(headersCarrier);
-            const keys = Object.keys(entries);
+            const keys = Object.keys(headersCarrier);
             keys.forEach((key) => {
-                proxied.setRequestHeader.call(this, key, entries[key]);
+                proxied.setRequestHeader.call(this, key, headersCarrier[key]);
             });
-            
+
             return proxied.send.apply(this, arguments);
         };
     }

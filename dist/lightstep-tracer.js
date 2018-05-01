@@ -3688,11 +3688,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	                // Add Open-Tracing headers
 	                var headersCarrier = {};
 	                tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
-	                var entries = Object.entries(headersCarrier);
-	                var keys = Object.keys(entries);
+	                var keys = Object.keys(headersCarrier);
 	                keys.forEach(function (key) {
-	                    proxied.setRequestHeader.call(_this, key, entries[key]);
+	                    proxied.setRequestHeader.call(_this, key, headersCarrier[key]);
 	                });
+	
+	                // const headersCarrier = {};
+	                // tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
+	                // for (const [key, value] of Object.entries(headersCarrier)) {
+	                //     proxied.setRequestHeader.call(this, key, value);
+	                // }
 	
 	                return proxied.send.apply(this, arguments);
 	            };
@@ -6147,6 +6152,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			"eslint": "2.4.0",
 			"eslint-config-airbnb": "6.2.0",
 			"eslint-plugin-react": "4.2.3",
+			"express": "^4.16.3",
 			"istanbul": "0.4.4",
 			"json-loader": "0.5.4",
 			"mocha": "2.3.4",
