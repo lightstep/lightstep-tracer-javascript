@@ -3356,8 +3356,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 	
-	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
 	var _each2 = __webpack_require__(15);
@@ -3658,6 +3656,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var self = this;
 	            var tracer = this._tracer;
 	            return function () {
+	                var _this = this;
+	
 	                if (!self._shouldTrace(tracer, this, this.__tracer_url)) {
 	                    return proxied.send.apply(this, arguments);
 	                }
@@ -3688,14 +3688,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                // Add Open-Tracing headers
 	                var headersCarrier = {};
 	                tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
-	                for (var _ref3 of Object.entries(headersCarrier)) {
-	                    var _ref2 = _slicedToArray(_ref3, 2);
-	
-	                    var key = _ref2[0];
-	                    var value = _ref2[1];
-	
-	                    proxied.setRequestHeader.call(this, key, value);
-	                }
+	                var entries = Object.entries(headersCarrier);
+	                var keys = Object.keys(entries);
+	                keys.forEach(function (key) {
+	                    proxied.setRequestHeader.call(_this, key, entries[key]);
+	                });
 	
 	                return proxied.send.apply(this, arguments);
 	            };
