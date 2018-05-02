@@ -120,11 +120,6 @@ lint:
 watch: build
 	node node_modules/watch-trigger/index.js watch-trigger.config.json
 
-.PHONY: update-examples
-update-examples: node_modules
-	cp node_modules/opentracing/dist/opentracing-browser.min.js examples/browser/opentracing-browser.min.js
-	cp node_modules/opentracing/dist/opentracing-browser.min.js examples/browser-trivial/opentracing-browser.min.js
-
 .PHONY: example-browser
 example-browser: build
 	cd examples/browser && bash run.sh
