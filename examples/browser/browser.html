@@ -28,12 +28,10 @@
         <div class="main">
             <h1>LightStep: Simple Browser Example</h1>
             <p>
-                In this trivial example, a request is made to the public GitHub
-                API to get info about the given username. The request is traced
-                and sent to LightStep.
+                In this trivial example, a request is made to an endpoint being served from
+                an Express.js app. The request is traced and sent to LightStep.
             </p>
-            <input id="username" type="text" placeholder="GitHub Username" value="lightstep"><br />
-            <button id="span-button">Get GitHub info</button>
+            <button id="span-button">Make Request</button>
 
             <h3>Results</h3>
             <div id="trace-link-div" style="opacity : 0">
@@ -46,7 +44,7 @@
             Include the standard OpenTracing APIs and the LightStep bindings.
         -->
         <script type="text/javascript" src="opentracing-browser.js"></script>
-        <script type="text/javascript" src="../../dist/lightstep-tracer.js"></script>
+        <script type="text/javascript" src="lightstep-tracer.js"></script>
 
         <!--
             Add a quick example script using OpenTracing and LightStep
@@ -67,117 +65,34 @@
         }));
 
         //
-        // Add a button to send the request to GitHub
+        // Add a button to send the request to to the express server
         //
-        var username = document.getElementById('username');
         var button = document.getElementById('span-button');
         var results = document.getElementById('results');
         var linkDiv = document.getElementById('trace-link-div');
         var link = document.getElementById('trace-link');
 
         button.onclick = function() {
-            printUserInfo(username.value);
+            makeRequestToTestEndpoint();
         };
 
-        function printUserInfo(username) {
-
+        function makeRequestToTestEndpoint() {
             // Start the outer operation span
-            var span = opentracing.globalTracer().startSpan('printUserInfo');
-            span.log({ event : 'query_started' });
+            var span = opentracing.globalTracer().startSpan('makeRequestToTestEndpoint');
+            span.log({ event : 'request_started' });
 
-            queryUserInfo(span, username, function(err, user) {
-                span.log({ event : 'query_finished', user : user });
-
-                var text = '';
-                text += 'User: ' + user.login + '\n';
-                text += 'Type: ' + user.type + '\n';
-                text += 'Public repositories: ' + user.repoNames.length + '\n';
-                for (var i = 0; i < user.repoNames.length; i++) {
-                    text += '  ' + user.repoNames[i] + '\n';
-                }
-                text += 'Recent events: ' + user.recentEvents + '\n';
-                for (var key in user.eventCounts) {
-                    text += '  ' + key + ': ' + user.eventCounts[key] + '\n';
-                }
-                results.value = text;
-
-                // Lastly, log the remaining rate limit data to see how many more times
-                // the public GitHub APIs can be queried!
-                httpGet(span, 'https://api.github.com/rate_limit', function (err, json) {
-                    if (!err) {
-                        span.log({ event : 'rate_limit', response : json });
-                    } else {
-                        span.setTag('error', true);
-                        span.log({ event : 'error', 'error.object' : err });
-                    }
-                    span.finish();
-
-                    // Generate a LightStep-specific URL
-                    var url = span.generateTraceURL();
-                    link.href = url;
-                    linkDiv.style.opacity = 1.0;
-                });
+            hitEndpoint(span, function(err, json) {
+                span.log({ event : 'request_finished', response_body : json });
+                results.value = JSON.stringify(json);
             });
         }
 
-        function queryUserInfo(parentSpan, username, callback) {
-            // Aggregated user information across multiple API calls
-            var user = {
-                login        : null,
-                type         : null,
-                repoNames    : [],
-                recentEvents : 0,
-                eventCounts  : {},
-            };
-
-            // Call the callback only when all three API requests finish or on the
-            // first error.
-            var remainingCalls = 3;
-            var next = function (err) {
+        function hitEndpoint(parentSpan, callback) {
+            httpGet(parentSpan, 'test_endpoint', function (err, json) {
                 if (err) {
-                    remainingCalls = 0;
-                    return callback(err, null);
+                    callback(err);
                 }
-                remainingCalls--;
-                if (remainingCalls === 0) {
-                    callback(null, user);
-                }
-            };
-
-            // First query the user info for the given username
-            httpGet(parentSpan, 'https://api.github.com/users/' + username, function (err, json) {
-                if (err) {
-                    return next(err);
-                }
-                user.login = json.login;
-                user.type  = json.type;
-
-                // Use the user info to query names of all the user's public repositories
-                httpGet(parentSpan, json.repos_url, function (err, json) {
-                    if (err) {
-                        return next(err);
-                    }
-                    for (var i = 0; i < json.length; i++) {
-                        user.repoNames.push(json[i].name);
-                    }
-                    next(null);
-                });
-
-                // In parallel, query the recent events activity for the user
-                httpGet(parentSpan, json.received_events_url, function (err, json) {
-                    if (err) {
-                        return next(err);
-                    }
-                    user.recentEvents = json.length;
-                    for (var i = 0; i < json.length; i++) {
-                        var eventType = json[i].type;
-                        user.eventCounts[eventType] = user.eventCounts[eventType] || 0;
-                        user.eventCounts[eventType]++;
-                    }
-                    next(null);
-                });
-
-                next(null);
+                callback(null, json);
             });
         }
 

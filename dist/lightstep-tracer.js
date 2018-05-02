@@ -3362,6 +3362,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _each3 = _interopRequireDefault(_each2);
 	
+	var _opentracing = __webpack_require__(3);
+	
+	var opentracing = _interopRequireWildcard(_opentracing);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -3650,6 +3656,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var self = this;
 	            var tracer = this._tracer;
 	            return function () {
+	                var _this = this;
+	
 	                if (!self._shouldTrace(tracer, this, this.__tracer_url)) {
 	                    return proxied.send.apply(this, arguments);
 	                }
@@ -3676,6 +3684,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    event: 'send',
 	                    data_length: lenStr
 	                });
+	
+	                // Add Open-Tracing headers
+	                var headersCarrier = {};
+	                tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
+	                var keys = Object.keys(headersCarrier);
+	                keys.forEach(function (key) {
+	                    proxied.setRequestHeader.call(_this, key, headersCarrier[key]);
+	                });
+	
 	                return proxied.send.apply(this, arguments);
 	            };
 	        }
@@ -6129,6 +6146,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			"eslint": "2.4.0",
 			"eslint-config-airbnb": "6.2.0",
 			"eslint-plugin-react": "4.2.3",
+			"express": "^4.16.3",
 			"istanbul": "0.4.4",
 			"json-loader": "0.5.4",
 			"mocha": "2.3.4",
