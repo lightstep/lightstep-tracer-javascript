@@ -1,2 +1,3 @@
 *
 !.gitignore
+!opentracing-browser.min.js
