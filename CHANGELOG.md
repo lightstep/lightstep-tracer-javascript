@@ -2,6 +2,11 @@
 
 *Log of significant changes, especially those affecting the supported API.*
 
+## 0.20.6
+
+* `instrument_page_load` option now defaults to false.
+* If `xhr_instrumentation` is enabled, Open Tracing headers are now properly sent with every xhr request, so long as that request is to a domain that matches the whitelist url rules and also does not match any of the blacklist url rules.
+
 ## 0.20.0
 
 * **API CHANGE**: use `new lightstep.Tracer(opts)` to return a lightstep `Tracer` instance
