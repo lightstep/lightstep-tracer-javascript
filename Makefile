@@ -88,7 +88,6 @@ test-node:
 
 .PHONY: test-browser
 test-browser:
-	cp node_modules/opentracing/dist/opentracing-browser.js test/dist
 	cp dist/lightstep-tracer.js test/dist
 	cd test && node ../node_modules/webpack/bin/webpack.js unittest_browser.js dist/unittest_browser.bundle.js
 	cd test && open unittest.html
