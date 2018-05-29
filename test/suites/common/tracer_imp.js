@@ -23,22 +23,6 @@ describe("TracerImp", function() {
             expect(tracer.options()).to.be.an('object');
         });
 
-        it('should throw an exception on invalid options', function() {
-
-            expect(function () { makeLSTracer() }).to.not.throw();
-
-            expect(function () {
-                Tracer.options({ not_a_real_option : 100 });
-            }).to.throw();
-
-            expect(function () {
-                Tracer.options({
-                    invalid_option_name    : 'test',
-                    another_invalid_option : 'test',
-                });
-            }).to.throw();
-        });
-
         it('should allow the component_name and access_token to be set only once', function() {
             expect(function () {
                 var rt = makeLSTracer();
