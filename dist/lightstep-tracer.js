@@ -6098,7 +6098,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = {
 		"name": "lightstep-tracer",
-		"version": "0.20.6",
+		"version": "0.20.7",
 		"main": "index.js",
 		"engines": {
 			"node": ">=0.12.0"
