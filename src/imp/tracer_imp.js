@@ -474,7 +474,7 @@ export default class Tracer extends opentracing.Tracer {
         // that didn't result either in a change or a reset to the existing value?
         for (let key in opts) {
             if (modified[key] === undefined && unchanged[key] === undefined) {
-                throw new Error(`Invalid option ${key}`);
+                this._warn(`Invalid option ${key} with value ${opts[key]}`);
             }
         }
 

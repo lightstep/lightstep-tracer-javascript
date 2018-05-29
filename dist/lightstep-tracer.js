@@ -606,7 +606,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            // that didn't result either in a change or a reset to the existing value?
 	            for (var key in opts) {
 	                if (modified[key] === undefined && unchanged[key] === undefined) {
-	                    throw new Error('Invalid option ' + key);
+	                    this._warn('Invalid option ' + key + ' with value ' + opts[key]);
 	                }
 	            }
 	
@@ -6098,7 +6098,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = {
 		"name": "lightstep-tracer",
-		"version": "0.20.3",
+		"version": "0.20.6",
 		"main": "index.js",
 		"engines": {
 			"node": ">=0.12.0"
