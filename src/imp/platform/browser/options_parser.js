@@ -62,6 +62,10 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
     if (collectorPort) {
         opts.collector_port = parseInt(collectorPort, 10);
     }
+    let collectorPath = dataset.collector_path;
+    if (typeof collectorPath === 'string' && collectorPath.length > 0) {
+        opts.collector_path = collectorPath;
+    }
     let collectorEncryption = dataset.collector_encryption;
     if (collectorEncryption) {
         opts.collector_encryption = collectorEncryption;

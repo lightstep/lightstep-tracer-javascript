@@ -133,6 +133,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var DEFAULT_COLLECTOR_HOSTNAME = 'collector.lightstep.com';
 	var DEFAULT_COLLECTOR_PORT_TLS = 443;
 	var DEFAULT_COLLECTOR_PORT_PLAIN = 80;
+	var DEFAULT_COLLECTOR_PATH = '';
 	
 	// Internal errors should be rare. Set a low limit to ensure a cascading failure
 	// does not compound an existing problem by trying to send a great deal of
@@ -294,6 +295,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.addOption('component_name', { type: 'string', defaultValue: '' });
 	            this.addOption('collector_host', { type: 'string', defaultValue: DEFAULT_COLLECTOR_HOSTNAME });
 	            this.addOption('collector_port', { type: 'int', defaultValue: DEFAULT_COLLECTOR_PORT_TLS });
+	            this.addOption('collector_path', { type: 'string', defaultValue: DEFAULT_COLLECTOR_PATH });
 	            this.addOption('collector_encryption', { type: 'string', defaultValue: 'tls' });
 	            this.addOption('tags', { type: 'any', defaultValue: {} });
 	            this.addOption('max_reporting_interval_millis', { type: 'int', defaultValue: 2500 });
@@ -742,6 +744,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	                if (modified.collector_port) {
 	                    throw new Error('Cannot change collector_port after the connection is established');
+	                }
+	                if (modified.collector_path) {
+	                    throw new Error('Cannot change collector_path after the connection is established');
 	                }
 	                if (modified.collector_encryption) {
 	                    throw new Error('Cannot change collector_encryption after the connection is established');
@@ -3264,6 +3269,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (collectorPort) {
 	        opts.collector_port = parseInt(collectorPort, 10);
 	    }
+	    var collectorPath = dataset.collector_path;
+	    if (typeof collectorPath === 'string' && collectorPath.length > 0) {
+	        opts.collector_path = collectorPath;
+	    }
 	    var collectorEncryption = dataset.collector_encryption;
 	    if (collectorEncryption) {
 	        opts.collector_encryption = collectorEncryption;
@@ -3966,6 +3975,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        this._host = '';
 	        this._port = 0;
+	        this._path = '';
 	        this._encryption = '';
 	    }
 	
@@ -3974,6 +3984,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        value: function ensureConnection(opts) {
 	            this._host = opts.collector_host;
 	            this._port = opts.collector_port;
+	            this._path = opts.collector_path;
 	            this._encryption = opts.collector_encryption;
 	        }
 	    }, {
@@ -3994,7 +4005,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        value: function _reportAJAX(auth, report, done) {
 	            var payload = JSON.stringify(report);
 	            var protocol = this._encryption === 'none' ? 'http' : 'https';
-	            var url = protocol + '://' + this._host + ':' + this._port + '/api/v0/reports';
+	            var url = protocol + '://' + this._host + ':' + this._port + this._path + '/api/v0/reports';
 	            var xhr = new XMLHttpRequest();
 	            xhr.open('POST', url);
 	            // Note: the browser automatically sets 'Connection' and 'Content-Length'
@@ -4033,7 +4044,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var authJSON = JSON.stringify(auth);
 	            var reportJSON = JSON.stringify(report);
 	            var protocol = this._encryption === 'none' ? 'http' : 'https';
-	            var url = protocol + '://' + this._host + ':' + this._port + '/_rpc/v1/reports/uri_encoded' + ('?auth=' + encodeURIComponent(authJSON)) + ('&report=' + encodeURIComponent(reportJSON));
+	            var url = protocol + '://' + this._host + ':' + this._port + this._path + '/_rpc/v1/reports/uri_encoded' + ('?auth=' + encodeURIComponent(authJSON)) + ('&report=' + encodeURIComponent(reportJSON));
 	
 	            var elem = document.createElement('script');
 	            elem.async = true;

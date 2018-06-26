@@ -24,6 +24,7 @@ const CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
 const DEFAULT_COLLECTOR_HOSTNAME   = 'collector.lightstep.com';
 const DEFAULT_COLLECTOR_PORT_TLS   = 443;
 const DEFAULT_COLLECTOR_PORT_PLAIN = 80;
+const DEFAULT_COLLECTOR_PATH       = '';
 
 // Internal errors should be rare. Set a low limit to ensure a cascading failure
 // does not compound an existing problem by trying to send a great deal of
@@ -184,6 +185,7 @@ export default class Tracer extends opentracing.Tracer {
         this.addOption('component_name',        { type: 'string',  defaultValue: '' });
         this.addOption('collector_host',        { type: 'string',  defaultValue: DEFAULT_COLLECTOR_HOSTNAME });
         this.addOption('collector_port',        { type: 'int',     defaultValue: DEFAULT_COLLECTOR_PORT_TLS });
+        this.addOption('collector_path',        { type: 'string',  defaultValue: DEFAULT_COLLECTOR_PATH });
         this.addOption('collector_encryption',  { type: 'string',  defaultValue: 'tls' });
         this.addOption('tags',                  { type: 'any',     defaultValue: {} });
         this.addOption('max_reporting_interval_millis',  { type: 'int',     defaultValue: 2500 });
@@ -602,6 +604,9 @@ export default class Tracer extends opentracing.Tracer {
             }
             if (modified.collector_port) {
                 throw new Error('Cannot change collector_port after the connection is established');
+            }
+            if (modified.collector_path) {
+                throw new Error('Cannot change collector_path after the connection is established');
             }
             if (modified.collector_encryption) {
                 throw new Error('Cannot change collector_encryption after the connection is established');

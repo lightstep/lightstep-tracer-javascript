@@ -3,12 +3,14 @@ export default class TransportBrowser {
     constructor() {
         this._host = '';
         this._port = 0;
+        this._path = '';
         this._encryption = '';
     }
 
     ensureConnection(opts) {
         this._host = opts.collector_host;
         this._port = opts.collector_port;
+        this._path = opts.collector_path;
         this._encryption = opts.collector_encryption;
     }
 
@@ -27,7 +29,7 @@ export default class TransportBrowser {
     _reportAJAX(auth, report, done) {
         let payload = JSON.stringify(report);
         let protocol = (this._encryption === 'none') ? 'http' : 'https';
-        let url = `${protocol}://${this._host}:${this._port}/api/v0/reports`;
+        let url = `${protocol}://${this._host}:${this._port}${this._path}/api/v0/reports`;
         let xhr = new XMLHttpRequest();
         xhr.open('POST', url);
         // Note: the browser automatically sets 'Connection' and 'Content-Length'
@@ -63,7 +65,7 @@ export default class TransportBrowser {
         let authJSON   = JSON.stringify(auth);
         let reportJSON = JSON.stringify(report);
         let protocol = (this._encryption === 'none') ? 'http' : 'https';
-        let url = `${protocol}://${this._host}:${this._port}/_rpc/v1/reports/uri_encoded` +
+        let url = `${protocol}://${this._host}:${this._port}${this._path}/_rpc/v1/reports/uri_encoded` +
             `?auth=${encodeURIComponent(authJSON)}` +
             `&report=${encodeURIComponent(reportJSON)}`;
 
