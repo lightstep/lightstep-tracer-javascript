@@ -2,6 +2,10 @@
 
 *Log of significant changes, especially those affecting the supported API.*
 
+## 0.20.9
+
+* Add new option to Tracer: `collector_path` `string` *optional*, which is an optional custom collector base path (if served behind a reverse proxy)
+
 ## 0.20.6
 
 * `options` function now only logs warnings when it sees a key name it doesn't know. Previously, it threw an error.
