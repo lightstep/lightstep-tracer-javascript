@@ -66,6 +66,7 @@ The OpenTracing standard JavaScript API is [documented here](https://doc.esdoc.o
     - `4` - all log statements, including debugging details
 * `collector_host` `string` *optional* - custom collector hostname
 * `collector_port` `number` *optional* - custom collector port
+* `collector_path` `string` *optional* - custom collector base path (if served behind a reverse proxy)
 * `collector_encryption` `string` *optional, default='tls'*
     - `tls` - use HTTPS encrypted connections
     - `none` - use HTTP plain-text connections

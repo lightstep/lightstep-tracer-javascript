@@ -124,6 +124,17 @@ describe("TracerImp", function() {
                 collector_encryption : 'none',
             }).options().collector_port).to.equal(80);
         });
+
+        it('should default to an empty base path', function() {
+            expect(makeLSTracer().options().collector_path).to.equal('');
+        });
+
+        it('should allow setting collector_path', function() {
+            expect(makeLSTracer({
+                collector_path : '/my_path',
+            }).options().collector_path).to.equal('/my_path');
+        });
+
     });
 
     describe("TracerImp#on", function() {
