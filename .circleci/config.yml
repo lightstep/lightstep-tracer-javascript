@@ -17,7 +17,7 @@ jobs:
             - ~/project/node_modules
           key: node-v2-{{ .Branch }}-{{ checksum "package-lock.json" }}
       - run: make lint
-      - run: make build test-node lint
+      - run: make build test-node
 
 workflows:
   version: 2
