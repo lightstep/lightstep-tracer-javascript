@@ -13,9 +13,9 @@ jobs:
             - node-v1-
       - run: make node_modules
       - save_cache:
-        paths:
-          - ~/usr/local/lib/node_modules
-        key: node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+          paths:
+            - ~/usr/local/lib/node_modules
+          key: node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
       - run: make lint
       - run: make build test-node lint
 
