@@ -129,9 +129,9 @@ thrift: thrift-compile thrift-postprocess
 
 .PHONY: thrift-compile
 thrift-compile:
-	docker run -v "$(LIGHTSTEP_HOME)/go/src/crouton/:/data" -v "$(PWD):/out" --rm thrift:0.9.2 \
+	docker run -v "$(MONO_REPO)/go/src/github.com/lightstep/common-go/:/data" -v "$(PWD):/out" --rm thrift:0.9.2 \
 		thrift -r -gen js:node -out /out/src/imp/platform/node/thrift_api /data/crouton.thrift
-	docker run -v "$(LIGHTSTEP_HOME)/go/src/crouton/:/data" -v "$(PWD):/out" --rm thrift:0.9.2 \
+	docker run -v "$(MONO_REPO)/go/src/github.com/lightstep/common-go/:/data" -v "$(PWD):/out" --rm thrift:0.9.2 \
 		thrift -r -gen js -out /out/src/imp/platform/browser/thrift_api /data/crouton.thrift
 	rm src/imp/platform/browser/thrift_api/ReportingService.js
 	rm src/imp/platform/node/thrift_api/ReportingService.js
