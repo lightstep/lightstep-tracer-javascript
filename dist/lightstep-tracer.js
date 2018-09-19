@@ -109,6 +109,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _auth_imp2 = _interopRequireDefault(_auth_imp);
 	
+	var _runtime_imp = __webpack_require__(35);
+	
+	var _runtime_imp2 = _interopRequireDefault(_runtime_imp);
+	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -124,13 +128,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	// eslint-disable-line camelcase
 	
 	
-	var ClockState = __webpack_require__(35);
-	var LogBuilder = __webpack_require__(36);
+	var ClockState = __webpack_require__(36);
+	var LogBuilder = __webpack_require__(37);
 	var coerce = __webpack_require__(22);
 	var constants = __webpack_require__(23);
-	var globals = __webpack_require__(37);
-	var packageObject = __webpack_require__(38);
-	var util = __webpack_require__(39);
+	var globals = __webpack_require__(38);
+	var packageObject = __webpack_require__(39);
+	var util = __webpack_require__(40);
 	
 	var CARRIER_TRACER_STATE_PREFIX = 'ot-tracer-';
 	var CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
@@ -183,7 +187,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // the necessary initialization options are available.
 	        _this._startMicros = now;
 	        _this._auth = null;
-	        _this._thriftRuntime = null;
+	        _this._runtime = null;
 	
 	        var logger = {
 	            warn: function (msg, payload) {
@@ -245,7 +249,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _this._flushIsActive = false;
 	
 	        // Built-in plugins
-	        _this.addPlugin(__webpack_require__(40));
+	        _this.addPlugin(__webpack_require__(41));
 	
 	        // Initialize the platform options after the built-in plugins in
 	        // case any of those options affect the built-ins.
@@ -735,8 +739,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	            // Ignore redundant initialization; complaint on inconsistencies
 	            if (this._auth !== null) {
-	                if (!this._thriftRuntime) {
-	                    return this._error('Inconsistent state: thrift auth initialized without runtime.');
+	                if (!this._runtime) {
+	                    return this._error('Inconsistent state: auth initialized without runtime.');
 	                }
 	                if (modified.access_token) {
 	                    throw new Error('Cannot change access_token after it has been set.');
@@ -792,14 +796,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        }));
 	                    });
 	
-	                    // NOTE: for legacy reasons, the Thrift field is called "group_name"
-	                    // but is semantically equivalen to the "component_name"
-	                    _this5._thriftRuntime = new _platform_abstraction_layer.crouton_thrift.Runtime({
-	                        guid: _this5._runtimeGUID,
-	                        start_micros: _this5._startMicros,
-	                        group_name: _this5._options.component_name,
-	                        attrs: thriftAttrs
-	                    });
+	                    _this5._runtime = new _runtime_imp2.default(_this5._runtimeGUID, _this5._startMicros, _this5._options.component_name, tags);
 	
 	                    _this5._info('Initializing thrift reporting data', {
 	                        component_name: _this5._options.component_name,
@@ -1102,7 +1099,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return;
 	            }
 	
-	            this._info('Starting reporting loop:', this._thriftRuntime);
+	            this._info('Starting reporting loop:', this._runtime);
 	            this._reportingLoopActive = true;
 	
 	            // Stop the reporting loop so the Node.js process does not become a
@@ -1256,7 +1253,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var timestampOffset = this._useClockState ? clockOffsetMicros : 0;
 	            var now = this._platform.nowMicros();
 	            var report = new _platform_abstraction_layer.crouton_thrift.ReportRequest({
-	                runtime: this._thriftRuntime,
+	                runtime: this._runtime.toThrift(),
 	                oldest_micros: this._reportYoungestMicros,
 	                youngest_micros: now,
 	                span_records: spanRecords,
@@ -6082,6 +6079,74 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); // eslint-disable-line camelcase
+	// eslint-disable-line camelcase
+	
+	
+	var _platform_abstraction_layer = __webpack_require__(24);
+	
+	var _each2 = __webpack_require__(20);
+	
+	var _each3 = _interopRequireDefault(_each2);
+	
+	var _coerce = __webpack_require__(22);
+	
+	var coerce = _interopRequireWildcard(_coerce);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var RuntimeImp = function () {
+	    function RuntimeImp(runtimeGUID, startMicros, componentName, attributes) {
+	        _classCallCheck(this, RuntimeImp);
+	
+	        this._runtimeGUID = runtimeGUID;
+	        this._startMicros = startMicros;
+	        this._componentName = componentName;
+	        this._attributes = attributes;
+	    }
+	
+	    _createClass(RuntimeImp, [{
+	        key: 'toThrift',
+	        value: function toThrift() {
+	            var thriftAttrs = [];
+	            (0, _each3.default)(this._attributes, function (val, key) {
+	                thriftAttrs.push(new _platform_abstraction_layer.crouton_thrift.KeyValue({
+	                    Key: coerce.toString(key),
+	                    Value: coerce.toString(val)
+	                }));
+	            });
+	
+	            // NOTE: for legacy reasons, the Thrift field is called "group_name"
+	            // but is semantically equivalen to the "component_name"
+	            return new _platform_abstraction_layer.crouton_thrift.Runtime({
+	                guid: this._runtimeGUID,
+	                start_micros: this._startMicros,
+	                group_name: this._componentName,
+	                attrs: thriftAttrs
+	            });
+	        }
+	    }]);
+	
+	    return RuntimeImp;
+	}();
+	
+	exports.default = RuntimeImp;
+	module.exports = exports['default'];
+
+/***/ },
+/* 36 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
 	var _each2 = __webpack_require__(20);
@@ -6250,7 +6315,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = ClockState;
 
 /***/ },
-/* 36 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6369,7 +6434,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = LogBuilder;
 
 /***/ },
-/* 37 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6408,7 +6473,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = new PackageGlobals();
 
 /***/ },
-/* 38 */
+/* 39 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -6475,7 +6540,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 39 */
+/* 40 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -6515,7 +6580,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ },
-/* 40 */
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';

@@ -11,6 +11,7 @@ import _each from '../_each';
 import { Platform, ThriftTransport } from '../platform_abstraction_layer';
 import { crouton_thrift } from '../platform_abstraction_layer';    // eslint-disable-line camelcase
 import AuthImp from './auth_imp';
+import RuntimeImp from './runtime_imp';
 
 const ClockState    = require('./util/clock_state');
 const LogBuilder    = require('./log_builder');
@@ -68,7 +69,7 @@ export default class Tracer extends opentracing.Tracer {
         // the necessary initialization options are available.
         this._startMicros = now;
         this._auth = null;
-        this._thriftRuntime = null;
+        this._runtime = null;
 
         let logger = {
             warn  : (msg, payload) => { this._warn(msg, payload); },
@@ -592,8 +593,8 @@ export default class Tracer extends opentracing.Tracer {
     _initReportingDataIfNeeded(modified) {
         // Ignore redundant initialization; complaint on inconsistencies
         if (this._auth !== null) {
-            if (!this._thriftRuntime) {
-                return this._error('Inconsistent state: thrift auth initialized without runtime.');
+            if (!this._runtime) {
+                return this._error('Inconsistent state: auth initialized without runtime.');
             }
             if (modified.access_token) {
                 throw new Error('Cannot change access_token after it has been set.');
@@ -648,14 +649,7 @@ export default class Tracer extends opentracing.Tracer {
                 }));
             });
 
-            // NOTE: for legacy reasons, the Thrift field is called "group_name"
-            // but is semantically equivalen to the "component_name"
-            this._thriftRuntime = new crouton_thrift.Runtime({
-                guid         : this._runtimeGUID,
-                start_micros : this._startMicros,
-                group_name   : this._options.component_name,
-                attrs        : thriftAttrs,
-            });
+            this._runtime = new RuntimeImp(this._runtimeGUID, this._startMicros, this._options.component_name, tags);
 
             this._info('Initializing thrift reporting data', {
                 component_name : this._options.component_name,
@@ -921,7 +915,7 @@ export default class Tracer extends opentracing.Tracer {
             return;
         }
 
-        this._info('Starting reporting loop:', this._thriftRuntime);
+        this._info('Starting reporting loop:', this._runtime);
         this._reportingLoopActive = true;
 
         // Stop the reporting loop so the Node.js process does not become a
@@ -1066,7 +1060,7 @@ export default class Tracer extends opentracing.Tracer {
         let timestampOffset = this._useClockState ? clockOffsetMicros : 0;
         let now = this._platform.nowMicros();
         let report = new crouton_thrift.ReportRequest({
-            runtime                 : this._thriftRuntime,
+            runtime                 : this._runtime.toThrift(),
             oldest_micros           : this._reportYoungestMicros,
             youngest_micros         : now,
             span_records            : spanRecords,
