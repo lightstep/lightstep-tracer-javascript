@@ -5,16 +5,16 @@
 // general differences in the platforms.
 if ((typeof PLATFORM_BROWSER !== 'undefined') && PLATFORM_BROWSER) {
     module.exports = {
-        Platform       : require('./imp/platform/browser/platform_browser.js'),
-        Transport      : require('./imp/platform/browser/transport_httpjson.js'),
-        thrift         : require('./imp/platform/browser/thrift.js'),
-        crouton_thrift : require('./imp/platform/browser/crouton_thrift.js'),
+        Platform        : require('./imp/platform/browser/platform_browser.js'),
+        ThriftTransport : require('./imp/platform/browser/transport_httpthrift.js'),
+        thrift          : require('./imp/platform/browser/thrift.js'),
+        crouton_thrift  : require('./imp/platform/browser/crouton_thrift.js'),
     };
 } else {
     module.exports = {
-        Platform       : require('./imp/platform/node/platform_node.js'),
-        Transport      : require('./imp/platform/node/transport_httpjson.js'),
-        thrift         : require('thrift'),
-        crouton_thrift : require('./imp/platform/node/crouton_thrift.js'),
+        Platform        : require('./imp/platform/node/platform_node.js'),
+        ThriftTransport : require('./imp/platform/node/transport_httpthrift.js'),
+        thrift          : require('thrift'),
+        crouton_thrift  : require('./imp/platform/node/crouton_thrift.js'),
     };
 }
