@@ -726,7 +726,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this._options[name] = value;
 	        }
 	
-	        // The Thrift authorization and runtime information is initializaed as soon
+	        // The authorization and runtime information is initialized as soon
 	        // as it is available.  This allows logs and spans to be buffered before
 	        // the library is initialized, which can be helpul in a complex setup with
 	        // many subsystems.
@@ -786,14 +786,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    var platformTags = _this5._platform.tracerTags();
 	                    (0, _each3.default)(platformTags, function (val, key) {
 	                        tags[key] = val;
-	                    });
-	
-	                    var thriftAttrs = [];
-	                    (0, _each3.default)(tags, function (val, key) {
-	                        thriftAttrs.push(new _platform_abstraction_layer.crouton_thrift.KeyValue({
-	                            Key: coerce.toString(key),
-	                            Value: coerce.toString(val)
-	                        }));
 	                    });
 	
 	                    _this5._runtime = new _runtime_imp2.default(_this5._runtimeGUID, _this5._startMicros, _this5._options.component_name, tags);

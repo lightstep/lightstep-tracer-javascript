@@ -585,7 +585,7 @@ export default class Tracer extends opentracing.Tracer {
         this._options[name] = value;
     }
 
-    // The Thrift authorization and runtime information is initializaed as soon
+    // The authorization and runtime information is initialized as soon
     // as it is available.  This allows logs and spans to be buffered before
     // the library is initialized, which can be helpul in a complex setup with
     // many subsystems.
@@ -639,14 +639,6 @@ export default class Tracer extends opentracing.Tracer {
             let platformTags = this._platform.tracerTags();
             _each(platformTags, (val, key) => {
                 tags[key] = val;
-            });
-
-            let thriftAttrs = [];
-            _each(tags, (val, key) => {
-                thriftAttrs.push(new crouton_thrift.KeyValue({
-                    Key   : coerce.toString(key),
-                    Value : coerce.toString(val),
-                }));
             });
 
             this._runtime = new RuntimeImp(this._runtimeGUID, this._startMicros, this._options.component_name, tags);
