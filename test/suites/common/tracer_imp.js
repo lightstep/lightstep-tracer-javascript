@@ -85,14 +85,9 @@ describe("TracerImp", function() {
                     silent       : true,
                     tags         : testTable[i][0],
                 });
-                var actual = {};
-                for (var j = 0; j < tracer._thriftRuntime.attrs.length; j++) {
-                    var attr = tracer._thriftRuntime.attrs[j];
-                    actual[attr.Key] = attr.Value;
-                }
                 var expectSet = testTable[i][1];
                 for (var key in expectSet) {
-                    expect(actual[key]).to.equal(expectSet[key]);
+                    expect(tracer._runtime._attributes[key]).to.equal(expectSet[key]);
                 }
             }
         });
