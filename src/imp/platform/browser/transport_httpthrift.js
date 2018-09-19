@@ -34,7 +34,7 @@ export default class TransportBrowser {
         xhr.open('POST', url);
         // Note: the browser automatically sets 'Connection' and 'Content-Length'
         // and *does not* allow they to be set manually
-        xhr.setRequestHeader('LightStep-Access-Token', auth.access_token);
+        xhr.setRequestHeader('LightStep-Access-Token', auth.getAccessToken());
         xhr.setRequestHeader('Content-Type', 'application/json');
         //req.setRequestHeader('Content-Encoding', 'gzip');
         xhr.onreadystatechange = function () {
@@ -62,7 +62,7 @@ export default class TransportBrowser {
     // interrupted as a normal Thirft RPC would when navigating away from
     // the page.
     _reportAsyncScript(auth, report, done) {
-        let authJSON   = JSON.stringify(auth);
+        let authJSON   = JSON.stringify(auth.toThrift());
         let reportJSON = JSON.stringify(report);
         let protocol = (this._encryption === 'none') ? 'http' : 'https';
         let url = `${protocol}://${this._host}:${this._port}${this._path}/_rpc/v1/reports/uri_encoded` +
