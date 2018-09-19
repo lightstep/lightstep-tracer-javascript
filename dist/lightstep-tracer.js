@@ -6117,7 +6117,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            });
 	
 	            // NOTE: for legacy reasons, the Thrift field is called "group_name"
-	            // but is semantically equivalen to the "component_name"
+	            // but is semantically equivalent to the "component_name"
 	            return new _platform_abstraction_layer.crouton_thrift.Runtime({
 	                guid: this._runtimeGUID,
 	                start_micros: this._startMicros,
