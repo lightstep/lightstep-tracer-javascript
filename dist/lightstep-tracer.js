@@ -60,7 +60,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _tracer_imp2 = _interopRequireDefault(_tracer_imp);
 	
-	var _platform_abstraction_layer = __webpack_require__(19);
+	var _platform_abstraction_layer = __webpack_require__(24);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -91,19 +91,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var opentracing = _interopRequireWildcard(_opentracing);
 	
-	var _span_context_imp = __webpack_require__(14);
+	var _span_context_imp = __webpack_require__(19);
 	
 	var _span_context_imp2 = _interopRequireDefault(_span_context_imp);
 	
-	var _span_imp = __webpack_require__(16);
+	var _span_imp = __webpack_require__(21);
 	
 	var _span_imp2 = _interopRequireDefault(_span_imp);
 	
-	var _each2 = __webpack_require__(15);
+	var _each2 = __webpack_require__(20);
 	
 	var _each3 = _interopRequireDefault(_each2);
 	
-	var _platform_abstraction_layer = __webpack_require__(19);
+	var _platform_abstraction_layer = __webpack_require__(24);
 	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
@@ -119,13 +119,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	// eslint-disable-line camelcase
 	
-	var ClockState = __webpack_require__(29);
-	var LogBuilder = __webpack_require__(30);
-	var coerce = __webpack_require__(17);
-	var constants = __webpack_require__(18);
-	var globals = __webpack_require__(31);
-	var packageObject = __webpack_require__(32);
-	var util = __webpack_require__(33);
+	var ClockState = __webpack_require__(34);
+	var LogBuilder = __webpack_require__(35);
+	var coerce = __webpack_require__(22);
+	var constants = __webpack_require__(23);
+	var globals = __webpack_require__(36);
+	var packageObject = __webpack_require__(37);
+	var util = __webpack_require__(38);
 	
 	var CARRIER_TRACER_STATE_PREFIX = 'ot-tracer-';
 	var CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
@@ -240,7 +240,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _this._flushIsActive = false;
 	
 	        // Built-in plugins
-	        _this.addPlugin(__webpack_require__(34));
+	        _this.addPlugin(__webpack_require__(39));
 	
 	        // Initialize the platform options after the built-in plugins in
 	        // case any of those options affect the built-ins.
@@ -1747,8 +1747,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var span_context_1 = __webpack_require__(8);
 	exports.SpanContext = span_context_1.default;
 	var tracer_1 = __webpack_require__(9);
-	exports.Tracer = tracer_1.default;
-	__export(__webpack_require__(13));
+	exports.Tracer = tracer_1.Tracer;
+	var mock_tracer_1 = __webpack_require__(13);
+	exports.MockTracer = mock_tracer_1.MockTracer;
+	__export(__webpack_require__(18));
 	__export(__webpack_require__(11));
 	__export(__webpack_require__(10));
 	// Initialize the noops last to avoid a dependecy cycle between the classes.
@@ -1767,7 +1769,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Any valid Object with a field named `buffer` may be used as a binary carrier;
 	 * this class is only one such type of object that can be used.
 	 */
-	var BinaryCarrier = (function () {
+	var BinaryCarrier = /** @class */ (function () {
 	    function BinaryCarrier(buffer) {
 	        this.buffer = buffer;
 	    }
@@ -1924,7 +1926,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * to sub-components. A Trace has a single, top-level "root" Span that in turn
 	 * may have zero or more child Spans, which in turn may have children.
 	 */
-	var Span = (function () {
+	var Span = /** @class */ (function () {
 	    function Span() {
 	    }
 	    // ---------------------------------------------------------------------- //
@@ -2139,7 +2141,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * identify or otherwise contextualize the associated Span instance (e.g., a
 	 * <trace_id, span_id, sampled> tuple).
 	 */
-	var SpanContext = (function () {
+	var SpanContext = /** @class */ (function () {
 	    function SpanContext() {
 	    }
 	    return SpanContext;
@@ -2168,7 +2170,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * underscore-prefixed methods to pick up the argument checking and handling
 	 * automatically from the base class.
 	 */
-	var Tracer = (function () {
+	var Tracer = /** @class */ (function () {
 	    function Tracer() {
 	    }
 	    // ---------------------------------------------------------------------- //
@@ -2396,7 +2398,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * A Span may be the "child of" a parent Span. In a “child of” reference,
 	 * the parent Span depends on the child Span in some capacity.
 	 *
-	 * See more about reference types at http://opentracing.io/spec/
+	 * See more about reference types at https://github.com/opentracing/specification
 	 */
 	exports.REFERENCE_CHILD_OF = 'child_of';
 	/**
@@ -2404,7 +2406,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Spans. In these cases, we say merely that the child Span “follows from”
 	 * the parent Span in a causal sense.
 	 *
-	 * See more about reference types at http://opentracing.io/spec/
+	 * See more about reference types at https://github.com/opentracing/specification
 	 */
 	exports.REFERENCE_FOLLOWS_FROM = 'follows_from';
 	//# sourceMappingURL=constants.js.map
@@ -2422,7 +2424,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *
 	 * See the exported childOf() and followsFrom() functions at the package level.
 	 */
-	var Reference = (function () {
+	var Reference = /** @class */ (function () {
 	    /**
 	     * Initialize a new Reference instance.
 	     *
@@ -2462,6 +2464,295 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
+	var mock_context_1 = __webpack_require__(14);
+	exports.MockContext = mock_context_1.default;
+	var mock_span_1 = __webpack_require__(15);
+	exports.MockSpan = mock_span_1.default;
+	var mock_tracer_1 = __webpack_require__(16);
+	exports.MockTracer = mock_tracer_1.default;
+	//# sourceMappingURL=index.js.map
+
+/***/ },
+/* 14 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var __extends = (this && this.__extends) || (function () {
+	    var extendStatics = Object.setPrototypeOf ||
+	        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+	        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+	    return function (d, b) {
+	        extendStatics(d, b);
+	        function __() { this.constructor = d; }
+	        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	    };
+	})();
+	Object.defineProperty(exports, "__esModule", { value: true });
+	var opentracing = __webpack_require__(3);
+	/**
+	 * OpenTracing Context implementation designed for use in
+	 * unit tests.
+	 */
+	var MockContext = /** @class */ (function (_super) {
+	    __extends(MockContext, _super);
+	    function MockContext(span) {
+	        var _this = _super.call(this) || this;
+	        // Store a reference to the span itself since this is a mock tracer
+	        // intended to make debugging and unit testing easier.
+	        _this._span = span;
+	        return _this;
+	    }
+	    MockContext.prototype.span = function () {
+	        return this._span;
+	    };
+	    return MockContext;
+	}(opentracing.SpanContext));
+	exports.MockContext = MockContext;
+	exports.default = MockContext;
+	//# sourceMappingURL=mock_context.js.map
+
+/***/ },
+/* 15 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	/* eslint-disable import/no-extraneous-dependencies */
+	var __extends = (this && this.__extends) || (function () {
+	    var extendStatics = Object.setPrototypeOf ||
+	        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+	        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+	    return function (d, b) {
+	        extendStatics(d, b);
+	        function __() { this.constructor = d; }
+	        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	    };
+	})();
+	Object.defineProperty(exports, "__esModule", { value: true });
+	var opentracing = __webpack_require__(3);
+	var mock_context_1 = __webpack_require__(14);
+	/**
+	 * OpenTracing Span implementation designed for use in unit tests.
+	 */
+	var MockSpan = /** @class */ (function (_super) {
+	    __extends(MockSpan, _super);
+	    //------------------------------------------------------------------------//
+	    // MockSpan-specific
+	    //------------------------------------------------------------------------//
+	    function MockSpan(tracer) {
+	        var _this = _super.call(this) || this;
+	        _this._mockTracer = tracer;
+	        _this._uuid = _this._generateUUID();
+	        _this._startMs = Date.now();
+	        _this._finishMs = 0;
+	        _this._operationName = '';
+	        _this._tags = {};
+	        _this._logs = [];
+	        return _this;
+	    }
+	    //------------------------------------------------------------------------//
+	    // OpenTracing implementation
+	    //------------------------------------------------------------------------//
+	    MockSpan.prototype._context = function () {
+	        return new mock_context_1.default(this);
+	    };
+	    MockSpan.prototype._setOperationName = function (name) {
+	        this._operationName = name;
+	    };
+	    MockSpan.prototype._addTags = function (set) {
+	        var keys = Object.keys(set);
+	        for (var _i = 0, keys_1 = keys; _i < keys_1.length; _i++) {
+	            var key = keys_1[_i];
+	            this._tags[key] = set[key];
+	        }
+	    };
+	    MockSpan.prototype._log = function (fields, timestamp) {
+	        this._logs.push({
+	            fields: fields,
+	            timestamp: timestamp
+	        });
+	    };
+	    MockSpan.prototype._finish = function (finishTime) {
+	        this._finishMs = finishTime || Date.now();
+	    };
+	    MockSpan.prototype.uuid = function () {
+	        return this._uuid;
+	    };
+	    MockSpan.prototype.operationName = function () {
+	        return this._operationName;
+	    };
+	    MockSpan.prototype.durationMs = function () {
+	        return this._finishMs - this._startMs;
+	    };
+	    MockSpan.prototype.tags = function () {
+	        return this._tags;
+	    };
+	    MockSpan.prototype.tracer = function () {
+	        return this._mockTracer;
+	    };
+	    MockSpan.prototype._generateUUID = function () {
+	        var p0 = ("00000000" + Math.abs((Math.random() * 0xFFFFFFFF) | 0).toString(16)).substr(-8);
+	        var p1 = ("00000000" + Math.abs((Math.random() * 0xFFFFFFFF) | 0).toString(16)).substr(-8);
+	        return "" + p0 + p1;
+	    };
+	    MockSpan.prototype.addReference = function (ref) {
+	    };
+	    /**
+	     * Returns a simplified object better for console.log()'ing.
+	     */
+	    MockSpan.prototype.debug = function () {
+	        var obj = {
+	            uuid: this._uuid,
+	            operation: this._operationName,
+	            millis: [this._finishMs - this._startMs, this._startMs, this._finishMs]
+	        };
+	        if (Object.keys(this._tags).length) {
+	            obj.tags = this._tags;
+	        }
+	        return obj;
+	    };
+	    return MockSpan;
+	}(opentracing.Span));
+	exports.MockSpan = MockSpan;
+	exports.default = MockSpan;
+	//# sourceMappingURL=mock_span.js.map
+
+/***/ },
+/* 16 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var __extends = (this && this.__extends) || (function () {
+	    var extendStatics = Object.setPrototypeOf ||
+	        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+	        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+	    return function (d, b) {
+	        extendStatics(d, b);
+	        function __() { this.constructor = d; }
+	        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	    };
+	})();
+	Object.defineProperty(exports, "__esModule", { value: true });
+	// TODO: Move mock-tracer to its own NPM package once it is complete and tested.
+	var opentracing = __webpack_require__(3);
+	var mock_report_1 = __webpack_require__(17);
+	var mock_span_1 = __webpack_require__(15);
+	/**
+	 * OpenTracing Tracer implementation designed for use in unit tests.
+	 */
+	var MockTracer = /** @class */ (function (_super) {
+	    __extends(MockTracer, _super);
+	    //------------------------------------------------------------------------//
+	    // MockTracer-specific
+	    //------------------------------------------------------------------------//
+	    function MockTracer() {
+	        var _this = _super.call(this) || this;
+	        _this._spans = [];
+	        return _this;
+	    }
+	    //------------------------------------------------------------------------//
+	    // OpenTracing implementation
+	    //------------------------------------------------------------------------//
+	    MockTracer.prototype._startSpan = function (name, fields) {
+	        // _allocSpan is given it's own method so that derived classes can
+	        // allocate any type of object they want, but not have to duplicate
+	        // the other common logic in startSpan().
+	        var span = this._allocSpan();
+	        span.setOperationName(name);
+	        this._spans.push(span);
+	        if (fields.references) {
+	            for (var _i = 0, _a = fields.references; _i < _a.length; _i++) {
+	                var ref = _a[_i];
+	                span.addReference(ref);
+	            }
+	        }
+	        // Capture the stack at the time the span started
+	        span._startStack = new Error().stack;
+	        return span;
+	    };
+	    MockTracer.prototype._inject = function (span, format, carrier) {
+	        throw new Error('NOT YET IMPLEMENTED');
+	    };
+	    MockTracer.prototype._extract = function (format, carrier) {
+	        throw new Error('NOT YET IMPLEMENTED');
+	    };
+	    MockTracer.prototype._allocSpan = function () {
+	        return new mock_span_1.default(this);
+	    };
+	    /**
+	     * Discard any buffered data.
+	     */
+	    MockTracer.prototype.clear = function () {
+	        this._spans = [];
+	    };
+	    /**
+	     * Return the buffered data in a format convenient for making unit test
+	     * assertions.
+	     */
+	    MockTracer.prototype.report = function () {
+	        return new mock_report_1.default(this._spans);
+	    };
+	    return MockTracer;
+	}(opentracing.Tracer));
+	exports.MockTracer = MockTracer;
+	exports.default = MockTracer;
+	//# sourceMappingURL=mock_tracer.js.map
+
+/***/ },
+/* 17 */
+/***/ function(module, exports) {
+
+	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
+	/**
+	 * Index a collection of reported MockSpans in a way that's easy to run unit
+	 * test assertions against.
+	 */
+	var MockReport = /** @class */ (function () {
+	    function MockReport(spans) {
+	        var _this = this;
+	        this.spans = spans;
+	        this.spansByUUID = {};
+	        this.spansByTag = {};
+	        this.debugSpans = [];
+	        this.unfinishedSpans = [];
+	        spans.forEach(function (span) {
+	            if (span._finishMs === 0) {
+	                _this.unfinishedSpans.push(span);
+	            }
+	            _this.spansByUUID[span.uuid()] = span;
+	            _this.debugSpans.push(span.debug());
+	            var tags = span.tags();
+	            Object.keys(tags).forEach(function (key) {
+	                var val = tags[key];
+	                _this.spansByTag[key] = _this.spansByTag[key] || {};
+	                _this.spansByTag[key][val] = _this.spansByTag[key][val] || [];
+	                _this.spansByTag[key][val].push(span);
+	            });
+	        });
+	    }
+	    MockReport.prototype.firstSpanWithTagValue = function (key, val) {
+	        var m = this.spansByTag[key];
+	        if (!m) {
+	            return null;
+	        }
+	        var n = m[val];
+	        if (!n) {
+	            return null;
+	        }
+	        return n[0];
+	    };
+	    return MockReport;
+	}());
+	exports.MockReport = MockReport;
+	exports.default = MockReport;
+	//# sourceMappingURL=mock_report.js.map
+
+/***/ },
+/* 18 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
 	var __extends = (this && this.__extends) || (function () {
 	    var extendStatics = Object.setPrototypeOf ||
 	        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
@@ -2487,22 +2778,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	// sometimes nearly intractible initialization order problems that can arise in
 	// applications with a complex set of dependencies, while also avoiding the
 	// case where
-	var GlobalTracerDelegate = (function (_super) {
+	var GlobalTracerDelegate = /** @class */ (function (_super) {
 	    __extends(GlobalTracerDelegate, _super);
 	    function GlobalTracerDelegate() {
 	        return _super !== null && _super.apply(this, arguments) || this;
 	    }
 	    GlobalTracerDelegate.prototype.startSpan = function () {
 	        var tracer = _globalTracer || noopTracer;
-	        return tracer.startSpan.apply(this, arguments);
+	        return tracer.startSpan.apply(tracer, arguments);
 	    };
 	    GlobalTracerDelegate.prototype.inject = function () {
 	        var tracer = _globalTracer || noopTracer;
-	        return tracer.inject.apply(this, arguments);
+	        return tracer.inject.apply(tracer, arguments);
 	    };
 	    GlobalTracerDelegate.prototype.extract = function () {
 	        var tracer = _globalTracer || noopTracer;
-	        return tracer.extract.apply(this, arguments);
+	        return tracer.extract.apply(tracer, arguments);
 	    };
 	    return GlobalTracerDelegate;
 	}(tracer_1.default));
@@ -2532,7 +2823,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	//# sourceMappingURL=global_tracer.js.map
 
 /***/ },
-/* 14 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2543,7 +2834,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _each2 = __webpack_require__(15);
+	var _each2 = __webpack_require__(20);
 	
 	var _each3 = _interopRequireDefault(_each2);
 	
@@ -2607,7 +2898,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ },
-/* 15 */
+/* 20 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -2633,7 +2924,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ },
-/* 16 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2644,15 +2935,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _coerce = __webpack_require__(17);
+	var _coerce = __webpack_require__(22);
 	
 	var coerce = _interopRequireWildcard(_coerce);
 	
-	var _constants = __webpack_require__(18);
+	var _constants = __webpack_require__(23);
 	
 	var constants = _interopRequireWildcard(_constants);
 	
-	var _each2 = __webpack_require__(15);
+	var _each2 = __webpack_require__(20);
 	
 	var _each3 = _interopRequireDefault(_each2);
 	
@@ -2660,7 +2951,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var opentracing = _interopRequireWildcard(_opentracing);
 	
-	var _platform_abstraction_layer = __webpack_require__(19);
+	var _platform_abstraction_layer = __webpack_require__(24);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -2935,7 +3226,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ },
-/* 17 */
+/* 22 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2959,7 +3250,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 18 */
+/* 23 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2993,7 +3284,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var JOIN_ID_PREFIX = exports.JOIN_ID_PREFIX = 'join:';
 
 /***/ },
-/* 19 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3005,10 +3296,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	// general differences in the platforms.
 	if (true) {
 	    module.exports = {
-	        Platform: __webpack_require__(20),
-	        Transport: __webpack_require__(25),
-	        thrift: __webpack_require__(26),
-	        crouton_thrift: __webpack_require__(28)
+	        Platform: __webpack_require__(25),
+	        Transport: __webpack_require__(30),
+	        thrift: __webpack_require__(31),
+	        crouton_thrift: __webpack_require__(33)
 	    };
 	} else {
 	    module.exports = {
@@ -3020,7 +3311,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 20 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3029,8 +3320,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
-	var optionsParser = __webpack_require__(21);
-	var util = __webpack_require__(22);
+	var optionsParser = __webpack_require__(26);
+	var util = __webpack_require__(27);
 	
 	var kRuntimeGUIDCookiePrefix = 'lightstep_guid';
 	var kSessionIDCookieKey = 'lightstep_session_id';
@@ -3121,7 +3412,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'plugins',
 	        value: function plugins(opts) {
-	            return [__webpack_require__(23), __webpack_require__(24)];
+	            return [__webpack_require__(28), __webpack_require__(29)];
 	        }
 	    }, {
 	        key: 'options',
@@ -3200,7 +3491,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = PlatformBrowser;
 
 /***/ },
-/* 21 */
+/* 26 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -3335,7 +3626,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 22 */
+/* 27 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -3360,14 +3651,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 23 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _each2 = __webpack_require__(15);
+	var _each2 = __webpack_require__(20);
 	
 	var _each3 = _interopRequireDefault(_each2);
 	
@@ -3762,14 +4053,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = new InstrumentXHR();
 
 /***/ },
-/* 24 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _each2 = __webpack_require__(15);
+	var _each2 = __webpack_require__(20);
 	
 	var _each3 = _interopRequireDefault(_each2);
 	
@@ -3956,7 +4247,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = new InstrumentPageLoad();
 
 /***/ },
-/* 25 */
+/* 30 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -4067,15 +4358,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ },
-/* 26 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	module.exports = __webpack_require__(27).Thrift;
+	module.exports = __webpack_require__(32).Thrift;
 
 /***/ },
-/* 27 */
+/* 32 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -5765,22 +6056,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	})();
 
 /***/ },
-/* 28 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	module.exports = __webpack_require__(27).crouton_thrift;
+	module.exports = __webpack_require__(32).crouton_thrift;
 
 /***/ },
-/* 29 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _each2 = __webpack_require__(15);
+	var _each2 = __webpack_require__(20);
 	
 	var _each3 = _interopRequireDefault(_each2);
 	
@@ -5946,20 +6237,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = ClockState;
 
 /***/ },
-/* 30 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _platform_abstraction_layer = __webpack_require__(19);
+	var _platform_abstraction_layer = __webpack_require__(24);
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
 	// eslint-disable-line camelcase
-	var constants = __webpack_require__(18);
-	var coerce = __webpack_require__(17);
+	var constants = __webpack_require__(23);
+	var coerce = __webpack_require__(22);
 	
 	// Facade on the thrift log data structure to make constructing log records more
 	// convenient.
@@ -6065,14 +6356,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = LogBuilder;
 
 /***/ },
-/* 31 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _each2 = __webpack_require__(15);
+	var _each2 = __webpack_require__(20);
 	
 	var _each3 = _interopRequireDefault(_each2);
 	
@@ -6104,12 +6395,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = new PackageGlobals();
 
 /***/ },
-/* 32 */
+/* 37 */
 /***/ function(module, exports) {
 
 	module.exports = {
 		"name": "lightstep-tracer",
-		"version": "0.20.8",
+		"version": "0.20.9",
 		"main": "index.js",
 		"engines": {
 			"node": ">=0.12.0"
@@ -6161,7 +6452,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			"istanbul": "0.4.4",
 			"json-loader": "0.5.4",
 			"mocha": "2.3.4",
-			"opentracing": "0.14.0",
+			"opentracing": "0.14.3",
 			"shelljs": "0.5.3",
 			"sprintf-js": "1.0.3",
 			"underscore": "1.8.3",
@@ -6171,7 +6462,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 33 */
+/* 38 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -6211,7 +6502,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ },
-/* 34 */
+/* 39 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6220,7 +6511,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
-	var constants = __webpack_require__(18);
+	var constants = __webpack_require__(23);
 	
 	var LogToConsole = function () {
 	    function LogToConsole() {
