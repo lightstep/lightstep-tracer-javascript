@@ -188,7 +188,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                _this._error(err, payload);
 	            }
 	        };
-	        _this._transport = (opts ? opts.override_transport : null) || new _platform_abstraction_layer.Transport(logger);
+	        _this._transport = (opts ? opts.override_transport : null) || new _platform_abstraction_layer.ThriftTransport(logger);
 	
 	        _this._reportingLoopActive = false;
 	        _this._reportYoungestMicros = now;
@@ -3297,14 +3297,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	if (true) {
 	    module.exports = {
 	        Platform: __webpack_require__(25),
-	        Transport: __webpack_require__(30),
+	        ThriftTransport: __webpack_require__(30),
 	        thrift: __webpack_require__(31),
 	        crouton_thrift: __webpack_require__(33)
 	    };
 	} else {
 	    module.exports = {
 	        Platform: require('./imp/platform/node/platform_node.js'),
-	        Transport: require('./imp/platform/node/transport_httpjson.js'),
+	        ThriftTransport: require('./imp/platform/node/transport_httpthrift.js'),
 	        thrift: require('thrift'),
 	        crouton_thrift: require('./imp/platform/node/crouton_thrift.js')
 	    };
@@ -5934,16 +5934,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	  crouton_thrift.ReportResponse = function (args) {
 	    this.commands = null;
 	    this.timing = null;
-	    this.errors = null;
 	    if (args) {
 	      if (args.commands !== undefined) {
 	        this.commands = args.commands;
 	      }
 	      if (args.timing !== undefined) {
 	        this.timing = args.timing;
-	      }
-	      if (args.errors !== undefined) {
-	        this.errors = args.errors;
 	      }
 	    }
 	  };
@@ -5987,25 +5983,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            input.skip(ftype);
 	          }
 	          break;
-	        case 3:
-	          if (ftype == Thrift.Type.LIST) {
-	            var _size103 = 0;
-	            var _rtmp3107;
-	            this.errors = [];
-	            var _etype106 = 0;
-	            _rtmp3107 = input.readListBegin();
-	            _etype106 = _rtmp3107.etype;
-	            _size103 = _rtmp3107.size;
-	            for (var _i108 = 0; _i108 < _size103; ++_i108) {
-	              var elem109 = null;
-	              elem109 = input.readString().value;
-	              this.errors.push(elem109);
-	            }
-	            input.readListEnd();
-	          } else {
-	            input.skip(ftype);
-	          }
-	          break;
 	        default:
 	          input.skip(ftype);
 	      }
@@ -6020,10 +5997,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (this.commands !== null && this.commands !== undefined) {
 	      output.writeFieldBegin('commands', Thrift.Type.LIST, 1);
 	      output.writeListBegin(Thrift.Type.STRUCT, this.commands.length);
-	      for (var iter110 in this.commands) {
-	        if (this.commands.hasOwnProperty(iter110)) {
-	          iter110 = this.commands[iter110];
-	          iter110.write(output);
+	      for (var iter103 in this.commands) {
+	        if (this.commands.hasOwnProperty(iter103)) {
+	          iter103 = this.commands[iter103];
+	          iter103.write(output);
 	        }
 	      }
 	      output.writeListEnd();
@@ -6032,18 +6009,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (this.timing !== null && this.timing !== undefined) {
 	      output.writeFieldBegin('timing', Thrift.Type.STRUCT, 2);
 	      this.timing.write(output);
-	      output.writeFieldEnd();
-	    }
-	    if (this.errors !== null && this.errors !== undefined) {
-	      output.writeFieldBegin('errors', Thrift.Type.LIST, 3);
-	      output.writeListBegin(Thrift.Type.STRING, this.errors.length);
-	      for (var iter111 in this.errors) {
-	        if (this.errors.hasOwnProperty(iter111)) {
-	          iter111 = this.errors[iter111];
-	          output.writeString(iter111);
-	        }
-	      }
-	      output.writeListEnd();
 	      output.writeFieldEnd();
 	    }
 	    output.writeFieldStop();

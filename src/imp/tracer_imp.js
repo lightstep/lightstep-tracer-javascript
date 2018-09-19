@@ -8,7 +8,8 @@ import * as opentracing from 'opentracing';
 import SpanContextImp from './span_context_imp';
 import SpanImp from './span_imp';
 import _each from '../_each';
-import { Platform, Transport, crouton_thrift } from '../platform_abstraction_layer';    // eslint-disable-line camelcase
+import { Platform, ThriftTransport } from '../platform_abstraction_layer';
+import { crouton_thrift } from '../platform_abstraction_layer';    // eslint-disable-line camelcase
 
 const ClockState    = require('./util/clock_state');
 const LogBuilder    = require('./log_builder');
@@ -72,7 +73,7 @@ export default class Tracer extends opentracing.Tracer {
             warn  : (msg, payload) => { this._warn(msg, payload); },
             error : (err, payload) => { this._error(err, payload); },
         };
-        this._transport = (opts ? opts.override_transport : null) || new Transport(logger);
+        this._transport = (opts ? opts.override_transport : null) || new ThriftTransport(logger);
 
         this._reportingLoopActive = false;
         this._reportYoungestMicros = now;
