@@ -85,6 +85,7 @@
                 span.log({ event : 'request_finished', response_body : json });
                 results.value = JSON.stringify(json);
             });
+            span.finish();
         }
 
         function hitEndpoint(parentSpan, callback) {
