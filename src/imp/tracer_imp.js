@@ -9,9 +9,9 @@ import SpanContextImp from './span_context_imp';
 import SpanImp from './span_imp';
 import _each from '../_each';
 import { Platform, ThriftTransport } from '../platform_abstraction_layer';
-import { crouton_thrift } from '../platform_abstraction_layer';    // eslint-disable-line camelcase
 import AuthImp from './auth_imp';
 import RuntimeImp from './runtime_imp';
+import ReportImp from './report_imp';
 
 const ClockState    = require('./util/clock_state');
 const LogBuilder    = require('./log_builder');
@@ -651,6 +651,14 @@ export default class Tracer extends opentracing.Tracer {
         }
     }
 
+    getLogFieldKeyHardLimit() {
+        return this._options.log_field_key_hard_limit;
+    }
+
+    getLogFieldValueHardLimit() {
+        return this._options.log_field_value_hard_limit;
+    }
+
     //-----------------------------------------------------------------------//
     // Plugins
     //-----------------------------------------------------------------------//
@@ -849,11 +857,11 @@ export default class Tracer extends opentracing.Tracer {
             this._pushInternalLog(log);
         });
 
-        _each(counters, (record) => {
-            if (this._counters[record.Name]) {
-                this._counters[record.Name] += record.Value;
+        _each(counters, (value, key) => {
+            if (key in this._counters) {
+                this._counters[key] += value;
             } else {
-                this._error(`Bad counter name: ${record.Name}`);
+                this._error(`Bad counter name: ${key}`);
             }
         });
     }
@@ -1034,34 +1042,10 @@ export default class Tracer extends opentracing.Tracer {
         // spans before the GUID is necessarily set.
         console.assert(this._runtimeGUID !== null, 'No runtime GUID for Tracer'); // eslint-disable-line no-console
 
-        _each(spanRecords, (span) => {
-            span.runtime_guid = this._runtimeGUID;
-        });
-
-        let thriftCounters = [];
-        _each(counters, (value, key) => {
-            if (value === 0) {
-                return;
-            }
-            thriftCounters.push(new crouton_thrift.MetricsSample({
-                name         : coerce.toString(key),
-                double_value : coerce.toNumber(value),
-            }));
-        });
-
         let timestampOffset = this._useClockState ? clockOffsetMicros : 0;
         let now = this._platform.nowMicros();
-        let report = new crouton_thrift.ReportRequest({
-            runtime                 : this._runtime.toThrift(),
-            oldest_micros           : this._reportYoungestMicros,
-            youngest_micros         : now,
-            span_records            : spanRecords,
-            internal_logs           : internalLogs,
-            internal_metrics        : new crouton_thrift.Metrics({
-                counts              : thriftCounters,
-            }),
-            timestamp_offset_micros : timestampOffset,
-        });
+        let report = new ReportImp(this._runtime, this._reportYoungestMicros, now,
+            spanRecords, internalLogs, counters, timestampOffset);
 
         this.emit('prereport', report);
         let originMicros = this._platform.nowMicros();
@@ -1087,9 +1071,9 @@ export default class Tracer extends opentracing.Tracer {
                 });
 
                 this._restoreRecords(
-                    report.span_records,
-                    report.internal_logs,
-                    report.counters);
+                    report.getSpanRecords(),
+                    report.getInternalLogs(),
+                    report.getCounters());
 
                 // Increment the counter *after* the counters are restored
                 this._counters['reports.errors.send']++;

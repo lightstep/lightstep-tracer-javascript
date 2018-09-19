@@ -38,8 +38,8 @@ FileTransport.prototype.report = function(detached, auth, report, done) {
 
     this._requests.push({
         detached : detached,
-        auth : auth,
-        report : report,
+        auth : auth.toThrift(),
+        report : report.toThrift(),
     });
 
     fs.writeFileSync(this._filename, JSON.stringify({

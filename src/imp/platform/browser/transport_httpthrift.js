@@ -27,7 +27,7 @@ export default class TransportBrowser {
     }
 
     _reportAJAX(auth, report, done) {
-        let payload = JSON.stringify(report);
+        let payload = JSON.stringify(report.toThrift());
         let protocol = (this._encryption === 'none') ? 'http' : 'https';
         let url = `${protocol}://${this._host}:${this._port}${this._path}/api/v0/reports`;
         let xhr = new XMLHttpRequest();
@@ -63,7 +63,7 @@ export default class TransportBrowser {
     // the page.
     _reportAsyncScript(auth, report, done) {
         let authJSON   = JSON.stringify(auth.toThrift());
-        let reportJSON = JSON.stringify(report);
+        let reportJSON = JSON.stringify(report.toThrift());
         let protocol = (this._encryption === 'none') ? 'http' : 'https';
         let url = `${protocol}://${this._host}:${this._port}${this._path}/_rpc/v1/reports/uri_encoded` +
             `?auth=${encodeURIComponent(authJSON)}` +

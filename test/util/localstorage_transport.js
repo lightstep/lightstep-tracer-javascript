@@ -33,8 +33,8 @@ LocalStorageTransport.prototype.report = function(detached, auth, report, done) 
 
     this._requests.push({
         detached : detached,
-        auth : auth,
-        report : report,
+        auth : auth.toThrift(),
+        report : report.toThrift(),
     });
 
     localStorage.setItem(this._keyname, JSON.stringify({
