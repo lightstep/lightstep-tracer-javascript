@@ -136,7 +136,7 @@ export default class TransportHTTPJSON {
 
             req.setHeader('Host', this._host);
             req.setHeader('User-Agent', 'LightStep-JavaScript-Node');
-            req.setHeader('LightStep-Access-Token', auth.access_token);
+            req.setHeader('LightStep-Access-Token', auth.getAccessToken());
             req.setHeader('Content-Type', 'application/json');
             req.setHeader('Content-Length', payload.length);
             if (useGzip) {

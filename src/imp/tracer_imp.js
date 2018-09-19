@@ -10,6 +10,7 @@ import SpanImp from './span_imp';
 import _each from '../_each';
 import { Platform, ThriftTransport } from '../platform_abstraction_layer';
 import { crouton_thrift } from '../platform_abstraction_layer';    // eslint-disable-line camelcase
+import AuthImp from './auth_imp';
 
 const ClockState    = require('./util/clock_state');
 const LogBuilder    = require('./log_builder');
@@ -66,7 +67,7 @@ export default class Tracer extends opentracing.Tracer {
         // The thrift authentication and runtime struct are created as soon as
         // the necessary initialization options are available.
         this._startMicros = now;
-        this._thriftAuth = null;
+        this._auth = null;
         this._thriftRuntime = null;
 
         let logger = {
@@ -590,7 +591,7 @@ export default class Tracer extends opentracing.Tracer {
     //
     _initReportingDataIfNeeded(modified) {
         // Ignore redundant initialization; complaint on inconsistencies
-        if (this._thriftAuth !== null) {
+        if (this._auth !== null) {
             if (!this._thriftRuntime) {
                 return this._error('Inconsistent state: thrift auth initialized without runtime.');
             }
@@ -619,9 +620,7 @@ export default class Tracer extends opentracing.Tracer {
         if (this._options.access_token.length > 0 && this._options.component_name.length > 0) {
             this._runtimeGUID = this._platform.runtimeGUID(this._options.component_name);
 
-            this._thriftAuth = new crouton_thrift.Auth({
-                access_token : this._options.access_token,
-            });
+            this._auth = new AuthImp(this._options.access_token);
 
             //
             // Assemble the tracer tags from the user-specified and automatic,
@@ -660,7 +659,7 @@ export default class Tracer extends opentracing.Tracer {
 
             this._info('Initializing thrift reporting data', {
                 component_name : this._options.component_name,
-                access_token   : this._thriftAuth.access_token,
+                access_token   : this._auth.getAccessToken(),
             });
             this.emit('reporting_initialized');
         }
@@ -912,7 +911,7 @@ export default class Tracer extends opentracing.Tracer {
             this._info('Not starting reporting loop: reporting loop is disabled.');
             return;
         }
-        if (this._thriftAuth === null) {
+        if (this._auth === null) {
             // Don't start the loop until the thrift data necessary to do the
             // report is set up.
             return;
@@ -1081,7 +1080,7 @@ export default class Tracer extends opentracing.Tracer {
         this.emit('prereport', report);
         let originMicros = this._platform.nowMicros();
 
-        this._transport.report(detached, this._thriftAuth, report, (err, res) => {
+        this._transport.report(detached, this._auth, report, (err, res) => {
             let destinationMicros = this._platform.nowMicros();
             let reportWindowSeconds = (now - report.oldest_micros) / 1e6;
 

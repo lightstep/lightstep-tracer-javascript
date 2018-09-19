@@ -105,6 +105,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _platform_abstraction_layer = __webpack_require__(24);
 	
+	var _auth_imp = __webpack_require__(34);
+	
+	var _auth_imp2 = _interopRequireDefault(_auth_imp);
+	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -119,13 +123,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	// eslint-disable-line camelcase
 	
-	var ClockState = __webpack_require__(34);
-	var LogBuilder = __webpack_require__(35);
+	
+	var ClockState = __webpack_require__(35);
+	var LogBuilder = __webpack_require__(36);
 	var coerce = __webpack_require__(22);
 	var constants = __webpack_require__(23);
-	var globals = __webpack_require__(36);
-	var packageObject = __webpack_require__(37);
-	var util = __webpack_require__(38);
+	var globals = __webpack_require__(37);
+	var packageObject = __webpack_require__(38);
+	var util = __webpack_require__(39);
 	
 	var CARRIER_TRACER_STATE_PREFIX = 'ot-tracer-';
 	var CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
@@ -177,7 +182,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // The thrift authentication and runtime struct are created as soon as
 	        // the necessary initialization options are available.
 	        _this._startMicros = now;
-	        _this._thriftAuth = null;
+	        _this._auth = null;
 	        _this._thriftRuntime = null;
 	
 	        var logger = {
@@ -240,7 +245,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _this._flushIsActive = false;
 	
 	        // Built-in plugins
-	        _this.addPlugin(__webpack_require__(39));
+	        _this.addPlugin(__webpack_require__(40));
 	
 	        // Initialize the platform options after the built-in plugins in
 	        // case any of those options affect the built-ins.
@@ -729,7 +734,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var _this5 = this;
 	
 	            // Ignore redundant initialization; complaint on inconsistencies
-	            if (this._thriftAuth !== null) {
+	            if (this._auth !== null) {
 	                if (!this._thriftRuntime) {
 	                    return this._error('Inconsistent state: thrift auth initialized without runtime.');
 	                }
@@ -759,9 +764,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                (function () {
 	                    _this5._runtimeGUID = _this5._platform.runtimeGUID(_this5._options.component_name);
 	
-	                    _this5._thriftAuth = new _platform_abstraction_layer.crouton_thrift.Auth({
-	                        access_token: _this5._options.access_token
-	                    });
+	                    _this5._auth = new _auth_imp2.default(_this5._options.access_token);
 	
 	                    //
 	                    // Assemble the tracer tags from the user-specified and automatic,
@@ -800,7 +803,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                    _this5._info('Initializing thrift reporting data', {
 	                        component_name: _this5._options.component_name,
-	                        access_token: _this5._thriftAuth.access_token
+	                        access_token: _this5._auth.getAccessToken()
 	                    });
 	                    _this5.emit('reporting_initialized');
 	                })();
@@ -1089,7 +1092,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                this._info('Not starting reporting loop: reporting loop is disabled.');
 	                return;
 	            }
-	            if (this._thriftAuth === null) {
+	            if (this._auth === null) {
 	                // Don't start the loop until the thrift data necessary to do the
 	                // report is set up.
 	                return;
@@ -1267,7 +1270,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.emit('prereport', report);
 	            var originMicros = this._platform.nowMicros();
 	
-	            this._transport.report(detached, this._thriftAuth, report, function (err, res) {
+	            this._transport.report(detached, this._auth, report, function (err, res) {
 	                var destinationMicros = _this13._platform.nowMicros();
 	                var reportWindowSeconds = (now - report.oldest_micros) / 1e6;
 	
@@ -4301,7 +4304,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            xhr.open('POST', url);
 	            // Note: the browser automatically sets 'Connection' and 'Content-Length'
 	            // and *does not* allow they to be set manually
-	            xhr.setRequestHeader('LightStep-Access-Token', auth.access_token);
+	            xhr.setRequestHeader('LightStep-Access-Token', auth.getAccessToken());
 	            xhr.setRequestHeader('Content-Type', 'application/json');
 	            //req.setRequestHeader('Content-Encoding', 'gzip');
 	            xhr.onreadystatechange = function () {
@@ -4332,7 +4335,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: '_reportAsyncScript',
 	        value: function _reportAsyncScript(auth, report, done) {
-	            var authJSON = JSON.stringify(auth);
+	            var authJSON = JSON.stringify(auth.toThrift());
 	            var reportJSON = JSON.stringify(report);
 	            var protocol = this._encryption === 'none' ? 'http' : 'https';
 	            var url = protocol + '://' + this._host + ':' + this._port + this._path + '/_rpc/v1/reports/uri_encoded' + ('?auth=' + encodeURIComponent(authJSON)) + ('&report=' + encodeURIComponent(reportJSON));
@@ -6034,6 +6037,51 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _platform_abstraction_layer = __webpack_require__(24);
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	// eslint-disable-line camelcase
+	
+	var AuthImp = function () {
+	    function AuthImp(accessToken) {
+	        _classCallCheck(this, AuthImp);
+	
+	        this._accessToken = accessToken;
+	    }
+	
+	    _createClass(AuthImp, [{
+	        key: 'getAccessToken',
+	        value: function getAccessToken() {
+	            return this._accessToken;
+	        }
+	    }, {
+	        key: 'toThrift',
+	        value: function toThrift() {
+	            return new _platform_abstraction_layer.crouton_thrift.Auth({
+	                access_token: this._accessToken
+	            });
+	        }
+	    }]);
+	
+	    return AuthImp;
+	}();
+	
+	exports.default = AuthImp;
+	module.exports = exports['default'];
+
+/***/ },
+/* 35 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
 	var _each2 = __webpack_require__(20);
@@ -6202,7 +6250,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = ClockState;
 
 /***/ },
-/* 35 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6321,7 +6369,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = LogBuilder;
 
 /***/ },
-/* 36 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6360,7 +6408,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = new PackageGlobals();
 
 /***/ },
-/* 37 */
+/* 38 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -6427,7 +6475,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 38 */
+/* 39 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -6467,7 +6515,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ },
-/* 39 */
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
