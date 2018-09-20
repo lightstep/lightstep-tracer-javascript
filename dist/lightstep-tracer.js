@@ -21573,7 +21573,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        value: function getFieldKey(key) {
 	            var keyStr = coerce.toString(key);
 	            if (keyStr.length > this._logFieldKeyHardLimit) {
-	                this._keysOverLimit++;
+	                this._keysOverLimit += 1;
 	                keyStr = keyStr.substr(0, this._logFieldKeyHardLimit) + '...';
 	            }
 	            return keyStr;
@@ -21592,7 +21592,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                valStr = coerce.toString(value);
 	            }
 	            if (valStr.length > this._logFieldValueHardLimit) {
-	                this._valuesOverLimit++;
+	                this._valuesOverLimit += 1;
 	                valStr = valStr.substr(0, this._logFieldValueHardLimit) + '...';
 	            }
 	            return valStr;
