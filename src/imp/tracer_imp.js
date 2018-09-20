@@ -8,7 +8,7 @@ import * as opentracing from 'opentracing';
 import SpanContextImp from './span_context_imp';
 import SpanImp from './span_imp';
 import _each from '../_each';
-import { Platform, ThriftTransport } from '../platform_abstraction_layer';
+import { Platform, ProtoTransport, ThriftTransport } from '../platform_abstraction_layer';
 import AuthImp from './auth_imp';
 import RuntimeImp from './runtime_imp';
 import ReportImp from './report_imp';
@@ -75,7 +75,18 @@ export default class Tracer extends opentracing.Tracer {
             warn  : (msg, payload) => { this._warn(msg, payload); },
             error : (err, payload) => { this._error(err, payload); },
         };
-        this._transport = (opts ? opts.override_transport : null) || new ThriftTransport(logger);
+
+        if (opts) {
+            this._transport = opts.override_transport;
+        }
+
+        if (!this._transport) {
+            if (opts.transport && opts.transport === 'thrift') {
+                this._transport = new ThriftTransport(logger);
+            } else {
+                this._transport = new ProtoTransport(logger);
+            }
+        }
 
         this._reportingLoopActive = false;
         this._reportYoungestMicros = now;

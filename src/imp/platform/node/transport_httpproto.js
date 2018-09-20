@@ -1,6 +1,6 @@
 import * as https from 'https';
 import * as http from 'http';
-import * as zlib from 'zlib';
+let proto = require('../../generated_proto/collector_pb.js');
 
 const kMaxDetailedErrorFrequencyMs = 30000;
 const kMaxStringLength = 2048;
@@ -15,7 +15,7 @@ function truncatedString(s) {
 
 function encodeAndTruncate(obj) {
     try {
-        return truncatedString(JSON.stringify(obj.toThrift()));
+        return truncatedString(obj.toString('utf8'));
     } catch (exception) {
         return exception;
     }
@@ -28,7 +28,7 @@ function errorFromResponse(res, buffer) {
     return new Error(`status code=${res.statusCode}, message='${res.statusMessage}', body='${buffer}'`);
 }
 
-export default class TransportHTTPThrift {
+export default class TransportHTTPProto {
     constructor(logger) {
         this._host = '';
         this._port = 0;
@@ -44,23 +44,21 @@ export default class TransportHTTPThrift {
         this._port       = opts.collector_port;
         this._encryption = opts.collector_encryption;
         this._timeoutMs  = opts.report_timeout_millis;
-        this._gzipJSON   = opts.gzip_json_requests;
     }
 
-    _preparePayload(useGzip, reportRequest, cb) {
+    _preparePayload(reportRequest, auth, cb) {
         let payload;
         try {
-            payload = JSON.stringify(reportRequest.toThrift());
+            let reportProto = reportRequest.toProto(auth);
+            let binary = reportProto.serializeBinary();
+            payload = Buffer.from(binary);
         } catch (exception) {
             // This should never happen. The library should always be constructing
             // valid reports.
-            this._error('Could not JSON.stringify report!');
+            this._error('Could not serialize report!');
             return cb(exception);
         }
 
-        if (useGzip) {
-            return zlib.gzip(payload, cb);
-        }
         return cb(null, payload);
     }
 
@@ -69,24 +67,26 @@ export default class TransportHTTPThrift {
             hostname : this._host,
             port     : this._port,
             method   : 'POST',
-            path     : '/api/v0/reports',
+            path     : '/api/v2/reports',
         };
-        let protocol = (this._encryption === 'none') ? http : https;
-        let useGzip = this._gzipJSON;
 
-        this._preparePayload(useGzip, reportRequest, (payloadErr, payload) => {
+        let protocol = (this._encryption === 'none') ? http : https;
+
+        this._preparePayload(reportRequest, auth, (payloadErr, payload) => {
             if (payloadErr) {
-                this._error('Error compressing payload');
+                this._error('Error serializing payload');
                 return done(payloadErr);
             }
 
             let extraErrorData = [];
+
             let req = protocol.request(options, (res) => {
-                let buffer = '';
+                let buffer = [];
                 res.on('data', (chunk) => {
-                    buffer += chunk;
+                    buffer.push(chunk);
                 });
                 res.on('end', () => {
+                    buffer = Buffer.concat(buffer);
                     let err = null;
                     let resp = null;
                     if (res.statusCode === 400) {
@@ -96,7 +96,7 @@ export default class TransportHTTPThrift {
                                 message : res.statusMessage,
                                 body    : buffer,
                                 extra   : extraErrorData,
-                                report  : encodeAndTruncate(reportRequest),
+                                report  : encodeAndTruncate(payload),
                             });
                         });
                         err = errorFromResponse(res, buffer);
@@ -106,7 +106,7 @@ export default class TransportHTTPThrift {
                         err = new Error('unexpected empty response');
                     } else {
                         try {
-                            resp = JSON.parse(buffer);
+                            resp = proto.ReportResponse.deserializeBinary(buffer);
                         } catch (exception) {
                             err = exception;
                         }
@@ -137,11 +137,9 @@ export default class TransportHTTPThrift {
             req.setHeader('Host', this._host);
             req.setHeader('User-Agent', 'LightStep-JavaScript-Node');
             req.setHeader('LightStep-Access-Token', auth.getAccessToken());
-            req.setHeader('Content-Type', 'application/json');
+            req.setHeader('Accept', 'application/octet-stream');
+            req.setHeader('Content-Type', 'application/octet-stream');
             req.setHeader('Content-Length', payload.length);
-            if (useGzip) {
-                req.setHeader('Content-Encoding', 'gzip');
-            }
             if (!detached) {
                 req.setHeader('Connection', 'keep-alive');
             }
