@@ -13,6 +13,7 @@ BUNDLE_JS=dist/lightstep-tracer.js dist/lightstep-tracer.min.js
 .PHONY: build
 build: node_modules build-node build-browser
 
+.PHONY: node_modules
 node_modules:
 	npm install
 
