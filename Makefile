@@ -140,3 +140,10 @@ thrift-compile:
 thrift-postprocess:
 	node ./scripts/build_browser_thrift_lib.js
 	node ./scripts/build_node_thrift_lib.js
+
+# LightStep internal target
+.PHONY: proto
+proto:
+	protoc -I"$(PWD)/../googleapis/:$(PWD)/../lightstep-tracer-common/" \
+		--js_out=import_style=commonjs,binary:src/imp/generated_proto \
+		collector.proto google/api/annotations.proto google/api/http.proto
