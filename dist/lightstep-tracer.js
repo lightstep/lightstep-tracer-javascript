@@ -105,13 +105,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _platform_abstraction_layer = __webpack_require__(24);
 	
-	var _auth_imp = __webpack_require__(34);
+	var _auth_imp = __webpack_require__(35);
 	
 	var _auth_imp2 = _interopRequireDefault(_auth_imp);
 	
-	var _runtime_imp = __webpack_require__(35);
+	var _runtime_imp = __webpack_require__(36);
 	
 	var _runtime_imp2 = _interopRequireDefault(_runtime_imp);
+	
+	var _report_imp = __webpack_require__(37);
+	
+	var _report_imp2 = _interopRequireDefault(_report_imp);
 	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
@@ -125,16 +129,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	// Imports
 	//============================================================================//
 	
-	// eslint-disable-line camelcase
-	
-	
-	var ClockState = __webpack_require__(36);
-	var LogBuilder = __webpack_require__(37);
+	var ClockState = __webpack_require__(38);
+	var LogBuilder = __webpack_require__(39);
 	var coerce = __webpack_require__(22);
 	var constants = __webpack_require__(23);
-	var globals = __webpack_require__(38);
-	var packageObject = __webpack_require__(39);
-	var util = __webpack_require__(40);
+	var globals = __webpack_require__(40);
+	var packageObject = __webpack_require__(41);
+	var util = __webpack_require__(42);
 	
 	var CARRIER_TRACER_STATE_PREFIX = 'ot-tracer-';
 	var CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
@@ -249,7 +250,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _this._flushIsActive = false;
 	
 	        // Built-in plugins
-	        _this.addPlugin(__webpack_require__(41));
+	        _this.addPlugin(__webpack_require__(43));
 	
 	        // Initialize the platform options after the built-in plugins in
 	        // case any of those options affect the built-ins.
@@ -798,6 +799,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	                })();
 	            }
 	        }
+	    }, {
+	        key: 'getLogFieldKeyHardLimit',
+	        value: function getLogFieldKeyHardLimit() {
+	            return this._options.log_field_key_hard_limit;
+	        }
+	    }, {
+	        key: 'getLogFieldValueHardLimit',
+	        value: function getLogFieldValueHardLimit() {
+	            return this._options.log_field_value_hard_limit;
+	        }
 	
 	        //-----------------------------------------------------------------------//
 	        // Plugins
@@ -1024,11 +1035,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                _this9._pushInternalLog(log);
 	            });
 	
-	            (0, _each3.default)(counters, function (record) {
-	                if (_this9._counters[record.Name]) {
-	                    _this9._counters[record.Name] += record.Value;
+	            (0, _each3.default)(counters, function (value, key) {
+	                if (key in _this9._counters) {
+	                    _this9._counters[key] += value;
 	                } else {
-	                    _this9._error('Bad counter name: ' + record.Name);
+	                    _this9._error('Bad counter name: ' + key);
 	                }
 	            });
 	        }
@@ -1227,34 +1238,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            // spans before the GUID is necessarily set.
 	            console.assert(this._runtimeGUID !== null, 'No runtime GUID for Tracer'); // eslint-disable-line no-console
 	
-	            (0, _each3.default)(spanRecords, function (span) {
-	                span.runtime_guid = _this13._runtimeGUID;
-	            });
-	
-	            var thriftCounters = [];
-	            (0, _each3.default)(counters, function (value, key) {
-	                if (value === 0) {
-	                    return;
-	                }
-	                thriftCounters.push(new _platform_abstraction_layer.crouton_thrift.MetricsSample({
-	                    name: coerce.toString(key),
-	                    double_value: coerce.toNumber(value)
-	                }));
-	            });
-	
 	            var timestampOffset = this._useClockState ? clockOffsetMicros : 0;
 	            var now = this._platform.nowMicros();
-	            var report = new _platform_abstraction_layer.crouton_thrift.ReportRequest({
-	                runtime: this._runtime.toThrift(),
-	                oldest_micros: this._reportYoungestMicros,
-	                youngest_micros: now,
-	                span_records: spanRecords,
-	                internal_logs: internalLogs,
-	                internal_metrics: new _platform_abstraction_layer.crouton_thrift.Metrics({
-	                    counts: thriftCounters
-	                }),
-	                timestamp_offset_micros: timestampOffset
-	            });
+	            var report = new _report_imp2.default(this._runtime, this._reportYoungestMicros, now, spanRecords, internalLogs, counters, timestampOffset);
 	
 	            this.emit('prereport', report);
 	            var originMicros = this._platform.nowMicros();
@@ -1279,7 +1265,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        last_report_seconds_ago: reportWindowSeconds
 	                    });
 	
-	                    _this13._restoreRecords(report.span_records, report.internal_logs, report.counters);
+	                    _this13._restoreRecords(report.getSpanRecords(), report.getInternalLogs(), report.getCounters());
 	
 	                    // Increment the counter *after* the counters are restored
 	                    _this13._counters['reports.errors.send']++;
@@ -2945,6 +2931,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _platform_abstraction_layer = __webpack_require__(24);
 	
+	var _log_record_imp = __webpack_require__(34);
+	
+	var _log_record_imp2 = _interopRequireDefault(_log_record_imp);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
@@ -2953,7 +2943,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 	
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } // eslint-disable-line camelcase
+	
 	
 	// eslint-disable-line camelcase
 	
@@ -3001,39 +2992,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	            var tsMicros = timestamp ? timestamp * 1000 : self._tracerImp._platform.nowMicros();
 	
-	            var fields = [];
-	            (0, _each3.default)(keyValuePairs, function (value, key) {
-	                if (!key || !value) {
-	                    return;
-	                }
-	                var keyStr = coerce.toString(key);
-	                var valStr = null;
-	                if (value instanceof Object) {
-	                    try {
-	                        valStr = JSON.stringify(value, null, '  ');
-	                    } catch (e) {
-	                        valStr = 'Could not encode value. Exception: ' + e;
-	                    }
-	                } else {
-	                    valStr = coerce.toString(value);
-	                }
-	                if (keyStr.length > self._tracerImp._options.log_field_key_hard_limit) {
-	                    self._tracerImp._counters['logs.keys.over_limit']++;
-	                    keyStr = keyStr.substr(0, self._tracerImp._options.log_field_key_hard_limit) + '...';
-	                }
-	                if (valStr.length > self._tracerImp._options.log_field_value_hard_limit) {
-	                    self._tracerImp._counters['logs.values.over_limit']++;
-	                    valStr = valStr.substr(0, self._tracerImp._options.log_field_value_hard_limit) + '...';
-	                }
-	                fields.push(new _platform_abstraction_layer.crouton_thrift.KeyValue({
-	                    Key: keyStr,
-	                    Value: valStr
-	                }));
-	            });
-	            var record = new _platform_abstraction_layer.crouton_thrift.LogRecord({
-	                timestamp_micros: tsMicros,
-	                fields: fields
-	            });
+	            var record = new _log_record_imp2.default(self._tracerImp.getLogFieldKeyHardLimit(), self._tracerImp.getLogFieldValueHardLimit(), tsMicros, keyValuePairs);
 	            self._log_records = self._log_records || [];
 	            self._log_records.push(record);
 	            self._tracerImp.emit('log_added', record);
@@ -3183,11 +3142,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (this._endMicros === 0) {
 	                this._endMicros = this._tracerImp._platform.nowMicros();
 	            }
-	            this._tracerImp._addSpanRecord(this._toThrift());
+	            this._tracerImp._addSpanRecord(this);
 	        }
 	    }, {
 	        key: '_toThrift',
 	        value: function _toThrift() {
+	            var _this2 = this;
+	
 	            var attributes = [];
 	            (0, _each3.default)(this._tags, function (value, key) {
 	                attributes.push(new _platform_abstraction_layer.crouton_thrift.KeyValue({
@@ -3196,7 +3157,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }));
 	            });
 	
-	            var record = new _platform_abstraction_layer.crouton_thrift.SpanRecord({
+	            var logs = [];
+	            (0, _each3.default)(this._log_records, function (logRecord) {
+	                var logThrift = logRecord.toThrift();
+	                _this2._tracerImp._counters['logs.keys.over_limit'] += logRecord.getNumKeysOverLimit();
+	                _this2._tracerImp._counters['logs.values.over_limit'] += logRecord.getNumValuesOverLimit();
+	                logs.push(logThrift);
+	            });
+	
+	            return new _platform_abstraction_layer.crouton_thrift.SpanRecord({
 	                span_guid: this.guid(),
 	                trace_guid: this.traceGUID(),
 	                runtime_guid: this._tracerImp.guid(),
@@ -3205,9 +3174,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                youngest_micros: this._endMicros,
 	                attributes: attributes,
 	                error_flag: this._errorFlag,
-	                log_records: this._log_records
+	                log_records: logs
 	            });
-	            return record;
 	        }
 	    }]);
 	
@@ -4286,7 +4254,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: '_reportAJAX',
 	        value: function _reportAJAX(auth, report, done) {
-	            var payload = JSON.stringify(report);
+	            var payload = JSON.stringify(report.toThrift());
 	            var protocol = this._encryption === 'none' ? 'http' : 'https';
 	            var url = protocol + '://' + this._host + ':' + this._port + this._path + '/api/v0/reports';
 	            var xhr = new XMLHttpRequest();
@@ -4325,7 +4293,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        key: '_reportAsyncScript',
 	        value: function _reportAsyncScript(auth, report, done) {
 	            var authJSON = JSON.stringify(auth.toThrift());
-	            var reportJSON = JSON.stringify(report);
+	            var reportJSON = JSON.stringify(report.toThrift());
 	            var protocol = this._encryption === 'none' ? 'http' : 'https';
 	            var url = protocol + '://' + this._host + ':' + this._port + this._path + '/_rpc/v1/reports/uri_encoded' + ('?auth=' + encodeURIComponent(authJSON)) + ('&report=' + encodeURIComponent(reportJSON));
 	
@@ -6030,6 +5998,126 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); // eslint-disable-line camelcase
+	
+	
+	var _platform_abstraction_layer = __webpack_require__(24);
+	
+	var _each2 = __webpack_require__(20);
+	
+	var _each3 = _interopRequireDefault(_each2);
+	
+	var _coerce = __webpack_require__(22);
+	
+	var coerce = _interopRequireWildcard(_coerce);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	// eslint-disable-line camelcase
+	
+	var LogRecordImp = function () {
+	    function LogRecordImp(logFieldKeyHardLimit, logFieldValueHardLimit, timestampMicros, fields) {
+	        _classCallCheck(this, LogRecordImp);
+	
+	        this._logFieldKeyHardLimit = logFieldKeyHardLimit;
+	        this._logFieldValueHardLimit = logFieldValueHardLimit;
+	        this._timestampMicros = timestampMicros;
+	        this._fields = fields;
+	        this._keysOverLimit = 0;
+	        this._valuesOverLimit = 0;
+	    }
+	
+	    _createClass(LogRecordImp, [{
+	        key: '_clearOverLimits',
+	        value: function _clearOverLimits() {
+	            this._keysOverLimit = 0;
+	            this._valuesOverLimit = 0;
+	        }
+	    }, {
+	        key: 'getNumKeysOverLimit',
+	        value: function getNumKeysOverLimit() {
+	            return this._keysOverLimit;
+	        }
+	    }, {
+	        key: 'getNumValuesOverLimit',
+	        value: function getNumValuesOverLimit() {
+	            return this._valuesOverLimit;
+	        }
+	    }, {
+	        key: 'toThrift',
+	        value: function toThrift() {
+	            var _this = this;
+	
+	            this._clearOverLimits();
+	            var thriftFields = [];
+	            (0, _each3.default)(this._fields, function (value, key) {
+	                if (!key || !value) {
+	                    return;
+	                }
+	                var keyStr = _this.getFieldKey(key);
+	                var valStr = _this.getFieldValue(value);
+	                thriftFields.push(new _platform_abstraction_layer.crouton_thrift.KeyValue({
+	                    Key: keyStr,
+	                    Value: valStr
+	                }));
+	            });
+	
+	            return new _platform_abstraction_layer.crouton_thrift.LogRecord({
+	                timestamp_micros: this._timestampMicros,
+	                fields: thriftFields
+	            });
+	        }
+	    }, {
+	        key: 'getFieldKey',
+	        value: function getFieldKey(key) {
+	            var keyStr = coerce.toString(key);
+	            if (keyStr.length > this._logFieldKeyHardLimit) {
+	                this._keysOverLimit++;
+	                keyStr = keyStr.substr(0, this._logFieldKeyHardLimit) + '...';
+	            }
+	            return keyStr;
+	        }
+	    }, {
+	        key: 'getFieldValue',
+	        value: function getFieldValue(value) {
+	            var valStr = null;
+	            if (value instanceof Object) {
+	                try {
+	                    valStr = JSON.stringify(value, null, '  ');
+	                } catch (e) {
+	                    valStr = 'Could not encode value. Exception: ' + e;
+	                }
+	            } else {
+	                valStr = coerce.toString(value);
+	            }
+	            if (valStr.length > this._logFieldValueHardLimit) {
+	                this._valuesOverLimit++;
+	                valStr = valStr.substr(0, this._logFieldValueHardLimit) + '...';
+	            }
+	            return valStr;
+	        }
+	    }]);
+	
+	    return LogRecordImp;
+	}();
+	
+	exports.default = LogRecordImp;
+	module.exports = exports['default'];
+
+/***/ },
+/* 35 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
 	var _platform_abstraction_layer = __webpack_require__(24);
@@ -6066,7 +6154,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ },
-/* 35 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6134,7 +6222,110 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ },
-/* 36 */
+/* 37 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); // eslint-disable-line camelcase
+	// eslint-disable-line camelcase
+	
+	
+	var _platform_abstraction_layer = __webpack_require__(24);
+	
+	var _each2 = __webpack_require__(20);
+	
+	var _each3 = _interopRequireDefault(_each2);
+	
+	var _coerce = __webpack_require__(22);
+	
+	var coerce = _interopRequireWildcard(_coerce);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var ReportImp = function () {
+	    function ReportImp(runtime, oldestMicros, youngestMicros, spanRecords, internalLogs, counters, timestampOffsetMicros) {
+	        _classCallCheck(this, ReportImp);
+	
+	        this._runtime = runtime;
+	        this._oldestMicros = oldestMicros;
+	        this._youngestMicros = youngestMicros;
+	        this._spanRecords = spanRecords;
+	        this._internalLogs = internalLogs;
+	        this._counters = counters;
+	        this._timestampOffsetMicros = timestampOffsetMicros;
+	    }
+	
+	    _createClass(ReportImp, [{
+	        key: 'getSpanRecords',
+	        value: function getSpanRecords() {
+	            return this._spanRecords;
+	        }
+	    }, {
+	        key: 'getInternalLogs',
+	        value: function getInternalLogs() {
+	            return this._internalLogs;
+	        }
+	    }, {
+	        key: 'getCounters',
+	        value: function getCounters() {
+	            return this._counters;
+	        }
+	    }, {
+	        key: 'toThrift',
+	        value: function toThrift() {
+	            var _this = this;
+	
+	            (0, _each3.default)(this._spanRecords, function (span) {
+	                span.runtime_guid = _this._runtimeGUID;
+	            });
+	
+	            var thriftCounters = [];
+	            (0, _each3.default)(this._counters, function (value, key) {
+	                if (value === 0) {
+	                    return;
+	                }
+	                thriftCounters.push(new _platform_abstraction_layer.crouton_thrift.MetricsSample({
+	                    name: coerce.toString(key),
+	                    double_value: coerce.toNumber(value)
+	                }));
+	            });
+	
+	            var thriftSpanRecords = [];
+	            (0, _each3.default)(this._spanRecords, function (spanRecord) {
+	                thriftSpanRecords.push(spanRecord._toThrift());
+	            });
+	
+	            return new _platform_abstraction_layer.crouton_thrift.ReportRequest({
+	                runtime: this._runtime.toThrift(),
+	                oldest_micros: this._oldestMicros,
+	                youngest_micros: this._youngestMicros,
+	                span_records: thriftSpanRecords,
+	                internal_logs: this._internalLogs,
+	                internal_metrics: new _platform_abstraction_layer.crouton_thrift.Metrics({
+	                    counts: thriftCounters
+	                }),
+	                timestamp_offset_micros: this._timestampOffsetMicros
+	            });
+	        }
+	    }]);
+	
+	    return ReportImp;
+	}();
+	
+	exports.default = ReportImp;
+	module.exports = exports['default'];
+
+/***/ },
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6307,7 +6498,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = ClockState;
 
 /***/ },
-/* 37 */
+/* 39 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6426,7 +6617,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = LogBuilder;
 
 /***/ },
-/* 38 */
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6465,7 +6656,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = new PackageGlobals();
 
 /***/ },
-/* 39 */
+/* 41 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -6532,7 +6723,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 40 */
+/* 42 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -6572,7 +6763,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports['default'];
 
 /***/ },
-/* 41 */
+/* 43 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';

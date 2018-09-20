@@ -15,7 +15,7 @@ function truncatedString(s) {
 
 function encodeAndTruncate(obj) {
     try {
-        return truncatedString(JSON.stringify(obj));
+        return truncatedString(JSON.stringify(obj.toThrift()));
     } catch (exception) {
         return exception;
     }
@@ -50,7 +50,7 @@ export default class TransportHTTPJSON {
     _preparePayload(useGzip, reportRequest, cb) {
         let payload;
         try {
-            payload = JSON.stringify(reportRequest);
+            payload = JSON.stringify(reportRequest.toThrift());
         } catch (exception) {
             // This should never happen. The library should always be constructing
             // valid reports.

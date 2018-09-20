@@ -3,6 +3,7 @@ import * as constants from '../constants';
 import _each from '../_each';
 import * as opentracing from 'opentracing';
 import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
+import LogRecordImp from './log_record_imp'; // eslint-disable-line camelcase
 
 export default class SpanImp extends opentracing.Span {
 
@@ -41,39 +42,11 @@ export default class SpanImp extends opentracing.Span {
             (timestamp * 1000) :
             self._tracerImp._platform.nowMicros();
 
-        let fields = [];
-        _each(keyValuePairs, (value, key) => {
-            if (!key || !value) {
-                return;
-            }
-            let keyStr = coerce.toString(key);
-            let valStr = null;
-            if (value instanceof Object) {
-                try {
-                    valStr = JSON.stringify(value, null, '  ');
-                } catch (e) {
-                    valStr = `Could not encode value. Exception: ${e}`;
-                }
-            } else {
-                valStr = coerce.toString(value);
-            }
-            if (keyStr.length > self._tracerImp._options.log_field_key_hard_limit) {
-                self._tracerImp._counters['logs.keys.over_limit']++;
-                keyStr = `${keyStr.substr(0, self._tracerImp._options.log_field_key_hard_limit)}...`;
-            }
-            if (valStr.length > self._tracerImp._options.log_field_value_hard_limit) {
-                self._tracerImp._counters['logs.values.over_limit']++;
-                valStr = `${valStr.substr(0, self._tracerImp._options.log_field_value_hard_limit)}...`;
-            }
-            fields.push(new crouton_thrift.KeyValue({
-                Key   : keyStr,
-                Value : valStr,
-            }));
-        });
-        let record = new crouton_thrift.LogRecord({
-            timestamp_micros : tsMicros,
-            fields           : fields,
-        });
+        let record = new LogRecordImp(
+            self._tracerImp.getLogFieldKeyHardLimit(),
+            self._tracerImp.getLogFieldValueHardLimit(),
+            tsMicros,
+            keyValuePairs);
         self._log_records = self._log_records || [];
         self._log_records.push(record);
         self._tracerImp.emit('log_added', record);
@@ -198,7 +171,7 @@ export default class SpanImp extends opentracing.Span {
         if (this._endMicros === 0) {
             this._endMicros = this._tracerImp._platform.nowMicros();
         }
-        this._tracerImp._addSpanRecord(this._toThrift());
+        this._tracerImp._addSpanRecord(this);
     }
 
     _toThrift() {
@@ -210,7 +183,15 @@ export default class SpanImp extends opentracing.Span {
             }));
         });
 
-        let record = new crouton_thrift.SpanRecord({
+        let logs = [];
+        _each(this._log_records, (logRecord) => {
+            let logThrift = logRecord.toThrift();
+            this._tracerImp._counters['logs.keys.over_limit'] += logRecord.getNumKeysOverLimit();
+            this._tracerImp._counters['logs.values.over_limit'] += logRecord.getNumValuesOverLimit();
+            logs.push(logThrift);
+        });
+
+        return new crouton_thrift.SpanRecord({
             span_guid       : this.guid(),
             trace_guid      : this.traceGUID(),
             runtime_guid    : this._tracerImp.guid(),
@@ -219,9 +200,7 @@ export default class SpanImp extends opentracing.Span {
             youngest_micros : this._endMicros,
             attributes      : attributes,
             error_flag      : this._errorFlag,
-            log_records     : this._log_records,
+            log_records     : logs,
         });
-        return record;
     }
-
 }
