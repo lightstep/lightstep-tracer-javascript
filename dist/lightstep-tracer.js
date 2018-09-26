@@ -21912,7 +21912,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			"async": "1.5.0",
 			"eventemitter3": "1.1.1",
 			"source-map-support": "0.3.3",
-			"thrift": "0.9.2"
+			"thrift": "^0.10.0"
 		},
 		"devDependencies": {
 			"babel-cli": "6.14.0",
