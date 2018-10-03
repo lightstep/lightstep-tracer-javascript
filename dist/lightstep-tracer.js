@@ -21911,6 +21911,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		"dependencies": {
 			"async": "1.5.0",
 			"eventemitter3": "1.1.1",
+			"google-protobuf": "3.6.1",
+			"hex2dec": "1.0.1",
 			"source-map-support": "0.3.3",
 			"thrift": "0.10.0"
 		},
@@ -21944,8 +21946,6 @@ return /******/ (function(modules) { // webpackBootstrap
 			"eslint-config-airbnb": "6.2.0",
 			"eslint-plugin-react": "4.2.3",
 			"express": "^4.16.3",
-			"google-protobuf": "3.6.1",
-			"hex2dec": "1.0.1",
 			"istanbul": "0.4.4",
 			"json-loader": "0.5.4",
 			"mocha": "2.3.4",
