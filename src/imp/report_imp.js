@@ -1,7 +1,16 @@
-import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
+/* global TRANSPORT_PROTO */
+
 import _each from '../_each'; // eslint-disable-line camelcase
 import * as coerce from './coerce.js';
-let proto = require('./generated_proto/collector_pb.js');
+
+let croutonThrift = null;
+let proto = null;
+if ((typeof TRANSPORT_PROTO === 'undefined') || TRANSPORT_PROTO) {
+    proto = require('./generated_proto/collector_pb.js');
+}
+if ((typeof TRANSPORT_PROTO === 'undefined') || !TRANSPORT_PROTO) {
+    croutonThrift = require('../platform_abstraction_layer').crouton_thrift;
+}
 
 export default class ReportImp {
     constructor(runtime, oldestMicros, youngestMicros, spanRecords, internalLogs, counters, timestampOffsetMicros) {
@@ -27,62 +36,66 @@ export default class ReportImp {
     }
 
     toThrift() {
-        _each(this._spanRecords, (span) => {
-            span.runtime_guid = this._runtimeGUID;
-        });
+        if ((typeof TRANSPORT_PROTO === 'undefined') || !TRANSPORT_PROTO) {
+            _each(this._spanRecords, (span) => {
+                span.runtime_guid = this._runtimeGUID;
+            });
 
-        let thriftCounters = [];
-        _each(this._counters, (value, key) => {
-            if (value === 0) {
-                return;
-            }
-            thriftCounters.push(new crouton_thrift.MetricsSample({
-                name         : coerce.toString(key),
-                double_value : coerce.toNumber(value),
-            }));
-        });
+            let thriftCounters = [];
+            _each(this._counters, (value, key) => {
+                if (value === 0) {
+                    return;
+                }
+                thriftCounters.push(new croutonThrift.MetricsSample({
+                    name         : coerce.toString(key),
+                    double_value : coerce.toNumber(value),
+                }));
+            });
 
-        let thriftSpanRecords = [];
-        _each(this._spanRecords, (spanRecord) => {
-            thriftSpanRecords.push(spanRecord._toThrift());
-        });
+            let thriftSpanRecords = [];
+            _each(this._spanRecords, (spanRecord) => {
+                thriftSpanRecords.push(spanRecord._toThrift());
+            });
 
-        return new crouton_thrift.ReportRequest({
-            runtime          : this._runtime.toThrift(),
-            oldest_micros    : this._oldestMicros,
-            youngest_micros  : this._youngestMicros,
-            span_records     : thriftSpanRecords,
-            internal_logs    : this._internalLogs,
-            internal_metrics : new crouton_thrift.Metrics({
-                counts : thriftCounters,
-            }),
-            timestamp_offset_micros : this._timestampOffsetMicros,
-        });
+            return new croutonThrift.ReportRequest({
+                runtime          : this._runtime.toThrift(),
+                oldest_micros    : this._oldestMicros,
+                youngest_micros  : this._youngestMicros,
+                span_records     : thriftSpanRecords,
+                internal_logs    : this._internalLogs,
+                internal_metrics : new croutonThrift.Metrics({
+                    counts : thriftCounters,
+                }),
+                timestamp_offset_micros : this._timestampOffsetMicros,
+            });
+        }
     }
 
     toProto(auth) {
-        let spansList = [];
-        _each(this._spanRecords, (spanRecord) => {
-            spansList.push(spanRecord._toProto());
-        });
+        if ((typeof TRANSPORT_PROTO === 'undefined') || TRANSPORT_PROTO) {
+            let spansList = [];
+            _each(this._spanRecords, (spanRecord) => {
+                spansList.push(spanRecord._toProto());
+            });
 
-        let countsList = [];
-        _each(this._counters, (count) => {
-            let metricSample = new proto.MetricsSample();
-            metricSample.setName(count.name);
-            metricSample.setIntValue(count.int64_value);
-            metricSample.setDoubleValue(count.double_value);
-            countsList.push(metricSample);
-        });
+            let countsList = [];
+            _each(this._counters, (count) => {
+                let metricSample = new proto.MetricsSample();
+                metricSample.setName(count.name);
+                metricSample.setIntValue(count.int64_value);
+                metricSample.setDoubleValue(count.double_value);
+                countsList.push(metricSample);
+            });
 
-        let internalMetrics = new proto.InternalMetrics();
-        internalMetrics.setCountsList(countsList);
+            let internalMetrics = new proto.InternalMetrics();
+            internalMetrics.setCountsList(countsList);
 
-        let reportProto = new proto.ReportRequest();
-        reportProto.setAuth(auth.toProto());
-        reportProto.setReporter(this._runtime.toProto());
-        reportProto.setSpansList(spansList);
-        reportProto.setTimestampOffsetMicros(this._timestampOffsetMicros);
-        return reportProto;
+            let reportProto = new proto.ReportRequest();
+            reportProto.setAuth(auth.toProto());
+            reportProto.setReporter(this._runtime.toProto());
+            reportProto.setSpansList(spansList);
+            reportProto.setTimestampOffsetMicros(this._timestampOffsetMicros);
+            return reportProto;
+        }
     }
 }

@@ -1,8 +1,18 @@
-import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
+/* global TRANSPORT_PROTO */
+
 import _each from '../_each';
-import * as coerce from './coerce'; // eslint-disable-line camelcase
-let proto = require('./generated_proto/collector_pb.js');
-let googleProtobufTimestampPB = require('google-protobuf/google/protobuf/timestamp_pb.js');
+import * as coerce from './coerce';
+
+let croutonThrift = null;
+let googleProtobufTimestampPB = null;
+let proto = null;
+if ((typeof TRANSPORT_PROTO === 'undefined') || TRANSPORT_PROTO) {
+    googleProtobufTimestampPB = require('google-protobuf/google/protobuf/timestamp_pb.js');
+    proto = require('./generated_proto/collector_pb.js');
+}
+if ((typeof TRANSPORT_PROTO === 'undefined') || !TRANSPORT_PROTO) {
+    croutonThrift = require('../platform_abstraction_layer').crouton_thrift;
+}
 
 export default class LogRecordImp {
     constructor(logFieldKeyHardLimit, logFieldValueHardLimit, timestampMicros, fields) {
@@ -28,24 +38,26 @@ export default class LogRecordImp {
     }
 
     toThrift() {
-        this._clearOverLimits();
-        let thriftFields = [];
-        _each(this._fields, (value, key) => {
-            if (!key || !value) {
-                return;
-            }
-            let keyStr = this.getFieldKey(key);
-            let valStr = this.getFieldValue(value);
-            thriftFields.push(new crouton_thrift.KeyValue({
-                Key   : keyStr,
-                Value : valStr,
-            }));
-        });
+        if ((typeof TRANSPORT_PROTO === 'undefined') || !TRANSPORT_PROTO) {
+            this._clearOverLimits();
+            let thriftFields = [];
+            _each(this._fields, (value, key) => {
+                if (!key || !value) {
+                    return;
+                }
+                let keyStr = this.getFieldKey(key);
+                let valStr = this.getFieldValue(value);
+                thriftFields.push(new croutonThrift.KeyValue({
+                    Key   : keyStr,
+                    Value : valStr,
+                }));
+            });
 
-        return new crouton_thrift.LogRecord({
-            timestamp_micros : this._timestampMicros,
-            fields           : thriftFields,
-        });
+            return new croutonThrift.LogRecord({
+                timestamp_micros : this._timestampMicros,
+                fields           : thriftFields,
+            });
+        }
     }
 
     getFieldKey(key) {
@@ -76,30 +88,32 @@ export default class LogRecordImp {
     }
 
     toProto() {
-        this._clearOverLimits();
-        let log = new proto.Log();
-        let ts = new googleProtobufTimestampPB.Timestamp();
-        let secs = Math.floor(this._timestampMicros / 1000000);
-        let nanos = this._timestampMicros % 1000000;
-        ts.setSeconds(secs);
-        ts.setNanos(nanos);
-        log.setTimestamp(ts);
-        let keyValues = [];
-        _each(this._fields, (value, key) => {
-            if (!key || !value) {
-                return;
-            }
-            let keyStr = this.getFieldKey(key);
-            let valStr = this.getFieldValue(value);
+        if ((typeof TRANSPORT_PROTO === 'undefined') || TRANSPORT_PROTO) {
+            this._clearOverLimits();
+            let log = new proto.Log();
+            let ts = new googleProtobufTimestampPB.Timestamp();
+            let secs = Math.floor(this._timestampMicros / 1000000);
+            let nanos = this._timestampMicros % 1000000;
+            ts.setSeconds(secs);
+            ts.setNanos(nanos);
+            log.setTimestamp(ts);
+            let keyValues = [];
+            _each(this._fields, (value, key) => {
+                if (!key || !value) {
+                    return;
+                }
+                let keyStr = this.getFieldKey(key);
+                let valStr = this.getFieldValue(value);
 
-            let keyValue = new proto.KeyValue();
-            keyValue.setKey(keyStr);
-            keyValue.setStringValue(valStr);
-            keyValues.push(keyValue);
-        });
+                let keyValue = new proto.KeyValue();
+                keyValue.setKey(keyStr);
+                keyValue.setStringValue(valStr);
+                keyValues.push(keyValue);
+            });
 
-        log.setFieldsList(keyValues);
+            log.setFieldsList(keyValues);
 
-        return log;
+            return log;
+        }
     }
 }

@@ -20,8 +20,10 @@ node_modules:
 .PHONY: build-browser
 build-browser: $(BUNDLE_JS)
 $(BUNDLE_JS): $(SOURCES_JS) webpack.config.js package.json
-	BUILD_PLATFORM=browser BUILD_CONFIG=debug $(CMD_WEBPACK) --display-error-details
-	BUILD_PLATFORM=browser BUILD_CONFIG=prod $(CMD_WEBPACK) --display-error-details
+	BUILD_TRANSPORT=proto BUILD_CONFIG=debug $(CMD_WEBPACK) --display-error-details
+	BUILD_TRANSPORT=proto BUILD_CONFIG=prod $(CMD_WEBPACK) --display-error-details
+	BUILD_TRANSPORT=thrift BUILD_CONFIG=debug $(CMD_WEBPACK) --display-error-details
+	BUILD_TRANSPORT=thrift BUILD_CONFIG=prod $(CMD_WEBPACK) --display-error-details
 
 .PHONY: build-node
 build-node: $(COMPILED_JS)
@@ -34,6 +36,7 @@ clean:
 	rm -rf dist
 	rm -rf lib
 	rm -rf coverage
+	rm -rf test/dist/lightstep*.js
 
 #
 # publish
@@ -89,7 +92,8 @@ test-node:
 
 .PHONY: test-browser
 test-browser:
-	cp dist/lightstep-tracer.js test/dist
+	cp dist/lightstep-tracer-thrift.js test/dist/
+	cp dist/lightstep-tracer-proto.js test/dist/
 	cd test && node ../node_modules/webpack/bin/webpack.js unittest_browser.js dist/unittest_browser.bundle.js
 	cd test && open unittest.html
 

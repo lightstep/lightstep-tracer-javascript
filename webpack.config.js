@@ -1,15 +1,22 @@
 var webpack = require('webpack');
 
-const CONFIG = process.env.BUILD_CONFIG
+const CONFIG = process.env.BUILD_CONFIG;
+const TRANSPORT = process.env.BUILD_TRANSPORT;
 
 // Modify the webpack settings based on the configuration
 var plugins = [];
 var defines = {
     DEBUG            : false,
     PLATFORM_BROWSER : true,
+    TRANSPORT_PROTO  : JSON.stringify(true),
 };
-var bundleSuffix = (CONFIG === 'debug') ? '' : '.min';
+var bundleSuffix = (TRANSPORT === 'proto') ? '-proto' : '-thrift';
+bundleSuffix += (CONFIG === 'debug') ? '' : '.min';
 var devtool = undefined;
+
+if (TRANSPORT === 'thrift') {
+    defines.TRANSPORT_PROTO = false;
+}
 
 switch (CONFIG) {
     case 'debug':
@@ -30,6 +37,11 @@ switch (CONFIG) {
             }
         }));
         plugins.push(new webpack.optimize.DedupePlugin());
+        if (!defines.TRANSPORT_PROTO) {
+            plugins.push(new webpack.NormalModuleReplacementPlugin(/generated_proto/, function(resource) {
+                resource.request = resource.request.replace(/generated_proto/, `no_proto`);
+            }));
+        }
         break;
     default:
         console.error('Unexpected BUILD_CONFIG!');
@@ -52,7 +64,7 @@ module.exports = {
         libraryTarget : 'umd',
     },
     plugins :[
-        new webpack.DefinePlugin(defines),
+        new webpack.DefinePlugin(defines)
     ].concat(plugins),
     resolve : {
         alias : { }

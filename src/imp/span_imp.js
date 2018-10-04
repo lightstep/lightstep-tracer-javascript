@@ -1,12 +1,23 @@
+/* global TRANSPORT_PROTO */
+
 import * as coerce from './coerce.js';
 import * as constants from '../constants';
 import _each from '../_each';
 import * as opentracing from 'opentracing';
-import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
-import LogRecordImp from './log_record_imp'; // eslint-disable-line camelcase
-let converter = require('hex2dec');
-let proto = require('./generated_proto/collector_pb.js');
-let googleProtobufTimestampPB = require('google-protobuf/google/protobuf/timestamp_pb.js');
+import LogRecordImp from './log_record_imp';
+
+let croutonThrift = null;
+let googleProtobufTimestampPB = null;
+let proto = null;
+let converter = null;
+if ((typeof TRANSPORT_PROTO === 'undefined') || TRANSPORT_PROTO) {
+    googleProtobufTimestampPB = require('google-protobuf/google/protobuf/timestamp_pb.js');
+    proto = require('./generated_proto/collector_pb.js');
+    converter = require('hex2dec');
+}
+if ((typeof TRANSPORT_PROTO === 'undefined') || !TRANSPORT_PROTO) {
+    croutonThrift = require('../platform_abstraction_layer').crouton_thrift;
+}
 
 export default class SpanImp extends opentracing.Span {
 
@@ -178,84 +189,88 @@ export default class SpanImp extends opentracing.Span {
     }
 
     _toThrift() {
-        let attributes = [];
-        _each(this._tags, (value, key) => {
-            attributes.push(new crouton_thrift.KeyValue({
-                Key   : coerce.toString(key),
-                Value : coerce.toString(value),
-            }));
-        });
+        if ((typeof TRANSPORT_PROTO === 'undefined') || !TRANSPORT_PROTO) {
+            let attributes = [];
+            _each(this._tags, (value, key) => {
+                attributes.push(new croutonThrift.KeyValue({
+                    Key   : coerce.toString(key),
+                    Value : coerce.toString(value),
+                }));
+            });
 
-        let logs = [];
-        _each(this._log_records, (logRecord) => {
-            let logThrift = logRecord.toThrift();
-            this._tracerImp._counters['logs.keys.over_limit'] += logRecord.getNumKeysOverLimit();
-            this._tracerImp._counters['logs.values.over_limit'] += logRecord.getNumValuesOverLimit();
-            logs.push(logThrift);
-        });
+            let logs = [];
+            _each(this._log_records, (logRecord) => {
+                let logThrift = logRecord.toThrift();
+                this._tracerImp._counters['logs.keys.over_limit'] += logRecord.getNumKeysOverLimit();
+                this._tracerImp._counters['logs.values.over_limit'] += logRecord.getNumValuesOverLimit();
+                logs.push(logThrift);
+            });
 
-        return new crouton_thrift.SpanRecord({
-            span_guid       : this.guid(),
-            trace_guid      : this.traceGUID(),
-            runtime_guid    : this._tracerImp.guid(),
-            span_name       : this._operationName,
-            oldest_micros   : this._beginMicros,
-            youngest_micros : this._endMicros,
-            attributes      : attributes,
-            error_flag      : this._errorFlag,
-            log_records     : logs,
-        });
+            return new croutonThrift.SpanRecord({
+                span_guid       : this.guid(),
+                trace_guid      : this.traceGUID(),
+                runtime_guid    : this._tracerImp.guid(),
+                span_name       : this._operationName,
+                oldest_micros   : this._beginMicros,
+                youngest_micros : this._endMicros,
+                attributes      : attributes,
+                error_flag      : this._errorFlag,
+                log_records     : logs,
+            });
+        }
     }
 
     _toProto() {
-        let spanContextProto = new proto.SpanContext();
-        spanContextProto.setTraceId(converter.hexToDec(this.traceGUID()));
-        spanContextProto.setSpanId(converter.hexToDec(this.guid()));
+        if ((typeof TRANSPORT_PROTO === 'undefined') || TRANSPORT_PROTO) {
+            let spanContextProto = new proto.SpanContext();
+            spanContextProto.setTraceId(converter.hexToDec(this.traceGUID()));
+            spanContextProto.setSpanId(converter.hexToDec(this.guid()));
 
-        let spanProto = new proto.Span();
-        spanProto.setSpanContext(spanContextProto);
-        spanProto.setOperationName(this._operationName);
+            let spanProto = new proto.Span();
+            spanProto.setSpanContext(spanContextProto);
+            spanProto.setOperationName(this._operationName);
 
-        let startTimestamp = new googleProtobufTimestampPB.Timestamp();
-        let startSeconds = Math.floor(this._beginMicros / 1000000);
-        let startNanos = this._beginMicros % 1000000;
-        startTimestamp.setSeconds(startSeconds);
-        startTimestamp.setNanos(startNanos);
-        spanProto.setStartTimestamp(startTimestamp);
-        spanProto.setDurationMicros(this._endMicros - this._beginMicros);
+            let startTimestamp = new googleProtobufTimestampPB.Timestamp();
+            let startSeconds = Math.floor(this._beginMicros / 1000000);
+            let startNanos = this._beginMicros % 1000000;
+            startTimestamp.setSeconds(startSeconds);
+            startTimestamp.setNanos(startNanos);
+            spanProto.setStartTimestamp(startTimestamp);
+            spanProto.setDurationMicros(this._endMicros - this._beginMicros);
 
-        let logs = [];
-        _each(this._log_records, (logRecord) => {
-            let logProto = logRecord.toProto();
-            this._tracerImp._counters['logs.keys.over_limit'] += logRecord.getNumKeysOverLimit();
-            this._tracerImp._counters['logs.values.over_limit'] += logRecord.getNumValuesOverLimit();
-            logs.push(logProto);
-        });
-        spanProto.setLogsList(logs);
+            let logs = [];
+            _each(this._log_records, (logRecord) => {
+                let logProto = logRecord.toProto();
+                this._tracerImp._counters['logs.keys.over_limit'] += logRecord.getNumKeysOverLimit();
+                this._tracerImp._counters['logs.values.over_limit'] += logRecord.getNumValuesOverLimit();
+                logs.push(logProto);
+            });
+            spanProto.setLogsList(logs);
 
-        let parentSpanGUID = undefined;
-        let tags = [];
-        _each(this._tags, (value, key) => {
-            let strValue = coerce.toString(value);
-            let strKey = coerce.toString(key);
-            let tag = new proto.KeyValue();
-            if (strKey === 'parent_span_guid') {
-                parentSpanGUID = strValue;
+            let parentSpanGUID = undefined;
+            let tags = [];
+            _each(this._tags, (value, key) => {
+                let strValue = coerce.toString(value);
+                let strKey = coerce.toString(key);
+                let tag = new proto.KeyValue();
+                if (strKey === 'parent_span_guid') {
+                    parentSpanGUID = strValue;
+                }
+                tag.setKey(strKey);
+                tag.setStringValue(strValue);
+                tags.push(tag);
+            });
+            spanProto.setTagsList(tags);
+
+            if (parentSpanGUID !== undefined) {
+                let ref = new proto.Reference();
+                ref.setRelationship(proto.Reference.Relationship.CHILD_OF);
+                let parentSpanContext = new proto.SpanContext();
+                parentSpanContext.setSpanId(converter.hexToDec(parentSpanGUID));
+                ref.setSpanContext(parentSpanContext);
+                spanProto.setReferencesList([ref]);
             }
-            tag.setKey(strKey);
-            tag.setStringValue(strValue);
-            tags.push(tag);
-        });
-        spanProto.setTagsList(tags);
-
-        if (parentSpanGUID !== undefined) {
-            let ref = new proto.Reference();
-            ref.setRelationship(proto.Reference.Relationship.CHILD_OF);
-            let parentSpanContext = new proto.SpanContext();
-            parentSpanContext.setSpanId(converter.hexToDec(parentSpanGUID));
-            ref.setSpanContext(parentSpanContext);
-            spanProto.setReferencesList([ref]);
+            return spanProto;
         }
-        return spanProto;
     }
 }

@@ -70,6 +70,10 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
     if (collectorEncryption) {
         opts.collector_encryption = collectorEncryption;
     }
+    let transport = dataset.transport;
+    if (transport) {
+        opts.transport = transport;
+    }
 
     let enable = dataset.enable;
     if (typeof enable === 'string') {

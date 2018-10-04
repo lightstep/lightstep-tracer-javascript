@@ -31,7 +31,7 @@ While in production, you'll likely want more control than this, this is an easy 
 
 ```html
 <script src="PATH/TO/opentracing-browser.min.js"></script>
-<script src="PATH/TO/lightstep-tracer.min.js"
+<script src="PATH/TO/lightstep-tracer-proto.min.js"
         data-init_global_tracer="true"
         data-access_token="{your_access_token}"
         data-component_name="{name_to_use_for_your_component}"

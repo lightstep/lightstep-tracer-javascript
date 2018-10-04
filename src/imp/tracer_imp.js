@@ -1,6 +1,7 @@
 //============================================================================//
 // Imports
 //============================================================================//
+/* global TRANSPORT_PROTO */
 
 import EventEmitter from 'eventemitter3';
 import * as opentracing from 'opentracing';
@@ -8,10 +9,19 @@ import * as opentracing from 'opentracing';
 import SpanContextImp from './span_context_imp';
 import SpanImp from './span_imp';
 import _each from '../_each';
-import { Platform, ProtoTransport, ThriftTransport } from '../platform_abstraction_layer';
 import AuthImp from './auth_imp';
 import RuntimeImp from './runtime_imp';
 import ReportImp from './report_imp';
+
+let Platform = require('../platform_abstraction_layer').Platform;
+let ProtoTransport = null;
+let ThriftTransport = null;
+if ((typeof TRANSPORT_PROTO === 'undefined') || TRANSPORT_PROTO) {
+    ProtoTransport = require('../platform_abstraction_layer').ProtoTransport;
+}
+if ((typeof TRANSPORT_PROTO === 'undefined') || !TRANSPORT_PROTO) {
+    ThriftTransport = require('../platform_abstraction_layer').ThriftTransport;
+}
 
 const ClockState    = require('./util/clock_state');
 const LogBuilder    = require('./log_builder');
