@@ -4,15 +4,15 @@ const CONFIG = process.env.BUILD_CONFIG;
 const TRANSPORT = process.env.BUILD_TRANSPORT;
 
 // Modify the webpack settings based on the configuration
-var plugins = [];
-var defines = {
+let plugins = [];
+let defines = {
     DEBUG            : false,
     PLATFORM_BROWSER : true,
     TRANSPORT_PROTO  : JSON.stringify(true),
 };
-var bundleSuffix = (TRANSPORT === 'proto') ? '-proto' : '-thrift';
+let bundleSuffix = (TRANSPORT === 'proto') ? '-proto' : '-thrift';
 bundleSuffix += (CONFIG === 'debug') ? '' : '.min';
-var devtool = undefined;
+let devtool = undefined;
 
 if (TRANSPORT === 'thrift') {
     defines.TRANSPORT_PROTO = false;
@@ -26,19 +26,19 @@ switch (CONFIG) {
     case 'prod':
         plugins.push(new webpack.optimize.OccurenceOrderPlugin());
         plugins.push(new webpack.optimize.UglifyJsPlugin({
-            minimize: true,
+            minimize : true,
             // beautify: true,
             compress : {
                 dead_code : true,
-                unused : true,
+                unused    : true,
                 // Hide the dead code warnings. The defines intentionally create
                 // dead code paths.
                 warnings  : false,
-            }
+            },
         }));
         plugins.push(new webpack.optimize.DedupePlugin());
         if (!defines.TRANSPORT_PROTO) {
-            plugins.push(new webpack.NormalModuleReplacementPlugin(/generated_proto/, function(resource) {
+            plugins.push(new webpack.NormalModuleReplacementPlugin(/generated_proto/, function (resource) {
                 resource.request = resource.request.replace(/generated_proto/, `no_proto`);
             }));
         }
@@ -63,11 +63,11 @@ module.exports = {
         library       : 'lightstep',
         libraryTarget : 'umd',
     },
-    plugins :[
-        new webpack.DefinePlugin(defines)
+    plugins : [
+        new webpack.DefinePlugin(defines),
     ].concat(plugins),
     resolve : {
-        alias : { }
+        alias : {},
     },
     module  : {
         loaders : [
@@ -78,8 +78,8 @@ module.exports = {
                 exclude : /node_modules/,
                 query   : {
                     cacheDirectory : true,
-                    presets : [ ],
-                    plugins : [
+                    presets        : [],
+                    plugins        : [
                         'add-module-exports',
                         //
                         // Manually specify the *subset* of the ES2015 preset
@@ -108,12 +108,12 @@ module.exports = {
                         //'babel-plugin-transform-es2015-typeof-symbol',
                         'babel-plugin-transform-es2015-modules-commonjs',
                     ],
-                }
+                },
             },
             {
-                test    : /\.json$/,
-                loader  : 'json',
+                test   : /\.json$/,
+                loader : 'json',
             },
-        ]
+        ],
     },
 };

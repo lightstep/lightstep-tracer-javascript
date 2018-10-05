@@ -6,10 +6,10 @@ import * as coerce from './coerce.js';
 let croutonThrift = null;
 let proto = null;
 if ((typeof TRANSPORT_PROTO === 'undefined') || TRANSPORT_PROTO) {
-    proto = require('./generated_proto/collector_pb.js');
+    proto = require('./generated_proto/collector_pb.js'); // eslint-disable-line global-require
 }
 if ((typeof TRANSPORT_PROTO === 'undefined') || !TRANSPORT_PROTO) {
-    croutonThrift = require('../platform_abstraction_layer').crouton_thrift;
+    croutonThrift = require('../platform_abstraction_layer').crouton_thrift; // eslint-disable-line global-require
 }
 
 export default class ReportImp {

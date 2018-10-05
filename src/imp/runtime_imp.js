@@ -8,11 +8,11 @@ let croutonThrift = null;
 let proto = null;
 let converter = null;
 if ((typeof TRANSPORT_PROTO === 'undefined') || TRANSPORT_PROTO) {
-    proto = require('./generated_proto/collector_pb.js');
-    converter = require('hex2dec');
+    proto = require('./generated_proto/collector_pb.js'); // eslint-disable-line global-require
+    converter = require('hex2dec'); // eslint-disable-line global-require
 }
 if ((typeof TRANSPORT_PROTO === 'undefined') || !TRANSPORT_PROTO) {
-    croutonThrift = require('../platform_abstraction_layer').crouton_thrift;
+    croutonThrift = require('../platform_abstraction_layer').crouton_thrift; // eslint-disable-line global-require
 }
 
 export default class RuntimeImp {

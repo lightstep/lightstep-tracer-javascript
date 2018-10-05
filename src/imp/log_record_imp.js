@@ -7,11 +7,12 @@ let croutonThrift = null;
 let googleProtobufTimestampPB = null;
 let proto = null;
 if ((typeof TRANSPORT_PROTO === 'undefined') || TRANSPORT_PROTO) {
-    googleProtobufTimestampPB = require('google-protobuf/google/protobuf/timestamp_pb.js');
-    proto = require('./generated_proto/collector_pb.js');
+    googleProtobufTimestampPB =
+        require('google-protobuf/google/protobuf/timestamp_pb.js'); // eslint-disable-line global-require
+    proto = require('./generated_proto/collector_pb.js'); // eslint-disable-line global-require
 }
 if ((typeof TRANSPORT_PROTO === 'undefined') || !TRANSPORT_PROTO) {
-    croutonThrift = require('../platform_abstraction_layer').crouton_thrift;
+    croutonThrift = require('../platform_abstraction_layer').crouton_thrift; // eslint-disable-line global-require
 }
 
 export default class LogRecordImp {
