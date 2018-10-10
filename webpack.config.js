@@ -12,7 +12,7 @@ let defines = {
 };
 let bundleSuffix = (TRANSPORT === 'proto') ? '-proto' : '-thrift';
 bundleSuffix += (CONFIG === 'debug') ? '' : '.min';
-let devtool = undefined;
+let devtool;
 
 if (TRANSPORT === 'thrift') {
     defines.TRANSPORT_PROTO = false;
