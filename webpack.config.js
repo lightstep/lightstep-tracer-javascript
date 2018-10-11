@@ -33,13 +33,11 @@ switch (CONFIG) {
                 unused    : true,
                 // Hide the dead code warnings. The defines intentionally create
                 // dead code paths.
-                warnings  : false,
-            },
-        }));
+                warnings  : false}}));
         plugins.push(new webpack.optimize.DedupePlugin());
         if (!defines.TRANSPORT_PROTO) {
             plugins.push(new webpack.NormalModuleReplacementPlugin(/generated_proto/, function (resource) {
-                resource.request = resource.request.replace(/generated_proto/, `no_proto`);
+                resource.request = resource.request.replace(/generated_proto/, 'no_proto');
             }));
         }
         break;
