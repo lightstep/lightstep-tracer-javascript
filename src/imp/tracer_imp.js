@@ -1097,7 +1097,7 @@ export default class Tracer extends opentracing.Tracer {
             } else {
                 if (this.verbosity() >= 4) {
                     this._debug(`Report flushed for last ${reportWindowSeconds} seconds`, {
-                        spans_reported : report.span_records.length,
+                        spans_reported : report.getSpanRecords().length,
                     });
                 }
 
