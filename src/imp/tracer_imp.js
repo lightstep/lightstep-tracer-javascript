@@ -81,10 +81,10 @@ export default class Tracer extends opentracing.Tracer {
         }
 
         if (!this._transport) {
-            if (opts.transport && opts.transport === 'thrift') {
-                this._transport = new ThriftTransport(logger);
-            } else {
+            if (opts.transport && opts.transport === 'proto') {
                 this._transport = new ProtoTransport(logger);
+            } else {
+                this._transport = new ThriftTransport(logger);
             }
         }
 

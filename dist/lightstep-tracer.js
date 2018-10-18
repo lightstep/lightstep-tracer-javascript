@@ -204,10 +204,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	
 	        if (!_this._transport) {
-	            if (opts.transport && opts.transport === 'thrift') {
-	                _this._transport = new _platform_abstraction_layer.ThriftTransport(logger);
-	            } else {
+	            if (opts.transport && opts.transport === 'proto') {
 	                _this._transport = new _platform_abstraction_layer.ProtoTransport(logger);
+	            } else {
+	                _this._transport = new _platform_abstraction_layer.ThriftTransport(logger);
 	            }
 	        }
 	
@@ -1289,7 +1289,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                } else {
 	                    if (_this13.verbosity() >= 4) {
 	                        _this13._debug('Report flushed for last ' + reportWindowSeconds + ' seconds', {
-	                            spans_reported: report.span_records.length
+	                            spans_reported: report.getSpanRecords().length
 	                        });
 	                    }
 	
@@ -21895,7 +21895,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = {
 		"name": "lightstep-tracer",
-		"version": "0.20.9",
+		"version": "0.20.10",
 		"main": "index.js",
 		"engines": {
 			"node": ">=0.12.0"
