@@ -209,6 +209,7 @@ export default class SpanImp extends opentracing.Span {
 
     _toProto() {
         let spanContextProto = new proto.SpanContext();
+
         spanContextProto.setTraceId(converter.hexToDec(this.traceGUID()));
         spanContextProto.setSpanId(converter.hexToDec(this.guid()));
 
@@ -217,8 +218,9 @@ export default class SpanImp extends opentracing.Span {
         spanProto.setOperationName(this._operationName);
 
         let startTimestamp = new googleProtobufTimestampPB.Timestamp();
-        let startSeconds = Math.floor(this._beginMicros / 1000000);
-        let startNanos = this._beginMicros % 1000000;
+        let startMillis = Math.floor(this._beginMicros / 1000);
+        let startSeconds = Math.floor(startMillis / 1000);
+        let startNanos = (startMillis % 1000) * 1000000;
         startTimestamp.setSeconds(startSeconds);
         startTimestamp.setNanos(startNanos);
         spanProto.setStartTimestamp(startTimestamp);
@@ -256,6 +258,7 @@ export default class SpanImp extends opentracing.Span {
             ref.setSpanContext(parentSpanContext);
             spanProto.setReferencesList([ref]);
         }
+
         return spanProto;
     }
 }
