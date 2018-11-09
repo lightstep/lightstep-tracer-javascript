@@ -3197,7 +3197,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var _this3 = this;
 	
 	            var spanContextProto = new proto.SpanContext();
-	
 	            spanContextProto.setTraceId(converter.hexToDec(this.traceGUID()));
 	            spanContextProto.setSpanId(converter.hexToDec(this.guid()));
 	
@@ -3206,9 +3205,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            spanProto.setOperationName(this._operationName);
 	
 	            var startTimestamp = new googleProtobufTimestampPB.Timestamp();
-	            var startMillis = Math.floor(this._beginMicros / 1000);
-	            var startSeconds = Math.floor(startMillis / 1000);
-	            var startNanos = startMillis % 1000 * 1000000;
+	            var startSeconds = Math.floor(this._beginMicros / 1000000);
+	            var startNanos = this._beginMicros % 1000000;
 	            startTimestamp.setSeconds(startSeconds);
 	            startTimestamp.setNanos(startNanos);
 	            spanProto.setStartTimestamp(startTimestamp);
@@ -3246,7 +3244,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                ref.setSpanContext(parentSpanContext);
 	                spanProto.setReferencesList([ref]);
 	            }
-	
 	            return spanProto;
 	        }
 	    }]);
@@ -21608,9 +21605,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this._clearOverLimits();
 	            var log = new proto.Log();
 	            var ts = new googleProtobufTimestampPB.Timestamp();
-	            var millis = Math.floor(this._timestampMicros / 1000);
-	            var secs = Math.floor(millis / 1000);
-	            var nanos = millis % 1000 * 1000000;
+	            var secs = Math.floor(this._timestampMicros / 1000000);
+	            var nanos = this._timestampMicros % 1000000;
 	            ts.setSeconds(secs);
 	            ts.setNanos(nanos);
 	            log.setTimestamp(ts);
@@ -21899,7 +21895,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = {
 		"name": "lightstep-tracer",
-		"version": "0.20.13",
+		"version": "0.20.10",
 		"main": "index.js",
 		"engines": {
 			"node": ">=0.12.0"
@@ -21918,7 +21914,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			"google-protobuf": "3.6.1",
 			"hex2dec": "1.0.1",
 			"source-map-support": "0.3.3",
-			"thrift": "0.11.0"
+			"thrift": "0.10.0"
 		},
 		"devDependencies": {
 			"babel-cli": "6.14.0",
