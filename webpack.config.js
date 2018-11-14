@@ -1,17 +1,17 @@
-var path = require('path');
+const path = require('path');
 
-var webpack = require('webpack');
+const webpack = require('webpack');
 
-var DEBUG = process.env.NODE_ENV === 'development';
+const DEBUG = process.env.NODE_ENV === 'development';
 
 // Modify the webpack settings based on the configuration
-var plugins = [];
-var defines = {
+const plugins = [];
+const defines = {
     DEBUG            : false,
     PLATFORM_BROWSER : true,
 };
-var bundleSuffix = (DEBUG) ? '' : '.min';
-var devtool = undefined;
+const bundleSuffix = (DEBUG) ? '' : '.min';
+let devtool = undefined;
 
 if (DEBUG) {
     defines.DEBUG = true;
@@ -21,36 +21,36 @@ if (DEBUG) {
 //
 // Webpack configuration
 //
-var bundleName = 'lightstep-tracer' + bundleSuffix;
+const bundleName = `lightstep-tracer${bundleSuffix}`;
 
 module.exports = {
-    mode: DEBUG ? 'development' : 'production',
+    mode    : DEBUG ? 'development' : 'production',
     entry   : './src/lib.js',
     target  : 'web',
     devtool : devtool,
     output  : {
         path          : path.resolve(__dirname, 'dist'),
-        filename      : bundleName + '.js',
+        filename      : `${bundleName}.js`,
         library       : 'lightstep',
         libraryTarget : 'umd',
     },
-    plugins :[
+    plugins : [
         new webpack.DefinePlugin(defines),
     ].concat(plugins),
     resolve : {
-        alias : { }
+        alias : { },
     },
-    module  : {
+    module : {
         rules : [
             {
                 test    : /\.js$/,
                 include : /src\//,
                 exclude : /node_modules/,
-                use: {
-                    loader: 'babel-loader',
-                    options: {
+                use     : {
+                    loader  : 'babel-loader',
+                    options : {
                         cacheDirectory : true,
-                        plugins : [
+                        plugins        : [
                             'add-module-exports',
                             //
                             // Manually specify the *subset* of the ES2015 preset
@@ -82,6 +82,6 @@ module.exports = {
                     },
                 },
             },
-        ]
+        ],
     },
 };
