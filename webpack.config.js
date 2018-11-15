@@ -11,7 +11,7 @@ const defines = {
     PLATFORM_BROWSER : true,
 };
 const bundleSuffix = (DEBUG) ? '' : '.min';
-let devtool = undefined;
+let devtool;
 
 if (DEBUG) {
     defines.DEBUG = true;
