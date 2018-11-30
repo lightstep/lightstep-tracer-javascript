@@ -136,7 +136,7 @@ export default class Tracer extends opentracing.Tracer {
 
         // For clock skew adjustment.
         // Must be set after options have been set.
-        this._useClockState = this._options.disable_clock_skew_correction;
+        this._useClockState = !this._options.disable_clock_skew_correction;
         this._clockState = new ClockState({
             nowMicros     : () => this._platform.nowMicros(),
             localStoreGet : () => {

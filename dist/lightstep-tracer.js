@@ -19454,7 +19454,7 @@ var Tracer = function (_opentracing$Tracer) {
 
         // For clock skew adjustment.
         // Must be set after options have been set.
-        _this._useClockState = _this._options.disable_clock_skew_correction;
+        _this._useClockState = !_this._options.disable_clock_skew_correction;
         _this._clockState = new ClockState({
             nowMicros: function () {
                 return _this._platform.nowMicros();
