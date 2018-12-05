@@ -1,6 +1,10 @@
 # CHANGELOG
 
 *Log of significant changes, especially those affecting the supported API.*
+## 0.20.13
+
+* Add new option to Tracer: `transport` `string` *optional, defaults to 'thrift'*, which controls the transport method used to send reports to LightStep. *Experimental Feature*
+* Fixes a bug when logging verbosity was greater than 4 during report flushes.
 
 ## 0.20.9
 

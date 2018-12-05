@@ -1,6 +1,6 @@
 {
   "name": "lightstep-tracer",
-  "version": "0.20.10",
+  "version": "0.20.13",
   "main": "index.js",
   "engines": {
     "node": ">=0.12.0"
@@ -24,7 +24,7 @@
   "devDependencies": {
     "babel-cli": "6.14.0",
     "babel-core": "6.3.26",
-    "babel-loader": "6.2.0",
+    "babel-loader": "7",
     "babel-plugin-add-module-exports": "0.1.2",
     "babel-plugin-check-es2015-constants": "6.7.2",
     "babel-plugin-transform-es2015-arrow-functions": "6.5.2",
@@ -52,7 +52,6 @@
     "eslint-plugin-react": "4.2.3",
     "express": "^4.16.3",
     "istanbul": "0.4.4",
-    "json-loader": "0.5.4",
     "mocha": "2.3.4",
     "opentracing": "0.14.3",
     "protobufjs": "6.8.8",
@@ -60,6 +59,7 @@
     "sprintf-js": "1.0.3",
     "underscore": "1.8.3",
     "watch-trigger": "0.0.5",
-    "webpack": "1.12.9"
+    "webpack": "^4.25.1",
+    "webpack-cli": "^3.1.2"
   }
 }

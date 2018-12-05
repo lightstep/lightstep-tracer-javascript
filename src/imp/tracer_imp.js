@@ -91,10 +91,14 @@ export default class Tracer extends opentracing.Tracer {
         }
 
         if (!this._transport) {
-            if (opts.transport && opts.transport === 'thrift') {
-                this._transport = new ThriftTransport(logger);
+            if (opts.transport && opts.transport === 'proto') {
+                if ((typeof TRANSPORT_PROTO === 'undefined') || TRANSPORT_PROTO) {
+                    this._transport = new ProtoTransport(logger);
+                }
             } else {
-                this._transport = new ProtoTransport(logger);
+                if ((typeof TRANSPORT_PROTO === 'undefined') || !TRANSPORT_PROTO) {
+                    this._transport = new ThriftTransport(logger);
+                }
             }
         }
 
@@ -1107,7 +1111,7 @@ export default class Tracer extends opentracing.Tracer {
             } else {
                 if (this.verbosity() >= 4) {
                     this._debug(`Report flushed for last ${reportWindowSeconds} seconds`, {
-                        spans_reported : report.span_records.length,
+                        spans_reported : report.getSpanRecords().length,
                     });
                 }
 

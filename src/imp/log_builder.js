@@ -1,4 +1,5 @@
-import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
+import LogRecordImp from './log_record_imp';
+
 const constants = require('../constants');
 const coerce    = require('./coerce');
 
@@ -8,20 +9,8 @@ class LogBuilder {
 
     constructor(runtime) {
         this._runtime = runtime;
-        this._record = new crouton_thrift.LogRecord({
-            timestamp_micros : runtime._platform.nowMicros(),
-            runtime_guid     : null,
-            span_guid        : null,
-            stable_name      : null,
-            message          : null,
-            level            : null,
-            thread_id        : null,
-            filename         : null,
-            line_number      : null,
-            stack_frames     : null,
-            payload_json     : null,
-            error_flag       : null,
-        });
+        this._record = new LogRecordImp();
+        this._record.timestamp_micros = runtime._platform.nowMicros();
     }
 
     record() {

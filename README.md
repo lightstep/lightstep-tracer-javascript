@@ -92,6 +92,7 @@ The OpenTracing standard JavaScript API is [documented here](https://doc.esdoc.o
 * `default_span_tags` `string` *optional* - an associative array of tags to add to every span started by the tracer (e.g., the active user id in a browser client)
 * `delay_initial_report_millis` `int` *optional*, *default=1000* - maximum additional delay of the initial report in addition to the normal reporting interval. A value between zero and this maximum will be selected as the actual delay. This can be useful when concurrently launching a large number of new processes and there is a desire to distribute the initial reports over a window of time.
 * `error_throttle_millis` `int` *optional*, *default=60000* - when `verbosity` is set to `1`, this the minimum time between logged errors.
+* `transport` `string` *optional*, *default=thrift* - when `transport` is set to `proto`, the Tracer will use Proto over HTTP as a transport rather than Thrift.
 
 ### SpanImp
 
