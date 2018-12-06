@@ -1,6 +1,10 @@
 # CHANGELOG
 
 *Log of significant changes, especially those affecting the supported API.*
+## 0.20.14
+
+* Add new option to Tracer: `disable_clock_skew_correction` `bool` *optional, defaults to 'false'*, which disables client-side clock kew correction.
+
 ## 0.20.13
 
 * Add new option to Tracer: `transport` `string` *optional, defaults to 'thrift'*, which controls the transport method used to send reports to LightStep. *Experimental Feature*
