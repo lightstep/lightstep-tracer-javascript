@@ -99,20 +99,6 @@ export default class Tracer extends opentracing.Tracer {
         this._activeRootSpanSet = {};
         this._activeRootSpan = null;
 
-        // For clock skew adjustment.
-        this._useClockState = true;
-        this._clockState = new ClockState({
-            nowMicros     : () => this._platform.nowMicros(),
-            localStoreGet : () => {
-                let key = `clock_state/${this._options.collector_host}`;
-                return this._platform.localStoreGet(key);
-            },
-            localStoreSet : (value) => {
-                let key = `clock_state/${this._options.collector_host}`;
-                return this._platform.localStoreSet(key, value);
-            },
-        });
-
         // Span reporting buffer and per-report data
         // These data are reset on every successful report.
         this._spanRecords = [];
@@ -147,6 +133,21 @@ export default class Tracer extends opentracing.Tracer {
         if (opts) {
             this.options(opts);
         }
+
+        // For clock skew adjustment.
+        // Must be set after options have been set.
+        this._useClockState = !this._options.disable_clock_skew_correction;
+        this._clockState = new ClockState({
+            nowMicros     : () => this._platform.nowMicros(),
+            localStoreGet : () => {
+                let key = `clock_state/${this._options.collector_host}`;
+                return this._platform.localStoreGet(key);
+            },
+            localStoreSet : (value) => {
+                let key = `clock_state/${this._options.collector_host}`;
+                return this._platform.localStoreSet(key, value);
+            },
+        });
 
         // This relies on the options being set: call this last.
         this._setupReportOnExit();
@@ -203,6 +204,7 @@ export default class Tracer extends opentracing.Tracer {
         this.addOption('collector_encryption',  { type: 'string',  defaultValue: 'tls' });
         this.addOption('tags',                  { type: 'any',     defaultValue: {} });
         this.addOption('max_reporting_interval_millis',  { type: 'int',     defaultValue: 2500 });
+        this.addOption('disable_clock_skew_correction', { type: 'bool', defaultValue: false })
 
         // Non-standard, may be deprecated
         this.addOption('disabled',              { type: 'bool',    defaultValue: false });
