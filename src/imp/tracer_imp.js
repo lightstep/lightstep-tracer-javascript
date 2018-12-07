@@ -204,7 +204,7 @@ export default class Tracer extends opentracing.Tracer {
         this.addOption('collector_encryption',  { type: 'string',  defaultValue: 'tls' });
         this.addOption('tags',                  { type: 'any',     defaultValue: {} });
         this.addOption('max_reporting_interval_millis',  { type: 'int',     defaultValue: 2500 });
-        this.addOption('disable_clock_skew_correction', { type: 'bool', defaultValue: false })
+        this.addOption('disable_clock_skew_correction', { type: 'bool', defaultValue: false });
 
         // Non-standard, may be deprecated
         this.addOption('disabled',              { type: 'bool',    defaultValue: false });
