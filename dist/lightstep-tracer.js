@@ -18012,6 +18012,7 @@ module.exports = __webpack_require__(/*! ./generated/thrift_all.js */ "./src/imp
 "use strict";
 
 
+/* global WorkerGlobalScope */
 // Find the HTML element that included the tracing library (if there is one).
 // This relies on the fact that scripts are executed as soon as they are
 // included -- thus 'this' script is the last one in the array at the time
@@ -18020,13 +18021,13 @@ var hostScriptElement = function () {
     // check to see if we're in a webworker
     if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
         return null;
-    } else {
-        var scripts = document.getElementsByTagName('SCRIPT');
-        if (!(scripts.length > 0)) {
-            return null;
-        }
-        return scripts[scripts.length - 1];
     }
+
+    var scripts = document.getElementsByTagName('SCRIPT');
+    if (!(scripts.length > 0)) {
+        return null;
+    }
+    return scripts[scripts.length - 1];
 }();
 
 function urlQueryParameters(defaults) {
