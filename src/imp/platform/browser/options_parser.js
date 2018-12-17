@@ -3,11 +3,16 @@
 // included -- thus 'this' script is the last one in the array at the time
 // this is run.
 let hostScriptElement = (function () {
-    let scripts = document.getElementsByTagName('SCRIPT');
-    if (!(scripts.length > 0)) {
+    // check to see if we're in a webworker
+    if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
         return null;
+    } else {
+        let scripts = document.getElementsByTagName('SCRIPT');
+        if (!(scripts.length > 0)) {
+            return null;
+        }
+        return scripts[scripts.length - 1];
     }
-    return scripts[scripts.length - 1];
 }());
 
 function urlQueryParameters(defaults) {

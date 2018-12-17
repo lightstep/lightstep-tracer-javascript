@@ -18017,11 +18017,16 @@ module.exports = __webpack_require__(/*! ./generated/thrift_all.js */ "./src/imp
 // included -- thus 'this' script is the last one in the array at the time
 // this is run.
 var hostScriptElement = function () {
-    var scripts = document.getElementsByTagName('SCRIPT');
-    if (!(scripts.length > 0)) {
+    // check to see if we're in a webworker
+    if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
         return null;
+    } else {
+        var scripts = document.getElementsByTagName('SCRIPT');
+        if (!(scripts.length > 0)) {
+            return null;
+        }
+        return scripts[scripts.length - 1];
     }
-    return scripts[scripts.length - 1];
 }();
 
 function urlQueryParameters(defaults) {
