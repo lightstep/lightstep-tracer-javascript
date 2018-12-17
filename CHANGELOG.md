@@ -1,6 +1,10 @@
 # CHANGELOG
 
 *Log of significant changes, especially those affecting the supported API.*
+## 0.20.15
+
+* Update `thrift` to `0.11.0`. This breaks support for node.js versions <= 5.8.
+
 ## 0.20.14
 
 * Add new option to Tracer: `disable_clock_skew_correction` `bool` *optional, defaults to 'false'*, which disables client-side clock kew correction.
