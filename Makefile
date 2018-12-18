@@ -45,7 +45,7 @@ publish: test test-all coverage
 	@if [ $(shell git symbolic-ref --short -q HEAD) = "master" ]; then exit 0; else \
 	echo "Current git branch does not appear to be 'master'. Refusing to publish."; exit 1; \
 	fi
-	npm version patch
+	npm version $(RELEASE_TYPE)
 	make build # need to rebuild with the new version number
 	git push
 	git push --tags
