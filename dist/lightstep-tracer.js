@@ -13403,7 +13403,7 @@ module.exports = g;
 /*! exports provided: name, version, main, engines, scripts, license, repository, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"lightstep-tracer","version":"0.20.14","main":"index.js","engines":{"node":">=0.12.0"},"scripts":{"test":"rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js"},"license":"MIT","repository":{"type":"git","url":"http://github.com/lightstep/lightstep-tracer-javascript.git"},"dependencies":{"async":"1.5.0","eventemitter3":"1.1.1","google-protobuf":"3.6.1","hex2dec":"1.0.1","source-map-support":"0.3.3","thrift":"0.11.0"},"devDependencies":{"babel-cli":"6.14.0","babel-core":"6.3.26","babel-loader":"7","babel-plugin-add-module-exports":"0.1.2","babel-plugin-check-es2015-constants":"6.7.2","babel-plugin-transform-es2015-arrow-functions":"6.5.2","babel-plugin-transform-es2015-block-scoped-functions":"6.6.5","babel-plugin-transform-es2015-block-scoping":"6.7.1","babel-plugin-transform-es2015-classes":"6.6.5","babel-plugin-transform-es2015-computed-properties":"6.6.5","babel-plugin-transform-es2015-destructuring":"6.6.5","babel-plugin-transform-es2015-duplicate-keys":"6.6.4","babel-plugin-transform-es2015-literals":"6.5.0","babel-plugin-transform-es2015-modules-commonjs":"6.7.4","babel-plugin-transform-es2015-object-super":"6.6.5","babel-plugin-transform-es2015-parameters":"6.7.0","babel-plugin-transform-es2015-spread":"6.6.5","babel-plugin-transform-es2015-sticky-regex":"6.5.0","babel-plugin-transform-es2015-template-literals":"6.6.5","babel-plugin-transform-es2015-unicode-regex":"6.5.0","babel-polyfill":"6.3.14","babel-preset-es2015":"6.3.13","chai":"3.4.1","clone":"1.0.2","colors":"1.1.2","eslint":"2.4.0","eslint-config-airbnb":"6.2.0","eslint-plugin-react":"4.2.3","express":"^4.16.3","istanbul":"0.4.4","mocha":"2.3.4","opentracing":"0.14.3","protobufjs":"6.8.8","shelljs":"0.5.3","sprintf-js":"1.0.3","underscore":"1.8.3","watch-trigger":"0.0.5","webpack":"^4.25.1","webpack-cli":"^3.1.2"}};
+module.exports = {"name":"lightstep-tracer","version":"0.20.14","main":"index.js","engines":{"node":">=0.12.0"},"scripts":{"test":"rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js"},"license":"MIT","repository":{"type":"git","url":"http://github.com/lightstep/lightstep-tracer-javascript.git"},"dependencies":{"async":"1.5.0","eventemitter3":"1.1.1","google-protobuf":"3.6.1","hex2dec":"1.0.1","source-map-support":"0.3.3","thrift":"0.11.0"},"devDependencies":{"babel-cli":"6.14.0","babel-core":"^6.26.3","babel-loader":"7","babel-plugin-add-module-exports":"^1.0.0","babel-plugin-check-es2015-constants":"6.7.2","babel-plugin-transform-es2015-arrow-functions":"6.5.2","babel-plugin-transform-es2015-block-scoped-functions":"6.6.5","babel-plugin-transform-es2015-block-scoping":"^6.26.0","babel-plugin-transform-es2015-classes":"6.6.5","babel-plugin-transform-es2015-computed-properties":"6.6.5","babel-plugin-transform-es2015-destructuring":"6.6.5","babel-plugin-transform-es2015-duplicate-keys":"6.6.4","babel-plugin-transform-es2015-literals":"6.5.0","babel-plugin-transform-es2015-modules-commonjs":"6.7.4","babel-plugin-transform-es2015-object-super":"6.6.5","babel-plugin-transform-es2015-parameters":"6.7.0","babel-plugin-transform-es2015-spread":"6.6.5","babel-plugin-transform-es2015-sticky-regex":"6.5.0","babel-plugin-transform-es2015-template-literals":"6.6.5","babel-plugin-transform-es2015-unicode-regex":"6.5.0","babel-polyfill":"6.3.14","babel-preset-es2015":"6.3.13","chai":"3.4.1","clone":"1.0.2","colors":"1.1.2","eslint":"2.4.0","eslint-config-airbnb":"6.2.0","eslint-plugin-react":"4.2.3","express":"^4.16.3","istanbul":"^0.4.5","mocha":"^5.2.0","opentracing":"0.14.3","protobufjs":"6.8.8","shelljs":"0.5.3","sprintf-js":"1.0.3","underscore":"1.8.3","watch-trigger":"0.0.5","webpack":"^4.25.1","webpack-cli":"^3.1.2"}};
 
 /***/ }),
 
@@ -13435,7 +13435,7 @@ function _each(obj, cb) {
         }
     }
 }
-module.exports = exports['default'];
+module.exports = exports.default;
 
 /***/ }),
 
@@ -13534,7 +13534,7 @@ var AuthImp = function () {
 }();
 
 exports.default = AuthImp;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 /***/ }),
 
@@ -17585,7 +17585,7 @@ var LogRecordImp = function () {
 }();
 
 exports.default = LogRecordImp;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 /***/ }),
 
@@ -18022,7 +18022,6 @@ var hostScriptElement = function () {
     if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
         return null;
     }
-
     var scripts = document.getElementsByTagName('SCRIPT');
     if (!(scripts.length > 0)) {
         return null;
@@ -18173,16 +18172,10 @@ var kCookieTimeToLiveSeconds = 7 * 24 * 60 * 60;
 var nowMicrosImp = function () {
     // Is a hi-res timer available?
     if (window.performance && window.performance.now && window.performance.timing && window.performance.timing.navigationStart) {
-        var _ret = function () {
-            var start = performance.timing.navigationStart;
-            return {
-                v: function () {
-                    return Math.floor((start + performance.now()) * 1000.0);
-                }
-            };
-        }();
-
-        if (typeof _ret === "object") return _ret.v;
+        var start = performance.timing.navigationStart;
+        return function () {
+            return Math.floor((start + performance.now()) * 1000.0);
+        };
     }
     // The low-res timer is the best we can do
     return function () {
@@ -18445,7 +18438,7 @@ var TransportBrowser = function () {
 }();
 
 exports.default = TransportBrowser;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 /***/ }),
 
@@ -18562,7 +18555,7 @@ var TransportBrowser = function () {
 }();
 
 exports.default = TransportBrowser;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 /***/ }),
 
@@ -18732,7 +18725,7 @@ var ReportImp = function () {
 }();
 
 exports.default = ReportImp;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 /***/ }),
 
@@ -18832,7 +18825,7 @@ var RuntimeImp = function () {
 }();
 
 exports.default = RuntimeImp;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 /***/ }),
 
@@ -18913,7 +18906,7 @@ var SpanContextImp = function () {
 }();
 
 exports.default = SpanContextImp;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 /***/ }),
 
@@ -19264,7 +19257,7 @@ var SpanImp = function (_opentracing$Span) {
 }(opentracing.Span);
 
 exports.default = SpanImp;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 /***/ }),
 
@@ -19846,17 +19839,15 @@ var Tracer = function (_opentracing$Tracer) {
             }
 
             if (this.verbosity() >= 3) {
-                (function () {
-                    var optionsString = '';
-                    var count = 0;
-                    (0, _each3.default)(modified, function (val, key) {
-                        optionsString += '\t' + JSON.stringify(key) + ': ' + JSON.stringify(val.newValue) + '\n';
-                        count++;
-                    });
-                    if (count > 0) {
-                        _this4._debug('Options modified:\n' + optionsString);
-                    }
-                })();
+                var optionsString = '';
+                var count = 0;
+                (0, _each3.default)(modified, function (val, key) {
+                    optionsString += '\t' + JSON.stringify(key) + ': ' + JSON.stringify(val.newValue) + '\n';
+                    count++;
+                });
+                if (count > 0) {
+                    this._debug('Options modified:\n' + optionsString);
+                }
             }
             this.emit('options', modified, this._options, this);
         }
@@ -19980,37 +19971,35 @@ var Tracer = function (_opentracing$Tracer) {
 
             // See if the Thrift data can be initialized
             if (this._options.access_token.length > 0 && this._options.component_name.length > 0) {
-                (function () {
-                    _this5._runtimeGUID = _this5._platform.runtimeGUID(_this5._options.component_name);
+                this._runtimeGUID = this._platform.runtimeGUID(this._options.component_name);
 
-                    _this5._auth = new _auth_imp2.default(_this5._options.access_token);
+                this._auth = new _auth_imp2.default(this._options.access_token);
 
-                    //
-                    // Assemble the tracer tags from the user-specified and automatic,
-                    // internal tags.
-                    //
-                    var tags = {};
-                    (0, _each3.default)(_this5._options.tags, function (value, key) {
-                        if (typeof value !== 'string') {
-                            _this5._error('Tracer tag value is not a string: key=' + key);
-                            return;
-                        }
-                        tags[key] = value;
-                    });
-                    tags['lightstep.tracer_version'] = packageObject.version;
-                    var platformTags = _this5._platform.tracerTags();
-                    (0, _each3.default)(platformTags, function (val, key) {
-                        tags[key] = val;
-                    });
+                //
+                // Assemble the tracer tags from the user-specified and automatic,
+                // internal tags.
+                //
+                var tags = {};
+                (0, _each3.default)(this._options.tags, function (value, key) {
+                    if (typeof value !== 'string') {
+                        _this5._error('Tracer tag value is not a string: key=' + key);
+                        return;
+                    }
+                    tags[key] = value;
+                });
+                tags['lightstep.tracer_version'] = packageObject.version;
+                var platformTags = this._platform.tracerTags();
+                (0, _each3.default)(platformTags, function (val, key) {
+                    tags[key] = val;
+                });
 
-                    _this5._runtime = new _runtime_imp2.default(_this5._runtimeGUID, _this5._startMicros, _this5._options.component_name, tags);
+                this._runtime = new _runtime_imp2.default(this._runtimeGUID, this._startMicros, this._options.component_name, tags);
 
-                    _this5._info('Initializing thrift reporting data', {
-                        component_name: _this5._options.component_name,
-                        access_token: _this5._auth.getAccessToken()
-                    });
-                    _this5.emit('reporting_initialized');
-                })();
+                this._info('Initializing thrift reporting data', {
+                    component_name: this._options.component_name,
+                    access_token: this._auth.getAccessToken()
+                });
+                this.emit('reporting_initialized');
             }
         }
     }, {
@@ -20648,7 +20637,7 @@ var Tracer = function (_opentracing$Tracer) {
 }(opentracing.Tracer);
 
 exports.default = Tracer;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 /***/ }),
 
@@ -20873,7 +20862,7 @@ var Util = function () {
 }();
 
 exports.default = new Util();
-module.exports = exports['default'];
+module.exports = exports.default;
 
 /***/ }),
 
