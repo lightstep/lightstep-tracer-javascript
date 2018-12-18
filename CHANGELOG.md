@@ -1,7 +1,8 @@
 # CHANGELOG
 
 *Log of significant changes, especially those affecting the supported API.*
-## 0.20.15
+
+## 0.21.0
 
 * Update `thrift` to `0.11.0`. This breaks support for node.js versions <= 5.8.
 
