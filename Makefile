@@ -93,17 +93,14 @@ test-browser:
 	cd test && node ../node_modules/webpack/bin/webpack.js unittest_browser.js -o dist/unittest_browser.bundle.js
 	cd test && open unittest.html
 
-# Note: versions < 0.12 are *not* supported.  The 'beforeExit' event has
+# Note: versions < 6.2 are *not* supported.  The 'beforeExit' event has
 # different behavior that does not work with the current implementation.
 .PHONY: test-all
 test-all: build
 	scripts/docker_test.sh latest
-	scripts/docker_test.sh 6.6
-	scripts/docker_test.sh 6.2
-	scripts/docker_test.sh 5.8
-	scripts/docker_test.sh 5.1
-	scripts/docker_test.sh 4.4
-	scripts/docker_test.sh 0.12
+	scripts/docker_test.sh 10
+	scripts/docker_test.sh 8
+	scripts/docker_test.sh 6
 
 #
 # lint
