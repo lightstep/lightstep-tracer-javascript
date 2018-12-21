@@ -131,13 +131,13 @@ describe("TracerImp", function() {
         });
 
         it('should allow setting a custom logger', function () {
-            let hasLogger = false;
+            let hasLogged = false;
             makeLSTracer({
-                logger : function () { hasLogger = true; },
+                logger : function () { hasLogged = true; },
                 silent : false,
                 verbosity : 4,
             });
-            expect(hasLogger).to.equal(true);
+            expect(hasLogged).to.equal(true);
         });
     });
 
