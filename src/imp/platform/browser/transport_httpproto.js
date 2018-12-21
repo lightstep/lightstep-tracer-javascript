@@ -1,4 +1,5 @@
-let proto = require('../../generated_proto/collector_pb.js');
+import { lightstep } from '../../generated_proto';
+let proto = lightstep.collector;
 
 export default class TransportBrowser {
 
@@ -41,28 +42,30 @@ export default class TransportBrowser {
             if (this.readyState === 4) {
                 let err = null;
                 let resp = null;
+                let jsonResp = null;
                 if (this.status !== 200) {
                     err = new Error(`status code = ${this.status}`);
                 } else if (!this.response) {
                     err = new Error('unexpected empty response');
                 } else {
                     try {
-                        resp = proto.ReportResponse.deserializeBinary(this.response);
+                        resp = proto.ReportResponse.decode(new Uint8Array(this.response));
+
+                        jsonResp = {
+                            timing : {
+                                receive_micros  : resp.receiveTimestamp,
+                                transmit_micros : resp.transmitTimestamp,
+                            },
+                            errors : resp.errors,
+                        };
                     } catch (exception) {
                         err = exception;
                     }
                 }
-                let jsonResp = {
-                    timing : {
-                        receive_micros  : resp.getReceiveTimestamp(),
-                        transmit_micros : resp.getTransmitTimestamp(),
-                    },
-                    errors : resp.errors,
-                };
                 return done(err, jsonResp);
             }
         };
-        let serialized = reportProto.serializeBinary();
+        let serialized = proto.ReportRequest.encode(reportProto).finish();
         xhr.send(serialized);
     }
 }

@@ -1,7 +1,8 @@
 import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
 import _each from '../_each'; // eslint-disable-line camelcase
 import * as coerce from './coerce.js';
-let proto = require('./generated_proto/collector_pb.js');
+import { lightstep } from './generated_proto';
+let proto = lightstep.collector;
 let converter = require('hex2dec');
 const packageObject = require('../../package.json');
 
@@ -34,22 +35,22 @@ export default class RuntimeImp {
 
     toProto() {
         let tracerVersion = new proto.KeyValue();
-        tracerVersion.setKey('lightstep.tracer_version');
-        tracerVersion.setStringValue(packageObject.version);
+        tracerVersion.key = 'lightstep.tracer_version';
+        tracerVersion.stringValue = packageObject.version;
 
         let tracerPlatform = new proto.KeyValue();
-        tracerPlatform.setKey('lightstep.tracer_platform');
-        tracerPlatform.setStringValue('browser');
+        tracerPlatform.key = 'lightstep.tracer_platform';
+        tracerPlatform.stringValue = 'browser';
 
         let componentName = new proto.KeyValue();
-        componentName.setKey('lightstep.component_name');
-        componentName.setStringValue(this._componentName);
+        componentName.key = 'lightstep.component_name';
+        componentName.stringValue = this._componentName;
 
-        let reporterId = converter.hexToDec(this._runtimeGUID);
+        let reporterId = parseInt(converter.hexToDec(this._runtimeGUID), 10);
 
         let reporterProto = new proto.Reporter();
-        reporterProto.setReporterId(reporterId);
-        reporterProto.setTagsList([tracerVersion, tracerPlatform, componentName]);
+        reporterProto.reporterId = reporterId;
+        reporterProto.tags = [tracerVersion, tracerPlatform, componentName];
         return reporterProto;
     }
 }

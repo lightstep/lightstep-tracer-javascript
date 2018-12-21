@@ -4,9 +4,10 @@ import _each from '../_each';
 import * as opentracing from 'opentracing';
 import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
 import LogRecordImp from './log_record_imp'; // eslint-disable-line camelcase
+import { lightstep, google } from './generated_proto';
 let converter = require('hex2dec');
-let proto = require('./generated_proto/collector_pb.js');
-let googleProtobufTimestampPB = require('google-protobuf/google/protobuf/timestamp_pb.js');
+let proto = lightstep.collector;
+let googleProtobufTimestampPB = google.proto;
 
 export default class SpanImp extends opentracing.Span {
 
@@ -210,21 +211,21 @@ export default class SpanImp extends opentracing.Span {
     _toProto() {
         let spanContextProto = new proto.SpanContext();
 
-        spanContextProto.setTraceId(converter.hexToDec(this.traceGUID()));
-        spanContextProto.setSpanId(converter.hexToDec(this.guid()));
+        spanContextProto.traceId = converter.hexToDec(this.traceGUID());
+        spanContextProto.spanId = converter.hexToDec(this.guid());
 
         let spanProto = new proto.Span();
-        spanProto.setSpanContext(spanContextProto);
-        spanProto.setOperationName(this._operationName);
+        spanProto.spanContext = spanContextProto;
+        spanProto.operationName = this._operationName;
 
         let startTimestamp = new googleProtobufTimestampPB.Timestamp();
         let startMillis = Math.floor(this._beginMicros / 1000);
         let startSeconds = Math.floor(startMillis / 1000);
         let startNanos = (startMillis % 1000) * 1000000;
-        startTimestamp.setSeconds(startSeconds);
-        startTimestamp.setNanos(startNanos);
-        spanProto.setStartTimestamp(startTimestamp);
-        spanProto.setDurationMicros(this._endMicros - this._beginMicros);
+        startTimestamp.seconds = startSeconds;
+        startTimestamp.nanos = startNanos;
+        spanProto.startTimestamp = startTimestamp;
+        spanProto.durationMicros = this._endMicros - this._beginMicros;
 
         let logs = [];
         _each(this._log_records, (logRecord) => {
@@ -233,7 +234,7 @@ export default class SpanImp extends opentracing.Span {
             this._tracerImp._counters['logs.values.over_limit'] += logRecord.getNumValuesOverLimit();
             logs.push(logProto);
         });
-        spanProto.setLogsList(logs);
+        spanProto.logs = logs;
 
         let parentSpanGUID = undefined;
         let tags = [];
@@ -244,19 +245,19 @@ export default class SpanImp extends opentracing.Span {
             if (strKey === 'parent_span_guid') {
                 parentSpanGUID = strValue;
             }
-            tag.setKey(strKey);
-            tag.setStringValue(strValue);
+            tag.key = strKey;
+            tag.stringValue = strValue;
             tags.push(tag);
         });
-        spanProto.setTagsList(tags);
+        spanProto.tags = tags;
 
         if (parentSpanGUID !== undefined) {
             let ref = new proto.Reference();
-            ref.setRelationship(proto.Reference.Relationship.CHILD_OF);
+            ref.relationship = proto.Reference.Relationship.CHILD_OF;
             let parentSpanContext = new proto.SpanContext();
-            parentSpanContext.setSpanId(converter.hexToDec(parentSpanGUID));
-            ref.setSpanContext(parentSpanContext);
-            spanProto.setReferencesList([ref]);
+            parentSpanContext.spanId = converter.hexToDec(parentSpanGUID);
+            ref.spanContext = parentSpanContext;
+            spanProto.references = [ref];
         }
 
         return spanProto;

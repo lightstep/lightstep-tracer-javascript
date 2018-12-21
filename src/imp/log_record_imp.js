@@ -1,8 +1,9 @@
 import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
 import _each from '../_each';
 import * as coerce from './coerce'; // eslint-disable-line camelcase
-let proto = require('./generated_proto/collector_pb.js');
-let googleProtobufTimestampPB = require('google-protobuf/google/protobuf/timestamp_pb.js');
+import { lightstep, google } from './generated_proto';
+let proto = lightstep.collector;
+let googleProtobufTimestampPB = google.proto;
 
 export default class LogRecordImp {
     constructor(logFieldKeyHardLimit, logFieldValueHardLimit, timestampMicros, fields) {
@@ -82,9 +83,9 @@ export default class LogRecordImp {
         let millis = Math.floor(this._timestampMicros / 1000);
         let secs = Math.floor(millis / 1000);
         let nanos = (millis % 1000) * 1000000;
-        ts.setSeconds(secs);
-        ts.setNanos(nanos);
-        log.setTimestamp(ts);
+        ts.seconds = secs;
+        ts.nanos = nanos;
+        log.Timestamp = ts;
         let keyValues = [];
         _each(this._fields, (value, key) => {
             if (!key || !value) {
@@ -94,12 +95,12 @@ export default class LogRecordImp {
             let valStr = this.getFieldValue(value);
 
             let keyValue = new proto.KeyValue();
-            keyValue.setKey(keyStr);
-            keyValue.setStringValue(valStr);
+            keyValue.key = keyStr;
+            keyValue.stringValue = valStr;
             keyValues.push(keyValue);
         });
 
-        log.setFieldsList(keyValues);
+        log.fields = keyValues;
 
         return log;
     }

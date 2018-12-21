@@ -5,6 +5,7 @@ recursive_wildcard = $(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call recursi
 # build
 #
 CMD_BABEL=node node_modules/.bin/babel
+CMD_PROTO=node node_modules/.bin/pbjs
 CMD_WEBPACK=node node_modules/.bin/webpack
 SOURCES_JS=$(call recursive_wildcard,src/,*.js)
 COMPILED_JS=$(SOURCES_JS:src/%.js=lib/%.js)
@@ -142,6 +143,9 @@ thrift-postprocess:
 # LightStep internal target
 .PHONY: proto
 proto:
-	protoc -I"$(PWD)/../googleapis/:$(PWD)/../lightstep-tracer-common/" \
-		--js_out=import_style=commonjs,binary:src/imp/generated_proto \
-		collector.proto google/api/annotations.proto google/api/http.proto
+	$(CMD_PROTO) \
+		-p ../googleapis \
+		-p ../lightstep-tracer-common \
+		-t static-module \
+		--es6 \
+		../lightstep-tracer-common/collector.proto > src/imp/generated_proto.js

@@ -1,7 +1,8 @@
 import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
 import _each from '../_each'; // eslint-disable-line camelcase
 import * as coerce from './coerce.js';
-let proto = require('./generated_proto/collector_pb.js');
+import { lightstep } from './generated_proto';
+let proto = lightstep.collector;
 
 export default class ReportImp {
     constructor(runtime, oldestMicros, youngestMicros, spanRecords, internalLogs, counters, timestampOffsetMicros) {
@@ -69,21 +70,21 @@ export default class ReportImp {
         let countsList = [];
         _each(this._counters, (count) => {
             let metricSample = new proto.MetricsSample();
-            metricSample.setName(count.name);
-            metricSample.setIntValue(count.int64_value);
-            metricSample.setDoubleValue(count.double_value);
+            metricSample.name = count.name;
+            metricSample.intValue = count.int64_value;
+            metricSample.doubleValue = count.double_value;
             countsList.push(metricSample);
         });
 
         let internalMetrics = new proto.InternalMetrics();
-        internalMetrics.setCountsList(countsList);
+        internalMetrics.counts = countsList;
 
         let reportProto = new proto.ReportRequest();
-        reportProto.setAuth(auth.toProto());
-        reportProto.setReporter(this._runtime.toProto());
-        reportProto.setSpansList(spansList);
-        reportProto.setTimestampOffsetMicros(this._timestampOffsetMicros);
-        reportProto.setInternalMetrics(internalMetrics);
+        reportProto.auth = auth.toProto();
+        reportProto.reporter = this._runtime.toProto();
+        reportProto.spans = spansList;
+        reportProto.timestampOffsetMicros = this._timestampOffsetMicros;
+        reportProto.internalMetrics = internalMetrics;
         return reportProto;
     }
 }

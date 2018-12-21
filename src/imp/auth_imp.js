@@ -1,5 +1,6 @@
 import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
-let proto = require('./generated_proto/collector_pb.js');
+import { lightstep } from './generated_proto';
+let proto = lightstep.collector;
 
 export default class AuthImp {
     constructor(accessToken) {
@@ -18,7 +19,7 @@ export default class AuthImp {
 
     toProto() {
         let authProto = new proto.Auth();
-        authProto.setAccessToken(this._accessToken);
+        authProto.accessToken = this._accessToken;
         return authProto;
     }
 }

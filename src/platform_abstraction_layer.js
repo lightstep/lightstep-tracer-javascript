@@ -10,7 +10,7 @@ if ((typeof PLATFORM_BROWSER !== 'undefined') && PLATFORM_BROWSER) {
         ProtoTransport  : require('./imp/platform/browser/transport_httpproto.js'),
         thrift          : require('./imp/platform/browser/thrift.js'),
         crouton_thrift  : require('./imp/platform/browser/crouton_thrift.js'),
-        proto           : require('./imp/generated_proto/collector_pb.js'),
+        proto           : require('./imp/generated_proto').lightstep,
     };
 } else {
     module.exports = {
@@ -19,6 +19,6 @@ if ((typeof PLATFORM_BROWSER !== 'undefined') && PLATFORM_BROWSER) {
         ProtoTransport  : require('./imp/platform/node/transport_httpproto.js'),
         thrift          : require('thrift'),
         crouton_thrift  : require('./imp/platform/node/crouton_thrift.js'),
-        proto           : require('./imp/generated_proto/collector_pb.js'),
+        proto           : require('./imp/generated_proto').lightstep,
     };
 }

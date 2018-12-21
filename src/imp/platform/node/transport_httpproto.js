@@ -1,6 +1,7 @@
 import * as https from 'https';
 import * as http from 'http';
-let proto = require('../../generated_proto/collector_pb.js');
+import { lightstep } from '../../generated_proto';
+let proto = lightstep.collector;
 
 const kMaxDetailedErrorFrequencyMs = 30000;
 const kMaxStringLength = 2048;
@@ -50,7 +51,7 @@ export default class TransportHTTPProto {
         let payload;
         try {
             let reportProto = reportRequest.toProto(auth);
-            let binary = reportProto.serializeBinary();
+            let binary = proto.ReportRequest.encode(reportProto).finish();
             payload = Buffer.from(binary);
         } catch (exception) {
             // This should never happen. The library should always be constructing
@@ -106,7 +107,7 @@ export default class TransportHTTPProto {
                         err = new Error('unexpected empty response');
                     } else {
                         try {
-                            resp = proto.ReportResponse.deserializeBinary(buffer);
+                            resp = proto.ReportResponse.decode(new Uint8Array(this.response));
                         } catch (exception) {
                             err = exception;
                         }
