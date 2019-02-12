@@ -260,7 +260,7 @@ export default class SpanImp extends opentracing.Span {
             ref.setSpanContext(parentSpanContext);
             spanProto.setReferencesList([ref]);
         }
-        
+
         return spanProto;
     }
 }
