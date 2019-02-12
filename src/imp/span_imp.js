@@ -4,6 +4,7 @@ import _each from '../_each';
 import * as opentracing from 'opentracing';
 import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
 import LogRecordImp from './log_record_imp'; // eslint-disable-line camelcase
+import moment from 'moment';
 let converter = require('hex2dec');
 let proto = require('./generated_proto/collector_pb.js');
 let googleProtobufTimestampPB = require('google-protobuf/google/protobuf/timestamp_pb.js');
@@ -217,14 +218,15 @@ export default class SpanImp extends opentracing.Span {
         spanProto.setSpanContext(spanContextProto);
         spanProto.setOperationName(this._operationName);
 
+        let startDate = moment(Math.floor(this._beginMicros / 1000));
+        let finishDate = moment(Math.floor(this._endMicros / 1000));
+        let duration = finishDate - startDate;
+
         let startTimestamp = new googleProtobufTimestampPB.Timestamp();
-        let startMillis = Math.floor(this._beginMicros / 1000);
-        let startSeconds = Math.floor(startMillis / 1000);
-        let startNanos = (startMillis % 1000) * 1000000;
-        startTimestamp.setSeconds(startSeconds);
-        startTimestamp.setNanos(startNanos);
+        startTimestamp.fromDate(startDate.toDate());
+
         spanProto.setStartTimestamp(startTimestamp);
-        spanProto.setDurationMicros(this._endMicros - this._beginMicros);
+        spanProto.setDurationMicros((duration * 1000).toString());
 
         let logs = [];
         _each(this._log_records, (logRecord) => {
@@ -258,7 +260,7 @@ export default class SpanImp extends opentracing.Span {
             ref.setSpanContext(parentSpanContext);
             spanProto.setReferencesList([ref]);
         }
-
+        
         return spanProto;
     }
 }
