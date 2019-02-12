@@ -217,15 +217,14 @@ export default class SpanImp extends opentracing.Span {
         spanProto.setSpanContext(spanContextProto);
         spanProto.setOperationName(this._operationName);
 
-        let millis = Math.floor(this._beginMicros / 1000);
-        let secs = Math.floor(millis / 1000);
-        let nanos = (millis % 1000) * 1000000;
-        let duration = (this._endMicros - this._beginMicros).toString();
         let startTimestamp = new googleProtobufTimestampPB.Timestamp();
-        startTimestamp.setSeconds(secs);
-        startTimestamp.setNanos(nanos);
+        let startMillis = Math.floor(this._beginMicros / 1000);
+        let startSeconds = Math.floor(startMillis / 1000);
+        let startNanos = (startMillis % 1000) * 1000000;
+        startTimestamp.setSeconds(startSeconds);
+        startTimestamp.setNanos(startNanos);
         spanProto.setStartTimestamp(startTimestamp);
-        spanProto.setDurationMicros(duration);
+        spanProto.setDurationMicros((this._endMicros - this._beginMicros).toString());
 
         let logs = [];
         _each(this._log_records, (logRecord) => {
