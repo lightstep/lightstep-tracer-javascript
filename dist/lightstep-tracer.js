@@ -13403,7 +13403,7 @@ module.exports = g;
 /*! exports provided: name, version, main, engines, scripts, license, repository, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"lightstep-tracer","version":"0.21.0","main":"index.js","engines":{"node":">=0.12.0"},"scripts":{"test":"rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js"},"license":"MIT","repository":{"type":"git","url":"http://github.com/lightstep/lightstep-tracer-javascript.git"},"dependencies":{"async":"1.5.0","eventemitter3":"1.1.1","google-protobuf":"3.6.1","hex2dec":"1.0.1","source-map-support":"0.3.3","thrift":"0.11.0"},"devDependencies":{"babel-cli":"6.14.0","babel-core":"^6.26.3","babel-loader":"7","babel-plugin-add-module-exports":"^1.0.0","babel-plugin-check-es2015-constants":"6.7.2","babel-plugin-transform-es2015-arrow-functions":"6.5.2","babel-plugin-transform-es2015-block-scoped-functions":"6.6.5","babel-plugin-transform-es2015-block-scoping":"^6.26.0","babel-plugin-transform-es2015-classes":"6.6.5","babel-plugin-transform-es2015-computed-properties":"6.6.5","babel-plugin-transform-es2015-destructuring":"6.6.5","babel-plugin-transform-es2015-duplicate-keys":"6.6.4","babel-plugin-transform-es2015-literals":"6.5.0","babel-plugin-transform-es2015-modules-commonjs":"6.7.4","babel-plugin-transform-es2015-object-super":"6.6.5","babel-plugin-transform-es2015-parameters":"6.7.0","babel-plugin-transform-es2015-spread":"6.6.5","babel-plugin-transform-es2015-sticky-regex":"6.5.0","babel-plugin-transform-es2015-template-literals":"6.6.5","babel-plugin-transform-es2015-unicode-regex":"6.5.0","babel-polyfill":"6.3.14","babel-preset-es2015":"6.3.13","chai":"3.4.1","clone":"1.0.2","colors":"1.1.2","eslint":"2.4.0","eslint-config-airbnb":"6.2.0","eslint-plugin-react":"4.2.3","express":"^4.16.3","istanbul":"^0.4.5","mocha":"^5.2.0","opentracing":"0.14.3","protobufjs":"6.8.8","shelljs":"0.5.3","sprintf-js":"1.0.3","underscore":"1.8.3","watch-trigger":"0.0.5","webpack":"^4.25.1","webpack-cli":"^3.1.2"}};
+module.exports = {"name":"lightstep-tracer","version":"0.21.0","main":"index.js","engines":{"node":">=0.12.0"},"scripts":{"test":"rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js"},"license":"MIT","repository":{"type":"git","url":"http://github.com/lightstep/lightstep-tracer-javascript.git"},"dependencies":{"async":"1.5.0","eventemitter3":"1.1.1","google-protobuf":"3.6.1","hex2dec":"1.0.1","moment":"^2.24.0","source-map-support":"0.3.3","thrift":"0.11.0"},"devDependencies":{"babel-cli":"6.14.0","babel-core":"^6.26.3","babel-loader":"7","babel-plugin-add-module-exports":"^1.0.0","babel-plugin-check-es2015-constants":"6.7.2","babel-plugin-transform-es2015-arrow-functions":"6.5.2","babel-plugin-transform-es2015-block-scoped-functions":"6.6.5","babel-plugin-transform-es2015-block-scoping":"^6.26.0","babel-plugin-transform-es2015-classes":"6.6.5","babel-plugin-transform-es2015-computed-properties":"6.6.5","babel-plugin-transform-es2015-destructuring":"6.6.5","babel-plugin-transform-es2015-duplicate-keys":"6.6.4","babel-plugin-transform-es2015-literals":"6.5.0","babel-plugin-transform-es2015-modules-commonjs":"6.7.4","babel-plugin-transform-es2015-object-super":"6.6.5","babel-plugin-transform-es2015-parameters":"6.7.0","babel-plugin-transform-es2015-spread":"6.6.5","babel-plugin-transform-es2015-sticky-regex":"6.5.0","babel-plugin-transform-es2015-template-literals":"6.6.5","babel-plugin-transform-es2015-unicode-regex":"6.5.0","babel-polyfill":"6.3.14","babel-preset-es2015":"6.3.13","chai":"3.4.1","clone":"1.0.2","colors":"1.1.2","eslint":"2.4.0","eslint-config-airbnb":"6.2.0","eslint-plugin-react":"4.2.3","express":"^4.16.3","istanbul":"^0.4.5","mocha":"^5.2.0","opentracing":"0.14.3","protobufjs":"6.8.8","shelljs":"0.5.3","sprintf-js":"1.0.3","underscore":"1.8.3","watch-trigger":"0.0.5","webpack":"^4.25.1","webpack-cli":"^3.1.2"}};
 
 /***/ }),
 
@@ -13652,8 +13652,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   proto.lightstep.collector.SpanContext.toObject = function (includeInstance, msg) {
     var f,
         obj = {
-      traceId: jspb.Message.getFieldWithDefault(msg, 1, 0),
-      spanId: jspb.Message.getFieldWithDefault(msg, 2, 0),
+      traceId: jspb.Message.getFieldWithDefault(msg, 1, "0"),
+      spanId: jspb.Message.getFieldWithDefault(msg, 2, "0"),
       baggageMap: (f = msg.getBaggageMap()) ? f.toObject(includeInstance, undefined) : []
     };
 
@@ -13690,11 +13690,11 @@ proto.lightstep.collector.SpanContext.deserializeBinaryFromReader = function (ms
     var field = reader.getFieldNumber();
     switch (field) {
       case 1:
-        var value = /** @type {number} */reader.readUint64();
+        var value = /** @type {string} */reader.readUint64String();
         msg.setTraceId(value);
         break;
       case 2:
-        var value = /** @type {number} */reader.readUint64();
+        var value = /** @type {string} */reader.readUint64String();
         msg.setSpanId(value);
         break;
       case 3:
@@ -13731,12 +13731,12 @@ proto.lightstep.collector.SpanContext.prototype.serializeBinary = function () {
 proto.lightstep.collector.SpanContext.serializeBinaryToWriter = function (message, writer) {
   var f = undefined;
   f = message.getTraceId();
-  if (f !== 0) {
-    writer.writeUint64(1, f);
+  if (parseInt(f, 10) !== 0) {
+    writer.writeUint64String(1, f);
   }
   f = message.getSpanId();
-  if (f !== 0) {
-    writer.writeUint64(2, f);
+  if (parseInt(f, 10) !== 0) {
+    writer.writeUint64String(2, f);
   }
   f = message.getBaggageMap(true);
   if (f && f.getLength() > 0) {
@@ -13746,30 +13746,30 @@ proto.lightstep.collector.SpanContext.serializeBinaryToWriter = function (messag
 
 /**
  * optional uint64 trace_id = 1;
- * @return {number}
+ * @return {string}
  */
 proto.lightstep.collector.SpanContext.prototype.getTraceId = function () {
-  return (/** @type {number} */jspb.Message.getFieldWithDefault(this, 1, 0)
+  return (/** @type {string} */jspb.Message.getFieldWithDefault(this, 1, "0")
   );
 };
 
-/** @param {number} value */
+/** @param {string} value */
 proto.lightstep.collector.SpanContext.prototype.setTraceId = function (value) {
-  jspb.Message.setProto3IntField(this, 1, value);
+  jspb.Message.setProto3StringIntField(this, 1, value);
 };
 
 /**
  * optional uint64 span_id = 2;
- * @return {number}
+ * @return {string}
  */
 proto.lightstep.collector.SpanContext.prototype.getSpanId = function () {
-  return (/** @type {number} */jspb.Message.getFieldWithDefault(this, 2, 0)
+  return (/** @type {string} */jspb.Message.getFieldWithDefault(this, 2, "0")
   );
 };
 
-/** @param {number} value */
+/** @param {string} value */
 proto.lightstep.collector.SpanContext.prototype.setSpanId = function (value) {
-  jspb.Message.setProto3IntField(this, 2, value);
+  jspb.Message.setProto3StringIntField(this, 2, value);
 };
 
 /**
@@ -13863,7 +13863,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         obj = {
       key: jspb.Message.getFieldWithDefault(msg, 1, ""),
       stringValue: jspb.Message.getFieldWithDefault(msg, 2, ""),
-      intValue: jspb.Message.getFieldWithDefault(msg, 3, 0),
+      intValue: jspb.Message.getFieldWithDefault(msg, 3, "0"),
       doubleValue: +jspb.Message.getFieldWithDefault(msg, 4, 0.0),
       boolValue: jspb.Message.getFieldWithDefault(msg, 5, false),
       jsonValue: jspb.Message.getFieldWithDefault(msg, 6, "")
@@ -13910,7 +13910,7 @@ proto.lightstep.collector.KeyValue.deserializeBinaryFromReader = function (msg, 
         msg.setStringValue(value);
         break;
       case 3:
-        var value = /** @type {number} */reader.readInt64();
+        var value = /** @type {string} */reader.readInt64String();
         msg.setIntValue(value);
         break;
       case 4:
@@ -13960,9 +13960,9 @@ proto.lightstep.collector.KeyValue.serializeBinaryToWriter = function (message, 
   if (f != null) {
     writer.writeString(2, f);
   }
-  f = /** @type {number} */jspb.Message.getField(message, 3);
+  f = /** @type {string} */jspb.Message.getField(message, 3);
   if (f != null) {
-    writer.writeInt64(3, f);
+    writer.writeInt64String(3, f);
   }
   f = /** @type {number} */jspb.Message.getField(message, 4);
   if (f != null) {
@@ -14020,14 +14020,14 @@ proto.lightstep.collector.KeyValue.prototype.hasStringValue = function () {
 
 /**
  * optional int64 int_value = 3;
- * @return {number}
+ * @return {string}
  */
 proto.lightstep.collector.KeyValue.prototype.getIntValue = function () {
-  return (/** @type {number} */jspb.Message.getFieldWithDefault(this, 3, 0)
+  return (/** @type {string} */jspb.Message.getFieldWithDefault(this, 3, "0")
   );
 };
 
-/** @param {number} value */
+/** @param {string} value */
 proto.lightstep.collector.KeyValue.prototype.setIntValue = function (value) {
   jspb.Message.setOneofField(this, 3, proto.lightstep.collector.KeyValue.oneofGroups_[0], value);
 };
@@ -14541,7 +14541,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       operationName: jspb.Message.getFieldWithDefault(msg, 2, ""),
       referencesList: jspb.Message.toObjectList(msg.getReferencesList(), proto.lightstep.collector.Reference.toObject, includeInstance),
       startTimestamp: (f = msg.getStartTimestamp()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
-      durationMicros: jspb.Message.getFieldWithDefault(msg, 5, 0),
+      durationMicros: jspb.Message.getFieldWithDefault(msg, 5, "0"),
       tagsList: jspb.Message.toObjectList(msg.getTagsList(), proto.lightstep.collector.KeyValue.toObject, includeInstance),
       logsList: jspb.Message.toObjectList(msg.getLogsList(), proto.lightstep.collector.Log.toObject, includeInstance)
     };
@@ -14598,7 +14598,7 @@ proto.lightstep.collector.Span.deserializeBinaryFromReader = function (msg, read
         msg.setStartTimestamp(value);
         break;
       case 5:
-        var value = /** @type {number} */reader.readUint64();
+        var value = /** @type {string} */reader.readUint64String();
         msg.setDurationMicros(value);
         break;
       case 6:
@@ -14655,8 +14655,8 @@ proto.lightstep.collector.Span.serializeBinaryToWriter = function (message, writ
     writer.writeMessage(4, f, google_protobuf_timestamp_pb.Timestamp.serializeBinaryToWriter);
   }
   f = message.getDurationMicros();
-  if (f !== 0) {
-    writer.writeUint64(5, f);
+  if (parseInt(f, 10) !== 0) {
+    writer.writeUint64String(5, f);
   }
   f = message.getTagsList();
   if (f.length > 0) {
@@ -14763,16 +14763,16 @@ proto.lightstep.collector.Span.prototype.hasStartTimestamp = function () {
 
 /**
  * optional uint64 duration_micros = 5;
- * @return {number}
+ * @return {string}
  */
 proto.lightstep.collector.Span.prototype.getDurationMicros = function () {
-  return (/** @type {number} */jspb.Message.getFieldWithDefault(this, 5, 0)
+  return (/** @type {string} */jspb.Message.getFieldWithDefault(this, 5, "0")
   );
 };
 
-/** @param {number} value */
+/** @param {string} value */
 proto.lightstep.collector.Span.prototype.setDurationMicros = function (value) {
-  jspb.Message.setProto3IntField(this, 5, value);
+  jspb.Message.setProto3StringIntField(this, 5, value);
 };
 
 /**
@@ -14880,7 +14880,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   proto.lightstep.collector.Reporter.toObject = function (includeInstance, msg) {
     var f,
         obj = {
-      reporterId: jspb.Message.getFieldWithDefault(msg, 1, 0),
+      reporterId: jspb.Message.getFieldWithDefault(msg, 1, "0"),
       tagsList: jspb.Message.toObjectList(msg.getTagsList(), proto.lightstep.collector.KeyValue.toObject, includeInstance)
     };
 
@@ -14917,7 +14917,7 @@ proto.lightstep.collector.Reporter.deserializeBinaryFromReader = function (msg, 
     var field = reader.getFieldNumber();
     switch (field) {
       case 1:
-        var value = /** @type {number} */reader.readUint64();
+        var value = /** @type {string} */reader.readUint64String();
         msg.setReporterId(value);
         break;
       case 4:
@@ -14953,8 +14953,8 @@ proto.lightstep.collector.Reporter.prototype.serializeBinary = function () {
 proto.lightstep.collector.Reporter.serializeBinaryToWriter = function (message, writer) {
   var f = undefined;
   f = message.getReporterId();
-  if (f !== 0) {
-    writer.writeUint64(1, f);
+  if (parseInt(f, 10) !== 0) {
+    writer.writeUint64String(1, f);
   }
   f = message.getTagsList();
   if (f.length > 0) {
@@ -14964,16 +14964,16 @@ proto.lightstep.collector.Reporter.serializeBinaryToWriter = function (message, 
 
 /**
  * optional uint64 reporter_id = 1;
- * @return {number}
+ * @return {string}
  */
 proto.lightstep.collector.Reporter.prototype.getReporterId = function () {
-  return (/** @type {number} */jspb.Message.getFieldWithDefault(this, 1, 0)
+  return (/** @type {string} */jspb.Message.getFieldWithDefault(this, 1, "0")
   );
 };
 
-/** @param {number} value */
+/** @param {string} value */
 proto.lightstep.collector.Reporter.prototype.setReporterId = function (value) {
-  jspb.Message.setProto3IntField(this, 1, value);
+  jspb.Message.setProto3StringIntField(this, 1, value);
 };
 
 /**
@@ -15075,7 +15075,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
         obj = {
       name: jspb.Message.getFieldWithDefault(msg, 1, ""),
-      intValue: jspb.Message.getFieldWithDefault(msg, 2, 0),
+      intValue: jspb.Message.getFieldWithDefault(msg, 2, "0"),
       doubleValue: +jspb.Message.getFieldWithDefault(msg, 3, 0.0)
     };
 
@@ -15116,7 +15116,7 @@ proto.lightstep.collector.MetricsSample.deserializeBinaryFromReader = function (
         msg.setName(value);
         break;
       case 2:
-        var value = /** @type {number} */reader.readInt64();
+        var value = /** @type {string} */reader.readInt64String();
         msg.setIntValue(value);
         break;
       case 3:
@@ -15154,9 +15154,9 @@ proto.lightstep.collector.MetricsSample.serializeBinaryToWriter = function (mess
   if (f.length > 0) {
     writer.writeString(1, f);
   }
-  f = /** @type {number} */jspb.Message.getField(message, 2);
+  f = /** @type {string} */jspb.Message.getField(message, 2);
   if (f != null) {
-    writer.writeInt64(2, f);
+    writer.writeInt64String(2, f);
   }
   f = /** @type {number} */jspb.Message.getField(message, 3);
   if (f != null) {
@@ -15180,14 +15180,14 @@ proto.lightstep.collector.MetricsSample.prototype.setName = function (value) {
 
 /**
  * optional int64 int_value = 2;
- * @return {number}
+ * @return {string}
  */
 proto.lightstep.collector.MetricsSample.prototype.getIntValue = function () {
-  return (/** @type {number} */jspb.Message.getFieldWithDefault(this, 2, 0)
+  return (/** @type {string} */jspb.Message.getFieldWithDefault(this, 2, "0")
   );
 };
 
-/** @param {number} value */
+/** @param {string} value */
 proto.lightstep.collector.MetricsSample.prototype.setIntValue = function (value) {
   jspb.Message.setOneofField(this, 2, proto.lightstep.collector.MetricsSample.oneofGroups_[0], value);
 };
@@ -15282,7 +15282,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
         obj = {
       startTimestamp: (f = msg.getStartTimestamp()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
-      durationMicros: jspb.Message.getFieldWithDefault(msg, 2, 0),
+      durationMicros: jspb.Message.getFieldWithDefault(msg, 2, "0"),
       logsList: jspb.Message.toObjectList(msg.getLogsList(), proto.lightstep.collector.Log.toObject, includeInstance),
       countsList: jspb.Message.toObjectList(msg.getCountsList(), proto.lightstep.collector.MetricsSample.toObject, includeInstance),
       gaugesList: jspb.Message.toObjectList(msg.getGaugesList(), proto.lightstep.collector.MetricsSample.toObject, includeInstance)
@@ -15326,7 +15326,7 @@ proto.lightstep.collector.InternalMetrics.deserializeBinaryFromReader = function
         msg.setStartTimestamp(value);
         break;
       case 2:
-        var value = /** @type {number} */reader.readUint64();
+        var value = /** @type {string} */reader.readUint64String();
         msg.setDurationMicros(value);
         break;
       case 3:
@@ -15376,8 +15376,8 @@ proto.lightstep.collector.InternalMetrics.serializeBinaryToWriter = function (me
     writer.writeMessage(1, f, google_protobuf_timestamp_pb.Timestamp.serializeBinaryToWriter);
   }
   f = message.getDurationMicros();
-  if (f !== 0) {
-    writer.writeUint64(2, f);
+  if (parseInt(f, 10) !== 0) {
+    writer.writeUint64String(2, f);
   }
   f = message.getLogsList();
   if (f.length > 0) {
@@ -15421,16 +15421,16 @@ proto.lightstep.collector.InternalMetrics.prototype.hasStartTimestamp = function
 
 /**
  * optional uint64 duration_micros = 2;
- * @return {number}
+ * @return {string}
  */
 proto.lightstep.collector.InternalMetrics.prototype.getDurationMicros = function () {
-  return (/** @type {number} */jspb.Message.getFieldWithDefault(this, 2, 0)
+  return (/** @type {string} */jspb.Message.getFieldWithDefault(this, 2, "0")
   );
 };
 
-/** @param {number} value */
+/** @param {string} value */
 proto.lightstep.collector.InternalMetrics.prototype.setDurationMicros = function (value) {
-  jspb.Message.setProto3IntField(this, 2, value);
+  jspb.Message.setProto3StringIntField(this, 2, value);
 };
 
 /**
@@ -15699,7 +15699,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       reporter: (f = msg.getReporter()) && proto.lightstep.collector.Reporter.toObject(includeInstance, f),
       auth: (f = msg.getAuth()) && proto.lightstep.collector.Auth.toObject(includeInstance, f),
       spansList: jspb.Message.toObjectList(msg.getSpansList(), proto.lightstep.collector.Span.toObject, includeInstance),
-      timestampOffsetMicros: jspb.Message.getFieldWithDefault(msg, 5, 0),
+      timestampOffsetMicros: jspb.Message.getFieldWithDefault(msg, 5, "0"),
       internalMetrics: (f = msg.getInternalMetrics()) && proto.lightstep.collector.InternalMetrics.toObject(includeInstance, f)
     };
 
@@ -15751,7 +15751,7 @@ proto.lightstep.collector.ReportRequest.deserializeBinaryFromReader = function (
         msg.addSpans(value);
         break;
       case 5:
-        var value = /** @type {number} */reader.readInt64();
+        var value = /** @type {string} */reader.readInt64String();
         msg.setTimestampOffsetMicros(value);
         break;
       case 6:
@@ -15799,8 +15799,8 @@ proto.lightstep.collector.ReportRequest.serializeBinaryToWriter = function (mess
     writer.writeRepeatedMessage(3, f, proto.lightstep.collector.Span.serializeBinaryToWriter);
   }
   f = message.getTimestampOffsetMicros();
-  if (f !== 0) {
-    writer.writeInt64(5, f);
+  if (parseInt(f, 10) !== 0) {
+    writer.writeInt64String(5, f);
   }
   f = message.getInternalMetrics();
   if (f != null) {
@@ -15889,16 +15889,16 @@ proto.lightstep.collector.ReportRequest.prototype.clearSpansList = function () {
 
 /**
  * optional int64 timestamp_offset_micros = 5;
- * @return {number}
+ * @return {string}
  */
 proto.lightstep.collector.ReportRequest.prototype.getTimestampOffsetMicros = function () {
-  return (/** @type {number} */jspb.Message.getFieldWithDefault(this, 5, 0)
+  return (/** @type {string} */jspb.Message.getFieldWithDefault(this, 5, "0")
   );
 };
 
-/** @param {number} value */
+/** @param {string} value */
 proto.lightstep.collector.ReportRequest.prototype.setTimestampOffsetMicros = function (value) {
-  jspb.Message.setProto3IntField(this, 5, value);
+  jspb.Message.setProto3StringIntField(this, 5, value);
 };
 
 /**
@@ -15972,7 +15972,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   proto.lightstep.collector.Command.toObject = function (includeInstance, msg) {
     var f,
         obj = {
-      disable: jspb.Message.getFieldWithDefault(msg, 1, false)
+      disable: jspb.Message.getFieldWithDefault(msg, 1, false),
+      devMode: jspb.Message.getFieldWithDefault(msg, 2, false)
     };
 
     if (includeInstance) {
@@ -16011,6 +16012,10 @@ proto.lightstep.collector.Command.deserializeBinaryFromReader = function (msg, r
         var value = /** @type {boolean} */reader.readBool();
         msg.setDisable(value);
         break;
+      case 2:
+        var value = /** @type {boolean} */reader.readBool();
+        msg.setDevMode(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -16042,6 +16047,10 @@ proto.lightstep.collector.Command.serializeBinaryToWriter = function (message, w
   if (f) {
     writer.writeBool(1, f);
   }
+  f = message.getDevMode();
+  if (f) {
+    writer.writeBool(2, f);
+  }
 };
 
 /**
@@ -16058,6 +16067,22 @@ proto.lightstep.collector.Command.prototype.getDisable = function () {
 /** @param {boolean} value */
 proto.lightstep.collector.Command.prototype.setDisable = function (value) {
   jspb.Message.setProto3BooleanField(this, 1, value);
+};
+
+/**
+ * optional bool dev_mode = 2;
+ * Note that Boolean fields may be set to 0/1 when serialized from a Java server.
+ * You should avoid comparisons like {@code val === true/false} in those cases.
+ * @return {boolean}
+ */
+proto.lightstep.collector.Command.prototype.getDevMode = function () {
+  return (/** @type {boolean} */jspb.Message.getFieldWithDefault(this, 2, false)
+  );
+};
+
+/** @param {boolean} value */
+proto.lightstep.collector.Command.prototype.setDevMode = function (value) {
+  jspb.Message.setProto3BooleanField(this, 2, value);
 };
 
 /**
@@ -19207,14 +19232,15 @@ var SpanImp = function (_opentracing$Span) {
             spanProto.setSpanContext(spanContextProto);
             spanProto.setOperationName(this._operationName);
 
+            var millis = Math.floor(this._beginMicros / 1000);
+            var secs = Math.floor(millis / 1000);
+            var nanos = millis % 1000 * 1000000;
+            var duration = (this._endMicros - this._beginMicros).toString();
             var startTimestamp = new googleProtobufTimestampPB.Timestamp();
-            var startMillis = Math.floor(this._beginMicros / 1000);
-            var startSeconds = Math.floor(startMillis / 1000);
-            var startNanos = startMillis % 1000 * 1000000;
-            startTimestamp.setSeconds(startSeconds);
-            startTimestamp.setNanos(startNanos);
+            startTimestamp.setSeconds(secs);
+            startTimestamp.setNanos(nanos);
             spanProto.setStartTimestamp(startTimestamp);
-            spanProto.setDurationMicros(this._endMicros - this._beginMicros);
+            spanProto.setDurationMicros(duration);
 
             var logs = [];
             (0, _each3.default)(this._log_records, function (logRecord) {

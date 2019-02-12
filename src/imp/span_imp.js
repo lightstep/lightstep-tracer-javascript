@@ -224,7 +224,7 @@ export default class SpanImp extends opentracing.Span {
         startTimestamp.setSeconds(startSeconds);
         startTimestamp.setNanos(startNanos);
         spanProto.setStartTimestamp(startTimestamp);
-        spanProto.setDurationMicros(this._endMicros - this._beginMicros);
+        spanProto.setDurationMicros((this._endMicros - this._beginMicros).toString());
 
         let logs = [];
         _each(this._log_records, (logRecord) => {
