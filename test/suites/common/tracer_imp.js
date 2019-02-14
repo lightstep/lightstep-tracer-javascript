@@ -130,6 +130,15 @@ describe("TracerImp", function() {
             }).options().collector_path).to.equal('/my_path');
         });
 
+        it('should allow setting a custom logger', function () {
+            let hasLogged = false;
+            makeLSTracer({
+                logger : function () { hasLogged = true; },
+                silent : false,
+                verbosity : 4,
+            });
+            expect(hasLogged).to.equal(true);
+        });
     });
 
     describe("TracerImp#on", function() {
