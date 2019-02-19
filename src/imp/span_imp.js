@@ -164,7 +164,7 @@ export default class SpanImp extends opentracing.Span {
         this._ended = true;
 
         if (finishTime !== undefined) {
-            this._endMicros = finishTime * 1000;
+            this._endMicros = Math.floor(finishTime * 1000);
         }
 
         // Do not set endMicros if it has already been set. This accounts for
