@@ -111,7 +111,7 @@ export default class TransportHTTPProto {
                             err = exception;
                         }
                     }
-                    return done(err, resp);
+                    return done(err, resp.toObject());
                 });
             });
             req.on('socket', (socket, head) => {
