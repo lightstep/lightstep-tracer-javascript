@@ -234,6 +234,9 @@ export default class Tracer extends opentracing.Tracer {
         this.addOption('log_field_key_hard_limit',   { type: 'int',     defaultValue: 256 });
         this.addOption('log_field_value_hard_limit', { type: 'int',     defaultValue: 1024 });
 
+        // Meta Event reporting options
+        this.addOption('meta_event_reporting', { type: 'bool', defaultValue: false });
+
         /* eslint-disable key-spacing, no-multi-spaces */
     }
 
@@ -289,6 +292,18 @@ export default class Tracer extends opentracing.Tracer {
         }
 
         this.emit('start_span', spanImp);
+
+        if (util.shouldSendMetaSpan(this.options(), spanImp.getTags())) {
+            this.startSpan(constants.LS_META_SP_START,
+                {
+                    tags : {
+                        [constants.LS_META_EVENT_KEY]: true,
+                        [constants.LS_META_TRACE_KEY]: spanImp.traceGUID(),
+                        [constants.LS_META_SPAN_KEY]: spanImp.guid(),
+                    },
+                })
+                .finish();
+        }
         return spanImp;
     }
 
@@ -296,6 +311,18 @@ export default class Tracer extends opentracing.Tracer {
         switch (format) {
         case this._opentracing.FORMAT_HTTP_HEADERS:
         case this._opentracing.FORMAT_TEXT_MAP:
+            if (this.options().meta_event_reporting === true) {
+                this.startSpan(constants.LS_META_INJECT,
+                    {
+                        tags: {
+                            [constants.LS_META_EVENT_KEY]: true,
+                            [constants.LS_META_TRACE_KEY]: spanContext._traceGUID,
+                            [constants.LS_META_SPAN_KEY]: spanContext._guid,
+                            [constants.LS_META_PROPAGATION_KEY]: format,
+                        },
+                    })
+                .finish();
+            }
             this._injectToTextMap(spanContext, carrier);
             break;
 
@@ -329,11 +356,24 @@ export default class Tracer extends opentracing.Tracer {
     }
 
     _extract(format, carrier) {
+        let sc;
         switch (format) {
         case this._opentracing.FORMAT_HTTP_HEADERS:
         case this._opentracing.FORMAT_TEXT_MAP:
-            return this._extractTextMap(format, carrier);
-
+            sc = this._extractTextMap(format, carrier);
+            if (this.options().meta_event_reporting === true) {
+                this.startSpan(constants.LS_META_EXTRACT,
+                    {
+                        tags: {
+                            [constants.LS_META_EVENT_KEY]: true,
+                            [constants.LS_META_TRACE_KEY]: sc._traceGUID,
+                            [constants.LS_META_SPAN_KEY]: sc._guid,
+                            [constants.LS_META_PROPAGATION_KEY]: format,
+                        },
+                    })
+                .finish();
+            }
+            return sc;
         case this._opentracing.FORMAT_BINARY:
             this._error(`Unsupported format: ${format}`);
             return null;
@@ -1132,6 +1172,12 @@ export default class Tracer extends opentracing.Tracer {
 
                     if (res.errors && res.errors.length > 0) {
                         this._warn('Errors in report', res.errors);
+                    }
+
+                    if (res.commandsList && res.commandsList.length > 0) {
+                        if (res.commandsList[0].devMode) {
+                            this.options().meta_event_reporting = true;
+                        }
                     }
                 } else {
                     this._useClockState = false;

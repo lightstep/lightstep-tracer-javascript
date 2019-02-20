@@ -9,6 +9,10 @@ class Util {
         }
         return timer;
     }
+
+    shouldSendMetaSpan(opts, tags) {
+        return opts.meta_event_reporting === true && !tags['lightstep.meta_event'] === true;
+    }
 }
 
 export default new Util();
