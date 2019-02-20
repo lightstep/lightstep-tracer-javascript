@@ -273,7 +273,7 @@ export default class Tracer extends opentracing.Tracer {
                 break;
             case 'startTime':
                 // startTime is in milliseconds
-                spanImp.setBeginMicros(value * 1000);
+                spanImp.setBeginMicros(Math.floor(value * 1000));
                 break;
             case 'tags':
                 spanImp.addTags(value);
