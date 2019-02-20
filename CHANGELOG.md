@@ -2,6 +2,12 @@
 
 *Log of significant changes, especially those affecting the supported API.*
 
+## 0.21.1
+
+* Passing fractional timestamps to span start/finish are now properly handled.
+* Several bugs were fixed with the `proto` transport option around span duration and span ids.
+* We now support a custom logger function (thanks @Rowno), see README for more details.
+
 ## 0.21.0
 
 * Update `thrift` to `0.11.0`. This breaks support for node.js versions <= 5.8.
