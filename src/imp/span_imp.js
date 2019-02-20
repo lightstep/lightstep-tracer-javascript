@@ -164,7 +164,7 @@ export default class SpanImp extends opentracing.Span {
         this._ended = true;
 
         if (finishTime !== undefined) {
-            this._endMicros = Math.floor(finishTime * 1000);
+            this.setEndMicros(Math.floor(finishTime * 1000));
         }
 
         // Do not set endMicros if it has already been set. This accounts for
@@ -172,7 +172,7 @@ export default class SpanImp extends opentracing.Span {
         // for retroactively created spans that might not be possible to create
         // in real-time).
         if (this._endMicros === 0) {
-            this._endMicros = this._tracerImp._platform.nowMicros();
+            this.setEndMicros(this._tracerImp._platform.nowMicros());
         }
         this._tracerImp._addSpanRecord(this);
     }
