@@ -13403,7 +13403,7 @@ module.exports = g;
 /*! exports provided: name, version, main, engines, scripts, license, repository, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"lightstep-tracer","version":"0.21.0","main":"index.js","engines":{"node":">=0.12.0"},"scripts":{"test":"rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js"},"license":"MIT","repository":{"type":"git","url":"http://github.com/lightstep/lightstep-tracer-javascript.git"},"dependencies":{"async":"1.5.0","eventemitter3":"1.1.1","google-protobuf":"3.6.1","hex2dec":"1.0.1","moment":"^2.24.0","source-map-support":"0.3.3","thrift":"0.11.0"},"devDependencies":{"babel-cli":"6.14.0","babel-core":"^6.26.3","babel-loader":"7","babel-plugin-add-module-exports":"^1.0.0","babel-plugin-check-es2015-constants":"6.7.2","babel-plugin-transform-es2015-arrow-functions":"6.5.2","babel-plugin-transform-es2015-block-scoped-functions":"6.6.5","babel-plugin-transform-es2015-block-scoping":"^6.26.0","babel-plugin-transform-es2015-classes":"6.6.5","babel-plugin-transform-es2015-computed-properties":"6.6.5","babel-plugin-transform-es2015-destructuring":"6.6.5","babel-plugin-transform-es2015-duplicate-keys":"6.6.4","babel-plugin-transform-es2015-literals":"6.5.0","babel-plugin-transform-es2015-modules-commonjs":"6.7.4","babel-plugin-transform-es2015-object-super":"6.6.5","babel-plugin-transform-es2015-parameters":"6.7.0","babel-plugin-transform-es2015-spread":"6.6.5","babel-plugin-transform-es2015-sticky-regex":"6.5.0","babel-plugin-transform-es2015-template-literals":"6.6.5","babel-plugin-transform-es2015-unicode-regex":"6.5.0","babel-polyfill":"6.3.14","babel-preset-es2015":"6.3.13","chai":"3.4.1","clone":"1.0.2","colors":"1.1.2","eslint":"2.4.0","eslint-config-airbnb":"6.2.0","eslint-plugin-react":"4.2.3","express":"^4.16.3","istanbul":"^0.4.5","mocha":"^5.2.0","opentracing":"0.14.3","protobufjs":"6.8.8","shelljs":"0.5.3","sprintf-js":"1.0.3","underscore":"1.8.3","watch-trigger":"0.0.5","webpack":"^4.25.1","webpack-cli":"^3.1.2"}};
+module.exports = {"name":"lightstep-tracer","version":"0.21.0","main":"index.js","engines":{"node":">=0.12.0"},"scripts":{"test":"rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js"},"license":"MIT","repository":{"type":"git","url":"http://github.com/lightstep/lightstep-tracer-javascript.git"},"dependencies":{"async":"1.5.0","eventemitter3":"1.1.1","google-protobuf":"3.6.1","hex2dec":"1.0.1","source-map-support":"0.3.3","thrift":"0.11.0"},"devDependencies":{"babel-cli":"6.14.0","babel-core":"^6.26.3","babel-loader":"7","babel-plugin-add-module-exports":"^1.0.0","babel-plugin-check-es2015-constants":"6.7.2","babel-plugin-transform-es2015-arrow-functions":"6.5.2","babel-plugin-transform-es2015-block-scoped-functions":"6.6.5","babel-plugin-transform-es2015-block-scoping":"^6.26.0","babel-plugin-transform-es2015-classes":"6.6.5","babel-plugin-transform-es2015-computed-properties":"6.6.5","babel-plugin-transform-es2015-destructuring":"6.6.5","babel-plugin-transform-es2015-duplicate-keys":"6.6.4","babel-plugin-transform-es2015-literals":"6.5.0","babel-plugin-transform-es2015-modules-commonjs":"6.7.4","babel-plugin-transform-es2015-object-super":"6.6.5","babel-plugin-transform-es2015-parameters":"6.7.0","babel-plugin-transform-es2015-spread":"6.6.5","babel-plugin-transform-es2015-sticky-regex":"6.5.0","babel-plugin-transform-es2015-template-literals":"6.6.5","babel-plugin-transform-es2015-unicode-regex":"6.5.0","babel-polyfill":"6.3.14","babel-preset-es2015":"6.3.13","chai":"3.4.1","clone":"1.0.2","colors":"1.1.2","eslint":"2.4.0","eslint-config-airbnb":"6.2.0","eslint-plugin-react":"4.2.3","express":"^4.16.3","istanbul":"^0.4.5","mocha":"^5.2.0","opentracing":"0.14.3","protobufjs":"6.8.8","shelljs":"0.5.3","sprintf-js":"1.0.3","underscore":"1.8.3","watch-trigger":"0.0.5","webpack":"^4.25.1","webpack-cli":"^3.1.2"}};
 
 /***/ }),
 
@@ -19173,7 +19173,7 @@ var SpanImp = function (_opentracing$Span) {
             this._ended = true;
 
             if (finishTime !== undefined) {
-                this._endMicros = finishTime * 1000;
+                this.setEndMicros(Math.floor(finishTime * 1000));
             }
 
             // Do not set endMicros if it has already been set. This accounts for
@@ -19181,7 +19181,7 @@ var SpanImp = function (_opentracing$Span) {
             // for retroactively created spans that might not be possible to create
             // in real-time).
             if (this._endMicros === 0) {
-                this._endMicros = this._tracerImp._platform.nowMicros();
+                this.setEndMicros(this._tracerImp._platform.nowMicros());
             }
             this._tracerImp._addSpanRecord(this);
         }
@@ -19232,15 +19232,14 @@ var SpanImp = function (_opentracing$Span) {
             spanProto.setSpanContext(spanContextProto);
             spanProto.setOperationName(this._operationName);
 
-            var millis = Math.floor(this._beginMicros / 1000);
-            var secs = Math.floor(millis / 1000);
-            var nanos = millis % 1000 * 1000000;
-            var duration = (this._endMicros - this._beginMicros).toString();
             var startTimestamp = new googleProtobufTimestampPB.Timestamp();
-            startTimestamp.setSeconds(secs);
-            startTimestamp.setNanos(nanos);
+            var startMillis = Math.floor(this._beginMicros / 1000);
+            var startSeconds = Math.floor(startMillis / 1000);
+            var startNanos = startMillis % 1000 * 1000000;
+            startTimestamp.setSeconds(startSeconds);
+            startTimestamp.setNanos(startNanos);
             spanProto.setStartTimestamp(startTimestamp);
-            spanProto.setDurationMicros(duration);
+            spanProto.setDurationMicros((this._endMicros - this._beginMicros).toString());
 
             var logs = [];
             (0, _each3.default)(this._log_records, function (logRecord) {
@@ -19613,7 +19612,7 @@ var Tracer = function (_opentracing$Tracer) {
                         break;
                     case 'startTime':
                         // startTime is in milliseconds
-                        spanImp.setBeginMicros(value * 1000);
+                        spanImp.setBeginMicros(Math.floor(value * 1000));
                         break;
                     case 'tags':
                         spanImp.addTags(value);
