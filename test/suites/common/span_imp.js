@@ -24,6 +24,14 @@ describe("SpanImp", function() {
         });
     });
 
+    describe("SpanImp#beginMicrosWithNanos", function() {
+        it("handles fractional timestamps", function() {
+            var span = Tracer.startSpan('test', {startTime: 1550584089648.123456789})
+            expect(span.beginMicros() % 1).to.be.eq(0)
+            span.finish();
+        });
+    });
+
     // Used by the browser to create spans retroactively
     describe("SpanImp#setEndMicros", function() {
         it("is a method", function() {
