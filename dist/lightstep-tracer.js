@@ -20955,7 +20955,6 @@ var Util = function () {
     _createClass(Util, [{
         key: 'detachedTimeout',
 
-
         // Similar to a regular setTimeout() call, but dereferences the timer so the
         // program execution will not be held up by this timer.
         value: function detachedTimeout(callback, delay) {
@@ -20968,7 +20967,8 @@ var Util = function () {
     }, {
         key: 'shouldSendMetaSpan',
         value: function shouldSendMetaSpan(opts, tags) {
-            return opts.meta_event_reporting === true && !tags['lightstep.meta_event'] === true;
+            var shouldSendSpan = opts.meta_event_reporting === true && !tags['lightstep.meta_event'] === true;
+            return shouldSendSpan;
         }
     }]);
 
