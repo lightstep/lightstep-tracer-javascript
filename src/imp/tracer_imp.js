@@ -89,6 +89,7 @@ export default class Tracer extends opentracing.Tracer {
         }
 
         this._reportingLoopActive = false;
+        this._first_report_has_run = false;
         this._reportYoungestMicros = now;
         this._reportTimer = null;
         this._reportErrorStreak = 0;    // Number of consecutive errors
@@ -1110,6 +1111,16 @@ export default class Tracer extends opentracing.Tracer {
 
         this.emit('prereport', report);
         let originMicros = this._platform.nowMicros();
+
+        if (this._options.meta_event_reporting && !this._first_report_has_run) {
+            this._first_report_has_run = true;
+            this.startSpan(constants.LS_META_TRACER_CREATE, {
+                tags: {
+                    [constants.LS_META_EVENT_KEY]: true,
+                    [constants.LS_META_TRACER_GUID_KEY]: this._runtimeGUID,
+                },
+            }).finish();
+        }
 
         this._transport.report(detached, this._auth, report, (err, res) => {
             let destinationMicros = this._platform.nowMicros();

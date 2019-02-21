@@ -19459,6 +19459,7 @@ var Tracer = function (_opentracing$Tracer) {
         }
 
         _this._reportingLoopActive = false;
+        _this._first_report_has_run = false;
         _this._reportYoungestMicros = now;
         _this._reportTimer = null;
         _this._reportErrorStreak = 0; // Number of consecutive errors
@@ -20534,6 +20535,15 @@ var Tracer = function (_opentracing$Tracer) {
 
             this.emit('prereport', report);
             var originMicros = this._platform.nowMicros();
+
+            if (this._options.meta_event_reporting && !this._first_report_has_run) {
+                var _tags4;
+
+                this._first_report_has_run = true;
+                this.startSpan(constants.LS_META_TRACER_CREATE, {
+                    tags: (_tags4 = {}, _defineProperty(_tags4, constants.LS_META_EVENT_KEY, true), _defineProperty(_tags4, constants.LS_META_TRACER_GUID_KEY, this._runtimeGUID), _tags4)
+                }).finish();
+            }
 
             this._transport.report(detached, this._auth, report, function (err, res) {
                 var destinationMicros = _this13._platform.nowMicros();
