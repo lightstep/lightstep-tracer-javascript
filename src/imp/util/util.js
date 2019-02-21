@@ -1,5 +1,4 @@
 class Util {
-
     // Similar to a regular setTimeout() call, but dereferences the timer so the
     // program execution will not be held up by this timer.
     detachedTimeout(callback, delay) {
@@ -11,7 +10,8 @@ class Util {
     }
 
     shouldSendMetaSpan(opts, tags) {
-        return opts.meta_event_reporting === true && !tags['lightstep.meta_event'] === true;
+        let shouldSendSpan = opts.meta_event_reporting === true && !tags['lightstep.meta_event'] === true;
+        return shouldSendSpan;
     }
 }
 
