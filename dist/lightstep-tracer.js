@@ -20977,7 +20977,7 @@ var Util = function () {
     }, {
         key: 'shouldSendMetaSpan',
         value: function shouldSendMetaSpan(opts, tags) {
-            var shouldSendSpan = opts.meta_event_reporting === true && !tags['lightstep.meta_event'] === true;
+            var shouldSendSpan = opts.meta_event_reporting === true && tags['lightstep.meta_event'] !== true;
             return shouldSendSpan;
         }
     }]);
