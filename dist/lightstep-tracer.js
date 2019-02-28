@@ -13477,6 +13477,17 @@ var LIGHTSTEP_APP_URL_PREFIX = exports.LIGHTSTEP_APP_URL_PREFIX = 'https://app.l
 
 var JOIN_ID_PREFIX = exports.JOIN_ID_PREFIX = 'join:';
 
+var LS_META_EVENT_KEY = exports.LS_META_EVENT_KEY = 'lightstep.meta_event';
+var LS_META_PROPAGATION_KEY = exports.LS_META_PROPAGATION_KEY = 'lightstep.propagation_format';
+var LS_META_TRACE_KEY = exports.LS_META_TRACE_KEY = 'lightstep.trace_id';
+var LS_META_SPAN_KEY = exports.LS_META_SPAN_KEY = 'lightstep.span_id';
+var LS_META_TRACER_GUID_KEY = exports.LS_META_TRACER_GUID_KEY = 'lightstep.tracer_guid';
+var LS_META_EXTRACT = exports.LS_META_EXTRACT = 'lightstep.extract_span';
+var LS_META_INJECT = exports.LS_META_INJECT = 'lightstep.inject_span';
+var LS_META_SP_START = exports.LS_META_SP_START = 'lightstep.span_start';
+var LS_META_SP_FINISH = exports.LS_META_SP_FINISH = 'lightstep.span_finish';
+var LS_META_TRACER_CREATE = exports.LS_META_TRACER_CREATE = 'lightstep.tracer_create';
+
 /***/ }),
 
 /***/ "./src/imp/auth_imp.js":
@@ -18973,18 +18984,24 @@ var _log_record_imp = __webpack_require__(/*! ./log_record_imp */ "./src/imp/log
 
 var _log_record_imp2 = _interopRequireDefault(_log_record_imp);
 
+var _util = __webpack_require__(/*! ./util/util.js */ "./src/imp/util/util.js");
+
+var _util2 = _interopRequireDefault(_util);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } // eslint-disable-line camelcase
-
-
 // eslint-disable-line camelcase
+
+
 var converter = __webpack_require__(/*! hex2dec */ "./node_modules/hex2dec/index.js");
 var proto = __webpack_require__(/*! ./generated_proto/collector_pb.js */ "./src/imp/generated_proto/collector_pb.js");
 var googleProtobufTimestampPB = __webpack_require__(/*! google-protobuf/google/protobuf/timestamp_pb.js */ "./node_modules/google-protobuf/google/protobuf/timestamp_pb.js");
@@ -19183,6 +19200,15 @@ var SpanImp = function (_opentracing$Span) {
             if (this._endMicros === 0) {
                 this.setEndMicros(this._tracerImp._platform.nowMicros());
             }
+
+            if (_util2.default.shouldSendMetaSpan(this._tracer().options(), this.getTags())) {
+                var _tags;
+
+                this._tracerImp.startSpan(constants.LS_META_SP_FINISH, {
+                    tags: (_tags = {}, _defineProperty(_tags, constants.LS_META_EVENT_KEY, true), _defineProperty(_tags, constants.LS_META_TRACE_KEY, this.traceGUID()), _defineProperty(_tags, constants.LS_META_SPAN_KEY, this.guid()), _tags)
+                }).finish();
+            }
+
             this._tracerImp._addSpanRecord(this);
         }
     }, {
@@ -19340,6 +19366,8 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -19431,6 +19459,7 @@ var Tracer = function (_opentracing$Tracer) {
         }
 
         _this._reportingLoopActive = false;
+        _this._first_report_has_run = false;
         _this._reportYoungestMicros = now;
         _this._reportTimer = null;
         _this._reportErrorStreak = 0; // Number of consecutive errors
@@ -19570,6 +19599,9 @@ var Tracer = function (_opentracing$Tracer) {
             this.addOption('log_field_key_hard_limit', { type: 'int', defaultValue: 256 });
             this.addOption('log_field_value_hard_limit', { type: 'int', defaultValue: 1024 });
 
+            // Meta Event reporting options
+            this.addOption('meta_event_reporting', { type: 'bool', defaultValue: false });
+
             /* eslint-disable key-spacing, no-multi-spaces */
         }
 
@@ -19628,6 +19660,14 @@ var Tracer = function (_opentracing$Tracer) {
             }
 
             this.emit('start_span', spanImp);
+
+            if (util.shouldSendMetaSpan(this.options(), spanImp.getTags())) {
+                var _tags;
+
+                this.startSpan(constants.LS_META_SP_START, {
+                    tags: (_tags = {}, _defineProperty(_tags, constants.LS_META_EVENT_KEY, true), _defineProperty(_tags, constants.LS_META_TRACE_KEY, spanImp.traceGUID()), _defineProperty(_tags, constants.LS_META_SPAN_KEY, spanImp.guid()), _tags)
+                }).finish();
+            }
             return spanImp;
         }
     }, {
@@ -19636,6 +19676,13 @@ var Tracer = function (_opentracing$Tracer) {
             switch (format) {
                 case this._opentracing.FORMAT_HTTP_HEADERS:
                 case this._opentracing.FORMAT_TEXT_MAP:
+                    if (this.options().meta_event_reporting === true) {
+                        var _tags2;
+
+                        this.startSpan(constants.LS_META_INJECT, {
+                            tags: (_tags2 = {}, _defineProperty(_tags2, constants.LS_META_EVENT_KEY, true), _defineProperty(_tags2, constants.LS_META_TRACE_KEY, spanContext._traceGUID), _defineProperty(_tags2, constants.LS_META_SPAN_KEY, spanContext._guid), _defineProperty(_tags2, constants.LS_META_PROPAGATION_KEY, format), _tags2)
+                        }).finish();
+                    }
                     this._injectToTextMap(spanContext, carrier);
                     break;
 
@@ -19671,11 +19718,19 @@ var Tracer = function (_opentracing$Tracer) {
     }, {
         key: '_extract',
         value: function _extract(format, carrier) {
+            var sc = void 0;
             switch (format) {
                 case this._opentracing.FORMAT_HTTP_HEADERS:
                 case this._opentracing.FORMAT_TEXT_MAP:
-                    return this._extractTextMap(format, carrier);
+                    sc = this._extractTextMap(format, carrier);
+                    if (this.options().meta_event_reporting === true) {
+                        var _tags3;
 
+                        this.startSpan(constants.LS_META_EXTRACT, {
+                            tags: (_tags3 = {}, _defineProperty(_tags3, constants.LS_META_EVENT_KEY, true), _defineProperty(_tags3, constants.LS_META_TRACE_KEY, sc._traceGUID), _defineProperty(_tags3, constants.LS_META_SPAN_KEY, sc._guid), _defineProperty(_tags3, constants.LS_META_PROPAGATION_KEY, format), _tags3)
+                        }).finish();
+                    }
+                    return sc;
                 case this._opentracing.FORMAT_BINARY:
                     this._error('Unsupported format: ' + format);
                     return null;
@@ -20481,6 +20536,15 @@ var Tracer = function (_opentracing$Tracer) {
             this.emit('prereport', report);
             var originMicros = this._platform.nowMicros();
 
+            if (this._options.meta_event_reporting && !this._first_report_has_run) {
+                var _tags4;
+
+                this._first_report_has_run = true;
+                this.startSpan(constants.LS_META_TRACER_CREATE, {
+                    tags: (_tags4 = {}, _defineProperty(_tags4, constants.LS_META_EVENT_KEY, true), _defineProperty(_tags4, constants.LS_META_TRACER_GUID_KEY, this._runtimeGUID), _tags4)
+                }).finish();
+            }
+
             this._transport.report(detached, this._auth, report, function (err, res) {
                 var destinationMicros = _this13._platform.nowMicros();
                 var reportWindowSeconds = (now - report.oldest_micros) / 1e6;
@@ -20535,6 +20599,12 @@ var Tracer = function (_opentracing$Tracer) {
 
                         if (res.errors && res.errors.length > 0) {
                             _this13._warn('Errors in report', res.errors);
+                        }
+
+                        if (res.commandsList && res.commandsList.length > 0) {
+                            if (res.commandsList[0].devMode) {
+                                _this13.options().meta_event_reporting = true;
+                            }
                         }
                     } else {
                         _this13._useClockState = false;
@@ -20893,8 +20963,7 @@ var Util = function () {
     }
 
     _createClass(Util, [{
-        key: "detachedTimeout",
-
+        key: 'detachedTimeout',
 
         // Similar to a regular setTimeout() call, but dereferences the timer so the
         // program execution will not be held up by this timer.
@@ -20904,6 +20973,12 @@ var Util = function () {
                 timer.unref();
             }
             return timer;
+        }
+    }, {
+        key: 'shouldSendMetaSpan',
+        value: function shouldSendMetaSpan(opts, tags) {
+            var shouldSendSpan = opts.meta_event_reporting === true && tags['lightstep.meta_event'] !== true;
+            return shouldSendSpan;
         }
     }]);
 

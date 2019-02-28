@@ -23,3 +23,14 @@ export const CLOCK_STATE_REFRESH_INTERVAL_MS = 350;
 export const LIGHTSTEP_APP_URL_PREFIX = 'https://app.lightstep.com';
 
 export const JOIN_ID_PREFIX = 'join:';
+
+export const LS_META_EVENT_KEY = 'lightstep.meta_event';
+export const LS_META_PROPAGATION_KEY = 'lightstep.propagation_format';
+export const LS_META_TRACE_KEY = 'lightstep.trace_id';
+export const LS_META_SPAN_KEY = 'lightstep.span_id';
+export const LS_META_TRACER_GUID_KEY = 'lightstep.tracer_guid';
+export const LS_META_EXTRACT = 'lightstep.extract_span';
+export const LS_META_INJECT = 'lightstep.inject_span';
+export const LS_META_SP_START = 'lightstep.span_start';
+export const LS_META_SP_FINISH = 'lightstep.span_finish';
+export const LS_META_TRACER_CREATE = 'lightstep.tracer_create';
