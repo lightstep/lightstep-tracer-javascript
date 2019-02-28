@@ -1,8 +1,0 @@
-{
-  "name": "opentracing-example",
-  "version": "1.0.0",
-  "main": "index.js",
-  "dependencies": {
-    "opentracing": "*"
-  }
-}

@@ -5,7 +5,6 @@ var opentracing = require('opentracing');
 
 var tracer = new lightstep.Tracer({
     component_name : 'lightstep-tracer/examples/node-trivial',
-    verbosity: 4
 });
 
 var span = tracer.startSpan('trivial_span');

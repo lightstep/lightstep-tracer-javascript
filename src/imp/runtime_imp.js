@@ -39,17 +39,32 @@ export default class RuntimeImp {
 
         let tracerPlatform = new proto.KeyValue();
         tracerPlatform.setKey('lightstep.tracer_platform');
-        tracerPlatform.setStringValue('browser');
+        tracerPlatform.setStringValue(this._attributes['lightstep.tracer_platform']);
+
+        let tracerPlatformVersion = new proto.KeyValue();
+        tracerPlatformVersion.setKey('lightstep.tracer_platform_version');
+        tracerPlatformVersion.setStringValue(this._attributes['lightstep.tracer_platform_version']);
 
         let componentName = new proto.KeyValue();
         componentName.setKey('lightstep.component_name');
         componentName.setStringValue(this._componentName);
 
+        let commandLine = new proto.KeyValue();
+        commandLine.setKey('lightstep.command_line');
+        commandLine.setStringValue(this._attributes['lightstep.command_line']);
+
+        let hostname = new proto.KeyValue();
+        hostname.setKey('lightstep.hostname');
+        hostname.setStringValue(this._attributes['lightstep.hostname']);
+
         let reporterId = converter.hexToDec(this._runtimeGUID);
 
         let reporterProto = new proto.Reporter();
         reporterProto.setReporterId(reporterId);
-        reporterProto.setTagsList([tracerVersion, tracerPlatform, componentName]);
+        reporterProto.setTagsList([
+            tracerVersion, tracerPlatform, componentName, commandLine, hostname, tracerPlatformVersion,
+        ]);
+
         return reporterProto;
     }
 }

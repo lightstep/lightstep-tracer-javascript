@@ -18842,17 +18842,30 @@ var RuntimeImp = function () {
 
             var tracerPlatform = new proto.KeyValue();
             tracerPlatform.setKey('lightstep.tracer_platform');
-            tracerPlatform.setStringValue('browser');
+            tracerPlatform.setStringValue(this._attributes['lightstep.tracer_platform']);
+
+            var tracerPlatformVersion = new proto.KeyValue();
+            tracerPlatformVersion.setKey('lightstep.tracer_platform_version');
+            tracerPlatformVersion.setStringValue(this._attributes['lightstep.tracer_platform_version']);
 
             var componentName = new proto.KeyValue();
             componentName.setKey('lightstep.component_name');
             componentName.setStringValue(this._componentName);
 
+            var commandLine = new proto.KeyValue();
+            commandLine.setKey('lightstep.command_line');
+            commandLine.setStringValue(this._attributes['lightstep.command_line']);
+
+            var hostname = new proto.KeyValue();
+            hostname.setKey('lightstep.hostname');
+            hostname.setStringValue(this._attributes['lightstep.hostname']);
+
             var reporterId = converter.hexToDec(this._runtimeGUID);
 
             var reporterProto = new proto.Reporter();
             reporterProto.setReporterId(reporterId);
-            reporterProto.setTagsList([tracerVersion, tracerPlatform, componentName]);
+            reporterProto.setTagsList([tracerVersion, tracerPlatform, componentName, commandLine, hostname, tracerPlatformVersion]);
+
             return reporterProto;
         }
     }]);
@@ -19449,17 +19462,6 @@ var Tracer = function (_opentracing$Tracer) {
             _this._transport = opts.override_transport;
         }
 
-        switch (_this._options.transport) {
-            case 'proto':
-                _this._transport = new _platform_abstraction_layer.ProtoTransport(logger);
-                break;
-            case 'thrift':
-                _this._transport = new _platform_abstraction_layer.ThriftTransport(logger);
-                break;
-            default:
-                _this._transport = new _platform_abstraction_layer.ProtoTransport(logger);
-        }
-
         _this._reportingLoopActive = false;
         _this._first_report_has_run = false;
         _this._reportYoungestMicros = now;
@@ -19505,6 +19507,17 @@ var Tracer = function (_opentracing$Tracer) {
         // Set constructor arguments
         if (opts) {
             _this.options(opts);
+        }
+
+        switch (_this._options.transport) {
+            case 'proto':
+                _this._transport = new _platform_abstraction_layer.ProtoTransport(logger);
+                break;
+            case 'thrift':
+                _this._transport = new _platform_abstraction_layer.ThriftTransport(logger);
+                break;
+            default:
+                _this._transport = new _platform_abstraction_layer.ProtoTransport(logger);
         }
 
         // For clock skew adjustment.
