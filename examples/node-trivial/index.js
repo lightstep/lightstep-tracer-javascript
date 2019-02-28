@@ -1,10 +1,11 @@
 'use strict';
 
 var lightstep = require('../..');
+var opentracing = require('opentracing');
 
 var tracer = new lightstep.Tracer({
-    access_token   : '{your_access_token}',
     component_name : 'lightstep-tracer/examples/node-trivial',
+    verbosity: 4
 });
 
 var span = tracer.startSpan('trivial_span');
@@ -19,10 +20,17 @@ setTimeout(function() {
             'property': 'value',
         },
     });
-}, 100);
+    var childSpan = tracer.startSpan('childSpan',{ childOf: span.context()});
+    setTimeout(function() {
+        childSpan.log({event: 'childevent'})
+        childSpan.finish();
+    }, 0.5)
+}, 600);
 setTimeout(function() {
     span.finish();
-}, 200);
+    tracer.inject(span, opentracing.FORMAT_TEXT_MAP, {});
+}, 1000);
 
 var url = span.generateTraceURL();
 console.log('URL: ' + url);
+tracer.flush();

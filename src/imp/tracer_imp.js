@@ -24,9 +24,8 @@ const util          = require('./util/util');
 const CARRIER_TRACER_STATE_PREFIX = 'ot-tracer-';
 const CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
 
-const DEFAULT_COLLECTOR_HOSTNAME   = 'collector.lightstep.com';
-const DEFAULT_COLLECTOR_PORT_TLS   = 443;
-const DEFAULT_COLLECTOR_PORT_PLAIN = 80;
+const DEFAULT_COLLECTOR_HOSTNAME   = 'localhost';
+const DEFAULT_COLLECTOR_PORT_PLAIN = 8360;
 const DEFAULT_COLLECTOR_PATH       = '';
 
 // Internal errors should be rare. Set a low limit to ensure a cascading failure
@@ -80,12 +79,15 @@ export default class Tracer extends opentracing.Tracer {
             this._transport = opts.override_transport;
         }
 
-        if (!this._transport) {
-            if (opts.transport && opts.transport === 'proto') {
-                this._transport = new ProtoTransport(logger);
-            } else {
-                this._transport = new ThriftTransport(logger);
-            }
+        switch (this._options.transport) {
+        case 'proto':
+            this._transport = new ProtoTransport(logger);
+            break;
+        case 'thrift':
+            this._transport = new ThriftTransport(logger);
+            break;
+        default:
+            this._transport = new ProtoTransport(logger);
         }
 
         this._reportingLoopActive = false;
@@ -200,12 +202,13 @@ export default class Tracer extends opentracing.Tracer {
         this.addOption('access_token',          { type: 'string',  defaultValue: '' });
         this.addOption('component_name',        { type: 'string',  defaultValue: '' });
         this.addOption('collector_host',        { type: 'string',  defaultValue: DEFAULT_COLLECTOR_HOSTNAME });
-        this.addOption('collector_port',        { type: 'int',     defaultValue: DEFAULT_COLLECTOR_PORT_TLS });
+        this.addOption('collector_port',        { type: 'int',     defaultValue: DEFAULT_COLLECTOR_PORT_PLAIN });
         this.addOption('collector_path',        { type: 'string',  defaultValue: DEFAULT_COLLECTOR_PATH });
-        this.addOption('collector_encryption',  { type: 'string',  defaultValue: 'tls' });
+        this.addOption('collector_encryption',  { type: 'string',  defaultValue: 'none' });
         this.addOption('tags',                  { type: 'any',     defaultValue: {} });
         this.addOption('max_reporting_interval_millis',  { type: 'int',     defaultValue: 2500 });
         this.addOption('disable_clock_skew_correction', { type: 'bool', defaultValue: false });
+        this.addOption('transport', { type: 'string', defaultValue: 'proto' });
 
         // Non-standard, may be deprecated
         this.addOption('disabled',              { type: 'bool',    defaultValue: false });
@@ -519,7 +522,7 @@ export default class Tracer extends opentracing.Tracer {
         // "collector_encryption" acts an alias for the common cases of 'collector_port'
         if (opts.collector_encryption !== undefined && opts.collector_port === undefined) {
             opts.collector_port = opts.collector_encryption !== 'none' ?
-                DEFAULT_COLLECTOR_PORT_TLS :
+                443 :
                 DEFAULT_COLLECTOR_PORT_PLAIN;
         }
 
@@ -679,38 +682,35 @@ export default class Tracer extends opentracing.Tracer {
             return;
         }
 
-        // See if the Thrift data can be initialized
-        if (this._options.access_token.length > 0 && this._options.component_name.length > 0) {
-            this._runtimeGUID = this._platform.runtimeGUID(this._options.component_name);
+        this._runtimeGUID = this._platform.runtimeGUID(this._options.component_name);
 
-            this._auth = new AuthImp(this._options.access_token);
+        this._auth = new AuthImp(this._options.access_token);
 
-            //
-            // Assemble the tracer tags from the user-specified and automatic,
-            // internal tags.
-            //
-            let tags = {};
-            _each(this._options.tags, (value, key) => {
-                if (typeof value !== 'string') {
-                    this._error(`Tracer tag value is not a string: key=${key}`);
-                    return;
-                }
-                tags[key] = value;
-            });
-            tags['lightstep.tracer_version'] = packageObject.version;
-            let platformTags = this._platform.tracerTags();
-            _each(platformTags, (val, key) => {
-                tags[key] = val;
-            });
+        //
+        // Assemble the tracer tags from the user-specified and automatic,
+        // internal tags.
+        //
+        let tags = {};
+        _each(this._options.tags, (value, key) => {
+            if (typeof value !== 'string') {
+                this._error(`Tracer tag value is not a string: key=${key}`);
+                return;
+            }
+            tags[key] = value;
+        });
+        tags['lightstep.tracer_version'] = packageObject.version;
+        let platformTags = this._platform.tracerTags();
+        _each(platformTags, (val, key) => {
+            tags[key] = val;
+        });
 
-            this._runtime = new RuntimeImp(this._runtimeGUID, this._startMicros, this._options.component_name, tags);
+        this._runtime = new RuntimeImp(this._runtimeGUID, this._startMicros, this._options.component_name, tags);
 
-            this._info('Initializing thrift reporting data', {
-                component_name : this._options.component_name,
-                access_token   : this._auth.getAccessToken(),
-            });
-            this.emit('reporting_initialized');
-        }
+        this._info('Initializing thrift reporting data', {
+            component_name : this._options.component_name,
+            access_token   : this._auth.getAccessToken(),
+        });
+        this.emit('reporting_initialized');
     }
 
     getLogFieldKeyHardLimit() {
