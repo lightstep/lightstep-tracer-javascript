@@ -19508,16 +19508,17 @@ var Tracer = function (_opentracing$Tracer) {
         if (opts) {
             _this.options(opts);
         }
-
-        switch (_this._options.transport) {
-            case 'proto':
-                _this._transport = new _platform_abstraction_layer.ProtoTransport(logger);
-                break;
-            case 'thrift':
-                _this._transport = new _platform_abstraction_layer.ThriftTransport(logger);
-                break;
-            default:
-                _this._transport = new _platform_abstraction_layer.ProtoTransport(logger);
+        if (_this._transport !== opts.override_transport) {
+            switch (_this._options.transport) {
+                case 'proto':
+                    _this._transport = new _platform_abstraction_layer.ProtoTransport(logger);
+                    break;
+                case 'thrift':
+                    _this._transport = new _platform_abstraction_layer.ThriftTransport(logger);
+                    break;
+                default:
+                    _this._transport = new _platform_abstraction_layer.ProtoTransport(logger);
+            }
         }
 
         // For clock skew adjustment.

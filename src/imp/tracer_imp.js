@@ -125,16 +125,17 @@ export default class Tracer extends opentracing.Tracer {
         if (opts) {
             this.options(opts);
         }
-
-        switch (this._options.transport) {
-        case 'proto':
-            this._transport = new ProtoTransport(logger);
-            break;
-        case 'thrift':
-            this._transport = new ThriftTransport(logger);
-            break;
-        default:
-            this._transport = new ProtoTransport(logger);
+        if (this._transport !== opts.override_transport) {
+            switch (this._options.transport) {
+            case 'proto':
+                this._transport = new ProtoTransport(logger);
+                break;
+            case 'thrift':
+                this._transport = new ThriftTransport(logger);
+                break;
+            default:
+                this._transport = new ProtoTransport(logger);
+            }
         }
 
         // For clock skew adjustment.

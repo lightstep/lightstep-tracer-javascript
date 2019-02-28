@@ -92,17 +92,8 @@ describe("TracerImp", function() {
             }
         });
 
-        it('should default to an HTTPS port', function() {
-            expect(makeLSTracer().options().collector_port).to.equal(443);
-        });
-
-        it('should default to correct ports when collector_encryption is set', function() {
-            expect(makeLSTracer({
-                collector_encryption : 'none',
-            }).options().collector_port).to.equal(80);
-            expect(makeLSTracer({
-                collector_encryption : 'tls',
-            }).options().collector_port).to.equal(443);
+        it('should default to the local satellite port', function() {
+            expect(makeLSTracer().options().collector_port).to.equal(8360);
         });
 
         it('should treat collector_port=0 as meaning "use the default"', function() {
@@ -112,12 +103,12 @@ describe("TracerImp", function() {
 
             expect(makeLSTracer({
                 collector_port : 0,
-            }).options().collector_port).to.equal(443);
+            }).options().collector_port).to.equal(8360);
 
             expect(makeLSTracer({
                 collector_port : 0,
                 collector_encryption : 'none',
-            }).options().collector_port).to.equal(80);
+            }).options().collector_port).to.equal(8360);
         });
 
         it('should default to an empty base path', function() {
