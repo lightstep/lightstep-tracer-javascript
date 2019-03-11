@@ -19404,8 +19404,9 @@ var util = __webpack_require__(/*! ./util/util */ "./src/imp/util/util.js");
 var CARRIER_TRACER_STATE_PREFIX = 'ot-tracer-';
 var CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
 
-var DEFAULT_COLLECTOR_HOSTNAME = 'localhost';
-var DEFAULT_COLLECTOR_PORT_PLAIN = 8360;
+var DEFAULT_COLLECTOR_HOSTNAME = 'collector.lightstep.com';
+var DEFAULT_COLLECTOR_PORT_TLS = 443;
+var DEFAULT_COLLECTOR_PORT_PLAIN = 80;
 var DEFAULT_COLLECTOR_PATH = '';
 
 // Internal errors should be rare. Set a low limit to ensure a cascading failure
@@ -19585,9 +19586,9 @@ var Tracer = function (_opentracing$Tracer) {
             this.addOption('access_token', { type: 'string', defaultValue: '' });
             this.addOption('component_name', { type: 'string', defaultValue: '' });
             this.addOption('collector_host', { type: 'string', defaultValue: DEFAULT_COLLECTOR_HOSTNAME });
-            this.addOption('collector_port', { type: 'int', defaultValue: DEFAULT_COLLECTOR_PORT_PLAIN });
+            this.addOption('collector_port', { type: 'int', defaultValue: DEFAULT_COLLECTOR_PORT_TLS });
             this.addOption('collector_path', { type: 'string', defaultValue: DEFAULT_COLLECTOR_PATH });
-            this.addOption('collector_encryption', { type: 'string', defaultValue: 'none' });
+            this.addOption('collector_encryption', { type: 'string', defaultValue: 'tls' });
             this.addOption('tags', { type: 'any', defaultValue: {} });
             this.addOption('max_reporting_interval_millis', { type: 'int', defaultValue: 2500 });
             this.addOption('disable_clock_skew_correction', { type: 'bool', defaultValue: false });
@@ -19914,7 +19915,7 @@ var Tracer = function (_opentracing$Tracer) {
 
             // "collector_encryption" acts an alias for the common cases of 'collector_port'
             if (opts.collector_encryption !== undefined && opts.collector_port === undefined) {
-                opts.collector_port = opts.collector_encryption !== 'none' ? 443 : DEFAULT_COLLECTOR_PORT_PLAIN;
+                opts.collector_port = opts.collector_encryption !== 'none' ? DEFAULT_COLLECTOR_PORT_TLS : DEFAULT_COLLECTOR_PORT_PLAIN;
             }
 
             // Track what options have been modified
@@ -20103,7 +20104,7 @@ var Tracer = function (_opentracing$Tracer) {
 
             this._runtime = new _runtime_imp2.default(this._runtimeGUID, this._startMicros, this._options.component_name, tags);
 
-            this._info('Initializing thrift reporting data', {
+            this._info('Initializing reporting data', {
                 component_name: this._options.component_name,
                 access_token: this._auth.getAccessToken()
             });

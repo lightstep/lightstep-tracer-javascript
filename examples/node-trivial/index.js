@@ -1,10 +1,9 @@
 'use strict';
 
 var lightstep = require('../..');
-var opentracing = require('opentracing');
 
 var tracer = new lightstep.Tracer({
-    component_name : 'lightstep-tracer/examples/node-trivial',
+    component_name : 'lightstep-tracer/examples/node-trivial'
 });
 
 var span = tracer.startSpan('trivial_span');
@@ -27,9 +26,6 @@ setTimeout(function() {
 }, 600);
 setTimeout(function() {
     span.finish();
-    tracer.inject(span, opentracing.FORMAT_TEXT_MAP, {});
 }, 1000);
 
-var url = span.generateTraceURL();
-console.log('URL: ' + url);
 tracer.flush();

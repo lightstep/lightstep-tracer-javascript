@@ -24,8 +24,9 @@ const util          = require('./util/util');
 const CARRIER_TRACER_STATE_PREFIX = 'ot-tracer-';
 const CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
 
-const DEFAULT_COLLECTOR_HOSTNAME   = 'localhost';
-const DEFAULT_COLLECTOR_PORT_PLAIN = 8360;
+const DEFAULT_COLLECTOR_HOSTNAME   = 'collector.lightstep.com';
+const DEFAULT_COLLECTOR_PORT_TLS   = 443;
+const DEFAULT_COLLECTOR_PORT_PLAIN = 80;
 const DEFAULT_COLLECTOR_PATH       = '';
 
 // Internal errors should be rare. Set a low limit to ensure a cascading failure
@@ -204,13 +205,13 @@ export default class Tracer extends opentracing.Tracer {
         this.addOption('access_token',          { type: 'string',  defaultValue: '' });
         this.addOption('component_name',        { type: 'string',  defaultValue: '' });
         this.addOption('collector_host',        { type: 'string',  defaultValue: DEFAULT_COLLECTOR_HOSTNAME });
-        this.addOption('collector_port',        { type: 'int',     defaultValue: DEFAULT_COLLECTOR_PORT_PLAIN });
+        this.addOption('collector_port',        { type: 'int',     defaultValue: DEFAULT_COLLECTOR_PORT_TLS });
         this.addOption('collector_path',        { type: 'string',  defaultValue: DEFAULT_COLLECTOR_PATH });
-        this.addOption('collector_encryption',  { type: 'string',  defaultValue: 'none' });
+        this.addOption('collector_encryption',  { type: 'string',  defaultValue: 'tls' });
         this.addOption('tags',                  { type: 'any',     defaultValue: {} });
         this.addOption('max_reporting_interval_millis',  { type: 'int',     defaultValue: 2500 });
         this.addOption('disable_clock_skew_correction', { type: 'bool', defaultValue: false });
-        this.addOption('transport', { type: 'string', defaultValue: 'proto' });
+        this.addOption('transport',             { type: 'string', defaultValue: 'proto' });
 
         // Non-standard, may be deprecated
         this.addOption('disabled',              { type: 'bool',    defaultValue: false });
@@ -524,7 +525,7 @@ export default class Tracer extends opentracing.Tracer {
         // "collector_encryption" acts an alias for the common cases of 'collector_port'
         if (opts.collector_encryption !== undefined && opts.collector_port === undefined) {
             opts.collector_port = opts.collector_encryption !== 'none' ?
-                443 :
+                DEFAULT_COLLECTOR_PORT_TLS :
                 DEFAULT_COLLECTOR_PORT_PLAIN;
         }
 
@@ -708,7 +709,7 @@ export default class Tracer extends opentracing.Tracer {
 
         this._runtime = new RuntimeImp(this._runtimeGUID, this._startMicros, this._options.component_name, tags);
 
-        this._info('Initializing thrift reporting data', {
+        this._info('Initializing reporting data', {
             component_name : this._options.component_name,
             access_token   : this._auth.getAccessToken(),
         });
