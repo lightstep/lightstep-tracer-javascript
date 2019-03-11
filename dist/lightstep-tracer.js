@@ -13523,7 +13523,11 @@ var AuthImp = function () {
     _createClass(AuthImp, [{
         key: 'getAccessToken',
         value: function getAccessToken() {
-            return this._accessToken;
+            if (typeof this._accessToken === 'undefined' || this._accessToken === null || this._accessToken.length === 0) {
+                return 'empty';
+            } else {
+                return this._accessToken;
+            }
         }
     }, {
         key: 'toThrift',
@@ -19508,7 +19512,8 @@ var Tracer = function (_opentracing$Tracer) {
         if (opts) {
             _this.options(opts);
         }
-        if (_this._transport !== opts.override_transport) {
+
+        if (typeof _this._transport === 'undefined' || _this._transport === null) {
             switch (_this._options.transport) {
                 case 'proto':
                     _this._transport = new _platform_abstraction_layer.ProtoTransport(logger);

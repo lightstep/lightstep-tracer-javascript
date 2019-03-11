@@ -125,7 +125,8 @@ export default class Tracer extends opentracing.Tracer {
         if (opts) {
             this.options(opts);
         }
-        if (this._transport !== opts.override_transport) {
+
+        if (typeof this._transport === 'undefined' || this._transport === null) {
             switch (this._options.transport) {
             case 'proto':
                 this._transport = new ProtoTransport(logger);
