@@ -18454,19 +18454,12 @@ var TransportBrowser = function () {
                         err = new Error('unexpected empty response');
                     } else {
                         try {
-                            resp = proto.ReportResponse.deserializeBinary(this.response);
+                            resp = proto.ReportResponse.deserializeBinary(this.response).toObject();
                         } catch (exception) {
                             err = exception;
                         }
                     }
-                    var jsonResp = {
-                        timing: {
-                            receive_micros: resp.getReceiveTimestamp(),
-                            transmit_micros: resp.getTransmitTimestamp()
-                        },
-                        errors: resp.errors
-                    };
-                    return done(err, jsonResp);
+                    return done(err, resp);
                 }
             };
             var serialized = reportProto.serializeBinary();

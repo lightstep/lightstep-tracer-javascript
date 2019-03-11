@@ -7,6 +7,7 @@
 * The default transport has been changed to `proto`.
 * The tracer supports empty access tokens.
 * Several bugs have been fixed with the `proto` transport option around the report of LightStep-specific tags.
+* Addresses an issue with `proto` transport usage in the browser.
 
 ## 0.21.1
 
