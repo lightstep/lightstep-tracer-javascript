@@ -103,6 +103,7 @@ describe("TracerImp", function() {
             expect(makeLSTracer({	
                 collector_encryption : 'tls',	
             }).options().collector_port).to.equal(443);
+        });
             
         it('should treat collector_port=0 as meaning "use the default"', function() {
             expect(makeLSTracer({
@@ -116,7 +117,7 @@ describe("TracerImp", function() {
             expect(makeLSTracer({
                 collector_port : 0,
                 collector_encryption : 'none',
-            }).options().collector_port).to.equal(443);
+            }).options().collector_port).to.equal(80);
         });
 
         it('should default to an empty base path', function() {

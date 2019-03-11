@@ -9,9 +9,9 @@ export default class AuthImp {
     getAccessToken() {
         if (typeof this._accessToken === 'undefined' || this._accessToken === null || this._accessToken.length === 0) {
             return 'empty';
-        } else {
-            return this._accessToken;
         }
+
+        return this._accessToken;
     }
 
     toThrift() {
