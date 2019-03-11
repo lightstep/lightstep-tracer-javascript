@@ -23,6 +23,16 @@ describe("TracerImp", function() {
             expect(tracer.options()).to.be.an('object');
         });
 
+        it('should allow empty access_token', function() {
+            expect(function() {
+                var t = new lightstep.Tracer({
+                    component_name : 'no_token',
+                    disable_reporting_loop : true,
+                    silent : true,
+                });
+            }).to.not.throw();
+        });
+
         it('should allow the component_name and access_token to be set only once', function() {
             expect(function () {
                 var rt = makeLSTracer();
