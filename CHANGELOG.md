@@ -2,6 +2,12 @@
 
 *Log of significant changes, especially those affecting the supported API.*
 
+## vNext
+
+* The default transport has been changed to `proto`.
+* The tracer supports empty access tokens.
+* Several bugs have been fixed with the `proto` transport option around the report of LightStep-specific tags.
+
 ## 0.21.1
 
 * Passing fractional timestamps to span start/finish are now properly handled.
