@@ -19511,12 +19511,15 @@ var Tracer = function (_opentracing$Tracer) {
             switch (_this._options.transport) {
                 case 'proto':
                     _this._transport = new _platform_abstraction_layer.ProtoTransport(logger);
+                    _this._info('Using protobuf over HTTP transport per user-defined option.');
                     break;
                 case 'thrift':
                     _this._transport = new _platform_abstraction_layer.ThriftTransport(logger);
+                    _this._info('Using thrift transport per user-defined option.');
                     break;
                 default:
                     _this._transport = new _platform_abstraction_layer.ProtoTransport(logger);
+                    _this._info('Using protobuf over HTTP transport as no user-defined option was supplied.');
             }
         }
 
@@ -19541,6 +19544,10 @@ var Tracer = function (_opentracing$Tracer) {
         _this._setupReportOnExit();
 
         _this._info('Tracer created with guid ' + _this._runtimeGUID);
+
+        if (_this._options.access_token.length === 0) {
+            _this._warn('No access token defined - this is only supported in developer mode.');
+        }
 
         _this.startPlugins();
         return _this;

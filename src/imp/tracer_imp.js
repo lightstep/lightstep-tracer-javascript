@@ -131,12 +131,15 @@ export default class Tracer extends opentracing.Tracer {
             switch (this._options.transport) {
             case 'proto':
                 this._transport = new ProtoTransport(logger);
+                this._info('Using protobuf over HTTP transport per user-defined option.');
                 break;
             case 'thrift':
                 this._transport = new ThriftTransport(logger);
+                this._info('Using thrift transport per user-defined option.');
                 break;
             default:
                 this._transport = new ProtoTransport(logger);
+                this._info('Using protobuf over HTTP transport as no user-defined option was supplied.');
             }
         }
 
@@ -159,6 +162,10 @@ export default class Tracer extends opentracing.Tracer {
         this._setupReportOnExit();
 
         this._info(`Tracer created with guid ${this._runtimeGUID}`);
+
+        if (this._options.access_token.length === 0) {
+            this._warn('No access token defined - this is only supported in developer mode.');
+        }
 
         this.startPlugins();
     }
