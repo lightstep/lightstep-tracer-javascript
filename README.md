@@ -94,7 +94,7 @@ The OpenTracing standard JavaScript API is [documented here](https://doc.esdoc.o
 * `error_throttle_millis` `int` *optional*, *default=60000* - when `verbosity` is set to `1`, this the minimum time between logged errors.
 * `transport` `string` *optional*, *default=proto* - when `transport` is set to `thrift`, the Tracer will use Thrift as its transport instead of Proto over HTTP.
 * `logger` `function(level: string, message: string, payload: any): void` *optional* - specify a custom logger function. Possible `level` values are `debug`, `info`, `warn` and `error`. By default messages will be logged to the console.
-* `meta_event_reporting` `bool` *optional*, *default=false* - when `meta_event_reporting` is set to `true`, the tracer will emit additional spans to LightStep for tracer and span lifecycle events.
+* `disable_meta_event_reporting` `bool` *optional*, *default=true* - when `disable_meta_event_reporting` is set to `false`, the tracer will emit additional spans to LightStep for tracer and span lifecycle events.
 
 ### SpanImp
 

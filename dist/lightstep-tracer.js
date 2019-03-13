@@ -19546,7 +19546,7 @@ var Tracer = function (_opentracing$Tracer) {
         _this._info('Tracer created with guid ' + _this._runtimeGUID);
 
         if (_this._options.access_token.length === 0) {
-            _this._warn('No access token defined - this is only supported in developer mode.');
+            _this._warn('Access token not set - this requires a satellite with access token checking disabled, \n            such as a developer satellite.');
         }
 
         _this.startPlugins();
@@ -19623,7 +19623,7 @@ var Tracer = function (_opentracing$Tracer) {
             this.addOption('log_field_value_hard_limit', { type: 'int', defaultValue: 1024 });
 
             // Meta Event reporting options
-            this.addOption('meta_event_reporting', { type: 'bool', defaultValue: false });
+            this.addOption('disable_meta_event_reporting', { type: 'bool', defaultValue: true });
 
             /* eslint-disable key-spacing, no-multi-spaces */
         }
@@ -19699,7 +19699,7 @@ var Tracer = function (_opentracing$Tracer) {
             switch (format) {
                 case this._opentracing.FORMAT_HTTP_HEADERS:
                 case this._opentracing.FORMAT_TEXT_MAP:
-                    if (this.options().meta_event_reporting === true) {
+                    if (this.options().disable_meta_event_reporting === false) {
                         var _tags2;
 
                         this.startSpan(constants.LS_META_INJECT, {
@@ -19746,7 +19746,7 @@ var Tracer = function (_opentracing$Tracer) {
                 case this._opentracing.FORMAT_HTTP_HEADERS:
                 case this._opentracing.FORMAT_TEXT_MAP:
                     sc = this._extractTextMap(format, carrier);
-                    if (this.options().meta_event_reporting === true) {
+                    if (this.options().disable_meta_event_reporting === false) {
                         var _tags3;
 
                         this.startSpan(constants.LS_META_EXTRACT, {
@@ -20556,7 +20556,7 @@ var Tracer = function (_opentracing$Tracer) {
             this.emit('prereport', report);
             var originMicros = this._platform.nowMicros();
 
-            if (this._options.meta_event_reporting && !this._first_report_has_run) {
+            if (this._options.disable_meta_event_reporting && !this._first_report_has_run) {
                 var _tags4;
 
                 this._first_report_has_run = true;
@@ -20623,7 +20623,7 @@ var Tracer = function (_opentracing$Tracer) {
 
                         if (res.commandsList && res.commandsList.length > 0) {
                             if (res.commandsList[0].devMode) {
-                                _this13.options().meta_event_reporting = true;
+                                _this13.options().disable_meta_event_reporting = false;
                             }
                         }
                     } else {
@@ -20997,7 +20997,7 @@ var Util = function () {
     }, {
         key: 'shouldSendMetaSpan',
         value: function shouldSendMetaSpan(opts, tags) {
-            var shouldSendSpan = opts.meta_event_reporting === true && tags['lightstep.meta_event'] !== true;
+            var shouldSendSpan = opts.disable_meta_event_reporting === false && tags['lightstep.meta_event'] !== true;
             return shouldSendSpan;
         }
     }]);

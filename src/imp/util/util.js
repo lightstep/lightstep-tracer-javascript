@@ -10,7 +10,7 @@ class Util {
     }
 
     shouldSendMetaSpan(opts, tags) {
-        let shouldSendSpan = opts.meta_event_reporting === true && tags['lightstep.meta_event'] !== true;
+        let shouldSendSpan = opts.disable_meta_event_reporting === false && tags['lightstep.meta_event'] !== true;
         return shouldSendSpan;
     }
 }
