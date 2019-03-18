@@ -3,8 +3,7 @@
 var lightstep = require('../..');
 
 var tracer = new lightstep.Tracer({
-    access_token   : '{your_access_token}',
-    component_name : 'lightstep-tracer/examples/node-trivial',
+    component_name : 'lightstep-tracer/examples/node-trivial'
 });
 
 var span = tracer.startSpan('trivial_span');
@@ -19,10 +18,14 @@ setTimeout(function() {
             'property': 'value',
         },
     });
-}, 100);
+    var childSpan = tracer.startSpan('childSpan',{ childOf: span.context()});
+    setTimeout(function() {
+        childSpan.log({event: 'childevent'})
+        childSpan.finish();
+    }, 0.5)
+}, 600);
 setTimeout(function() {
     span.finish();
-}, 200);
+}, 1000);
 
-var url = span.generateTraceURL();
-console.log('URL: ' + url);
+tracer.flush();

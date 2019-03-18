@@ -13523,6 +13523,10 @@ var AuthImp = function () {
     _createClass(AuthImp, [{
         key: 'getAccessToken',
         value: function getAccessToken() {
+            if (typeof this._accessToken === 'undefined' || this._accessToken === null || this._accessToken.length === 0) {
+                return 'empty';
+            }
+
             return this._accessToken;
         }
     }, {
@@ -18450,19 +18454,12 @@ var TransportBrowser = function () {
                         err = new Error('unexpected empty response');
                     } else {
                         try {
-                            resp = proto.ReportResponse.deserializeBinary(this.response);
+                            resp = proto.ReportResponse.deserializeBinary(this.response).toObject();
                         } catch (exception) {
                             err = exception;
                         }
                     }
-                    var jsonResp = {
-                        timing: {
-                            receive_micros: resp.getReceiveTimestamp(),
-                            transmit_micros: resp.getTransmitTimestamp()
-                        },
-                        errors: resp.errors
-                    };
-                    return done(err, jsonResp);
+                    return done(err, resp);
                 }
             };
             var serialized = reportProto.serializeBinary();
@@ -18842,17 +18839,30 @@ var RuntimeImp = function () {
 
             var tracerPlatform = new proto.KeyValue();
             tracerPlatform.setKey('lightstep.tracer_platform');
-            tracerPlatform.setStringValue('browser');
+            tracerPlatform.setStringValue(this._attributes['lightstep.tracer_platform']);
+
+            var tracerPlatformVersion = new proto.KeyValue();
+            tracerPlatformVersion.setKey('lightstep.tracer_platform_version');
+            tracerPlatformVersion.setStringValue(this._attributes['lightstep.tracer_platform_version']);
 
             var componentName = new proto.KeyValue();
             componentName.setKey('lightstep.component_name');
             componentName.setStringValue(this._componentName);
 
+            var commandLine = new proto.KeyValue();
+            commandLine.setKey('lightstep.command_line');
+            commandLine.setStringValue(this._attributes['lightstep.command_line']);
+
+            var hostname = new proto.KeyValue();
+            hostname.setKey('lightstep.hostname');
+            hostname.setStringValue(this._attributes['lightstep.hostname']);
+
             var reporterId = converter.hexToDec(this._runtimeGUID);
 
             var reporterProto = new proto.Reporter();
             reporterProto.setReporterId(reporterId);
-            reporterProto.setTagsList([tracerVersion, tracerPlatform, componentName]);
+            reporterProto.setTagsList([tracerVersion, tracerPlatform, componentName, commandLine, hostname, tracerPlatformVersion]);
+
             return reporterProto;
         }
     }]);
@@ -19450,14 +19460,6 @@ var Tracer = function (_opentracing$Tracer) {
             _this._transport = opts.override_transport;
         }
 
-        if (!_this._transport) {
-            if (opts.transport && opts.transport === 'proto') {
-                _this._transport = new _platform_abstraction_layer.ProtoTransport(logger);
-            } else {
-                _this._transport = new _platform_abstraction_layer.ThriftTransport(logger);
-            }
-        }
-
         _this._reportingLoopActive = false;
         _this._first_report_has_run = false;
         _this._reportYoungestMicros = now;
@@ -19505,6 +19507,22 @@ var Tracer = function (_opentracing$Tracer) {
             _this.options(opts);
         }
 
+        if (typeof _this._transport === 'undefined' || _this._transport === null) {
+            switch (_this._options.transport) {
+                case 'proto':
+                    _this._transport = new _platform_abstraction_layer.ProtoTransport(logger);
+                    _this._info('Using protobuf over HTTP transport per user-defined option.');
+                    break;
+                case 'thrift':
+                    _this._transport = new _platform_abstraction_layer.ThriftTransport(logger);
+                    _this._info('Using thrift transport per user-defined option.');
+                    break;
+                default:
+                    _this._transport = new _platform_abstraction_layer.ProtoTransport(logger);
+                    _this._info('Using protobuf over HTTP transport as no user-defined option was supplied.');
+            }
+        }
+
         // For clock skew adjustment.
         // Must be set after options have been set.
         _this._useClockState = !_this._options.disable_clock_skew_correction;
@@ -19526,6 +19544,10 @@ var Tracer = function (_opentracing$Tracer) {
         _this._setupReportOnExit();
 
         _this._info('Tracer created with guid ' + _this._runtimeGUID);
+
+        if (_this._options.access_token.length === 0) {
+            _this._warn('Access token not set -\n            this requires a satellite with access token checking disabled,\n            such as a developer satellite.');
+        }
 
         _this.startPlugins();
         return _this;
@@ -19570,6 +19592,7 @@ var Tracer = function (_opentracing$Tracer) {
             this.addOption('tags', { type: 'any', defaultValue: {} });
             this.addOption('max_reporting_interval_millis', { type: 'int', defaultValue: 2500 });
             this.addOption('disable_clock_skew_correction', { type: 'bool', defaultValue: false });
+            this.addOption('transport', { type: 'string', defaultValue: 'proto' });
 
             // Non-standard, may be deprecated
             this.addOption('disabled', { type: 'bool', defaultValue: false });
@@ -19600,6 +19623,7 @@ var Tracer = function (_opentracing$Tracer) {
             this.addOption('log_field_value_hard_limit', { type: 'int', defaultValue: 1024 });
 
             // Meta Event reporting options
+            this.addOption('disable_meta_event_reporting', { type: 'bool', defaultValue: false });
             this.addOption('meta_event_reporting', { type: 'bool', defaultValue: false });
 
             /* eslint-disable key-spacing, no-multi-spaces */
@@ -20057,38 +20081,35 @@ var Tracer = function (_opentracing$Tracer) {
                 return;
             }
 
-            // See if the Thrift data can be initialized
-            if (this._options.access_token.length > 0 && this._options.component_name.length > 0) {
-                this._runtimeGUID = this._platform.runtimeGUID(this._options.component_name);
+            this._runtimeGUID = this._platform.runtimeGUID(this._options.component_name);
 
-                this._auth = new _auth_imp2.default(this._options.access_token);
+            this._auth = new _auth_imp2.default(this._options.access_token);
 
-                //
-                // Assemble the tracer tags from the user-specified and automatic,
-                // internal tags.
-                //
-                var tags = {};
-                (0, _each3.default)(this._options.tags, function (value, key) {
-                    if (typeof value !== 'string') {
-                        _this5._error('Tracer tag value is not a string: key=' + key);
-                        return;
-                    }
-                    tags[key] = value;
-                });
-                tags['lightstep.tracer_version'] = packageObject.version;
-                var platformTags = this._platform.tracerTags();
-                (0, _each3.default)(platformTags, function (val, key) {
-                    tags[key] = val;
-                });
+            //
+            // Assemble the tracer tags from the user-specified and automatic,
+            // internal tags.
+            //
+            var tags = {};
+            (0, _each3.default)(this._options.tags, function (value, key) {
+                if (typeof value !== 'string') {
+                    _this5._error('Tracer tag value is not a string: key=' + key);
+                    return;
+                }
+                tags[key] = value;
+            });
+            tags['lightstep.tracer_version'] = packageObject.version;
+            var platformTags = this._platform.tracerTags();
+            (0, _each3.default)(platformTags, function (val, key) {
+                tags[key] = val;
+            });
 
-                this._runtime = new _runtime_imp2.default(this._runtimeGUID, this._startMicros, this._options.component_name, tags);
+            this._runtime = new _runtime_imp2.default(this._runtimeGUID, this._startMicros, this._options.component_name, tags);
 
-                this._info('Initializing thrift reporting data', {
-                    component_name: this._options.component_name,
-                    access_token: this._auth.getAccessToken()
-                });
-                this.emit('reporting_initialized');
-            }
+            this._info('Initializing reporting data', {
+                component_name: this._options.component_name,
+                access_token: this._auth.getAccessToken()
+            });
+            this.emit('reporting_initialized');
         }
     }, {
         key: 'getLogFieldKeyHardLimit',
@@ -20602,7 +20623,7 @@ var Tracer = function (_opentracing$Tracer) {
                         }
 
                         if (res.commandsList && res.commandsList.length > 0) {
-                            if (res.commandsList[0].devMode) {
+                            if (res.commandsList[0].devMode && _this13.options().disable_meta_event_reporting !== true) {
                                 _this13.options().meta_event_reporting = true;
                             }
                         }
@@ -20977,7 +20998,7 @@ var Util = function () {
     }, {
         key: 'shouldSendMetaSpan',
         value: function shouldSendMetaSpan(opts, tags) {
-            var shouldSendSpan = opts.meta_event_reporting === true && tags['lightstep.meta_event'] !== true;
+            var shouldSendSpan = opts.meta_event_reporting === false && tags['lightstep.meta_event'] !== true;
             return shouldSendSpan;
         }
     }]);

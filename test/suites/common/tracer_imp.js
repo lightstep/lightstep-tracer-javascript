@@ -23,6 +23,16 @@ describe("TracerImp", function() {
             expect(tracer.options()).to.be.an('object');
         });
 
+        it('should allow empty access_token', function() {
+            expect(function() {
+                var t = new lightstep.Tracer({
+                    component_name : 'no_token',
+                    disable_reporting_loop : true,
+                    silent : true,
+                });
+            }).to.not.throw();
+        });
+
         it('should allow the component_name and access_token to be set only once', function() {
             expect(function () {
                 var rt = makeLSTracer();
@@ -96,15 +106,15 @@ describe("TracerImp", function() {
             expect(makeLSTracer().options().collector_port).to.equal(443);
         });
 
-        it('should default to correct ports when collector_encryption is set', function() {
-            expect(makeLSTracer({
-                collector_encryption : 'none',
-            }).options().collector_port).to.equal(80);
-            expect(makeLSTracer({
-                collector_encryption : 'tls',
+        it('should default to correct ports when collector_encryption is set', function() {	
+            expect(makeLSTracer({	
+                collector_encryption : 'none',	
+            }).options().collector_port).to.equal(80);	
+            expect(makeLSTracer({	
+                collector_encryption : 'tls',	
             }).options().collector_port).to.equal(443);
         });
-
+            
         it('should treat collector_port=0 as meaning "use the default"', function() {
             expect(makeLSTracer({
                 collector_port : 4000,

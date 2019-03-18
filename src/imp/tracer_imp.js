@@ -80,14 +80,6 @@ export default class Tracer extends opentracing.Tracer {
             this._transport = opts.override_transport;
         }
 
-        if (!this._transport) {
-            if (opts.transport && opts.transport === 'proto') {
-                this._transport = new ProtoTransport(logger);
-            } else {
-                this._transport = new ThriftTransport(logger);
-            }
-        }
-
         this._reportingLoopActive = false;
         this._first_report_has_run = false;
         this._reportYoungestMicros = now;
@@ -135,6 +127,22 @@ export default class Tracer extends opentracing.Tracer {
             this.options(opts);
         }
 
+        if (typeof this._transport === 'undefined' || this._transport === null) {
+            switch (this._options.transport) {
+            case 'proto':
+                this._transport = new ProtoTransport(logger);
+                this._info('Using protobuf over HTTP transport per user-defined option.');
+                break;
+            case 'thrift':
+                this._transport = new ThriftTransport(logger);
+                this._info('Using thrift transport per user-defined option.');
+                break;
+            default:
+                this._transport = new ProtoTransport(logger);
+                this._info('Using protobuf over HTTP transport as no user-defined option was supplied.');
+            }
+        }
+
         // For clock skew adjustment.
         // Must be set after options have been set.
         this._useClockState = !this._options.disable_clock_skew_correction;
@@ -154,6 +162,13 @@ export default class Tracer extends opentracing.Tracer {
         this._setupReportOnExit();
 
         this._info(`Tracer created with guid ${this._runtimeGUID}`);
+
+        if (this._options.access_token.length === 0) {
+            this._warn(
+            `Access token not set -
+            this requires a satellite with access token checking disabled,
+            such as a developer satellite.`);
+        }
 
         this.startPlugins();
     }
@@ -206,6 +221,7 @@ export default class Tracer extends opentracing.Tracer {
         this.addOption('tags',                  { type: 'any',     defaultValue: {} });
         this.addOption('max_reporting_interval_millis',  { type: 'int',     defaultValue: 2500 });
         this.addOption('disable_clock_skew_correction', { type: 'bool', defaultValue: false });
+        this.addOption('transport',             { type: 'string', defaultValue: 'proto' });
 
         // Non-standard, may be deprecated
         this.addOption('disabled',              { type: 'bool',    defaultValue: false });
@@ -236,6 +252,7 @@ export default class Tracer extends opentracing.Tracer {
         this.addOption('log_field_value_hard_limit', { type: 'int',     defaultValue: 1024 });
 
         // Meta Event reporting options
+        this.addOption('disable_meta_event_reporting', { type: 'bool', defaultValue: false });
         this.addOption('meta_event_reporting', { type: 'bool', defaultValue: false });
 
         /* eslint-disable key-spacing, no-multi-spaces */
@@ -679,38 +696,35 @@ export default class Tracer extends opentracing.Tracer {
             return;
         }
 
-        // See if the Thrift data can be initialized
-        if (this._options.access_token.length > 0 && this._options.component_name.length > 0) {
-            this._runtimeGUID = this._platform.runtimeGUID(this._options.component_name);
+        this._runtimeGUID = this._platform.runtimeGUID(this._options.component_name);
 
-            this._auth = new AuthImp(this._options.access_token);
+        this._auth = new AuthImp(this._options.access_token);
 
-            //
-            // Assemble the tracer tags from the user-specified and automatic,
-            // internal tags.
-            //
-            let tags = {};
-            _each(this._options.tags, (value, key) => {
-                if (typeof value !== 'string') {
-                    this._error(`Tracer tag value is not a string: key=${key}`);
-                    return;
-                }
-                tags[key] = value;
-            });
-            tags['lightstep.tracer_version'] = packageObject.version;
-            let platformTags = this._platform.tracerTags();
-            _each(platformTags, (val, key) => {
-                tags[key] = val;
-            });
+        //
+        // Assemble the tracer tags from the user-specified and automatic,
+        // internal tags.
+        //
+        let tags = {};
+        _each(this._options.tags, (value, key) => {
+            if (typeof value !== 'string') {
+                this._error(`Tracer tag value is not a string: key=${key}`);
+                return;
+            }
+            tags[key] = value;
+        });
+        tags['lightstep.tracer_version'] = packageObject.version;
+        let platformTags = this._platform.tracerTags();
+        _each(platformTags, (val, key) => {
+            tags[key] = val;
+        });
 
-            this._runtime = new RuntimeImp(this._runtimeGUID, this._startMicros, this._options.component_name, tags);
+        this._runtime = new RuntimeImp(this._runtimeGUID, this._startMicros, this._options.component_name, tags);
 
-            this._info('Initializing thrift reporting data', {
-                component_name : this._options.component_name,
-                access_token   : this._auth.getAccessToken(),
-            });
-            this.emit('reporting_initialized');
-        }
+        this._info('Initializing reporting data', {
+            component_name : this._options.component_name,
+            access_token   : this._auth.getAccessToken(),
+        });
+        this.emit('reporting_initialized');
     }
 
     getLogFieldKeyHardLimit() {
@@ -1186,7 +1200,7 @@ export default class Tracer extends opentracing.Tracer {
                     }
 
                     if (res.commandsList && res.commandsList.length > 0) {
-                        if (res.commandsList[0].devMode) {
+                        if (res.commandsList[0].devMode && this.options().disable_meta_event_reporting !== true) {
                             this.options().meta_event_reporting = true;
                         }
                     }

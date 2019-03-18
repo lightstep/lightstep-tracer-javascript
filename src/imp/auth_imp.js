@@ -7,6 +7,10 @@ export default class AuthImp {
     }
 
     getAccessToken() {
+        if (typeof this._accessToken === 'undefined' || this._accessToken === null || this._accessToken.length === 0) {
+            return 'empty';
+        }
+
         return this._accessToken;
     }
 
