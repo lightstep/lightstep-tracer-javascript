@@ -253,7 +253,6 @@ export default class Tracer extends opentracing.Tracer {
 
         // Meta Event reporting options
         this.addOption('disable_meta_event_reporting', { type: 'bool', defaultValue: false });
-        this.addOption('meta_event_reporting', { type: 'bool', defaultValue: false });
 
         /* eslint-disable key-spacing, no-multi-spaces */
     }
@@ -539,7 +538,9 @@ export default class Tracer extends opentracing.Tracer {
                 DEFAULT_COLLECTOR_PORT_TLS :
                 DEFAULT_COLLECTOR_PORT_PLAIN;
         }
-
+        // set meta event reporting to false by default, it will be enabled by the satellite
+        this.meta_event_reporting = false;
+        
         // Track what options have been modified
         let modified = {};
         let unchanged = {};
