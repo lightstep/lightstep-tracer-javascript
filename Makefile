@@ -27,7 +27,7 @@ $(BUNDLE_JS): $(SOURCES_JS) webpack.config.js package.json
 build-node: $(COMPILED_JS)
 lib/%.js: src/%.js
 	@mkdir -p $(@D)
-	$(CMD_BABEL) --presets es2015 --plugins add-module-exports $< -o $@ --source-maps
+	$(CMD_BABEL) --presets @babel/env --plugins add-module-exports $< -o $@ --source-maps
 
 .PHONY: clean
 clean:
