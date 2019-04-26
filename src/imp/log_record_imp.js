@@ -8,8 +8,8 @@ export default class LogRecordImp {
     constructor(logFieldKeyHardLimit, logFieldValueHardLimit, timestampMicros, fields) {
         if (fields instanceof Error) {
             fields = {
-                'message': fields.message,
-                'stack': fields.stack,
+                stack   : fields.stack,
+                message : fields.message,
             };
         }
 
