@@ -6,6 +6,13 @@ let googleProtobufTimestampPB = require('google-protobuf/google/protobuf/timesta
 
 export default class LogRecordImp {
     constructor(logFieldKeyHardLimit, logFieldValueHardLimit, timestampMicros, fields) {
+        if (fields instanceof Error) {
+            fields = {
+                stack   : fields.stack,
+                message : fields.message,
+            };
+        }
+
         this._logFieldKeyHardLimit = logFieldKeyHardLimit;
         this._logFieldValueHardLimit = logFieldValueHardLimit;
         this._timestampMicros = timestampMicros;
@@ -59,7 +66,14 @@ export default class LogRecordImp {
 
     getFieldValue(value) {
         let valStr = null;
-        if (value instanceof Object) {
+        if (value instanceof Error) {
+            try {
+                // https://stackoverflow.com/a/26199752/9778850
+                valStr = JSON.stringify(value, Object.getOwnPropertyNames(value));
+            } catch (e) {
+                valStr = `Could not encode value. Exception: ${e}`;
+            }
+        } else if (value instanceof Object) {
             try {
                 valStr = JSON.stringify(value, null, '  ');
             } catch (e) {
