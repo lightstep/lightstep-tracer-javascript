@@ -2,6 +2,7 @@
   "name": "lightstep-tracer",
   "version": "0.21.1",
   "main": "index.js",
+  "browser": "browser.js",
   "engines": {
     "node": ">=0.12.0"
   },
