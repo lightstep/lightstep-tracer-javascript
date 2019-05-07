@@ -81,6 +81,12 @@ The OpenTracing standard JavaScript API is [documented here](https://doc.esdoc.o
 
 * `xhr_url_exclusion_patterns` `RegExp[]` - an array of regular expressions used to exclude URLs from `XMLHttpRequest` auto-instrumentation. The default value is an empty array. For a given URL to be instrumented, it must match at least one regular expression in `xhr_url_inclusion_patterns` and not match any regular expressions in `xhr_url_exclusion_patterns`.
 
+* `fetch_instrumentation` `bool` - if false, disables automatic instrumentation of `window.fetch`. This must be set at initialization; changes after initialization will have no effect. Defaults to false.
+
+* `fetch_url_inclusion_patterns` `RegExp[]` - an array of regular expressions used to whitelist URLs for `window.fetch` auto-instrumentation. The default value is wildcard matching all strings. For a given URL to be instrumented, it must match at least one regular expression in `fetch_url_inclusion_patterns` and not match any regular expressions in `fetch_url_exclusion_patterns`.
+
+* `fetch_url_exclusion_patterns` `RegExp[]` - an array of regular expressions used to exclude URLs from `window.fetch` auto-instrumentation. The default value is an empty array. For a given URL to be instrumented, it must match at least one regular expression in `fetch_url_inclusion_patterns` and not match any regular expressions in `fetch_url_exclusion_patterns`.
+
 **Non-standard options**
 
 *NOTE: Future API compatibility on non-standard options is not guaranteed.*

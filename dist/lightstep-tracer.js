@@ -21341,7 +21341,7 @@ function getResponseHeaders(response) {
     return result;
 }
 
-// Automatically create spans for all XMLHttpRequest objects.
+// Automatically create spans for all requests made via window.fetch.
 //
 // NOTE: this code currently works only with a single Tracer.
 //
@@ -21413,7 +21413,7 @@ var InstrumentFetch = function () {
                 this._addServiceHostToExclusions(current);
             }
 
-            // Set up the proxied XHR calls unless disabled
+            // Set up the proxied fetch calls unless disabled
             if (!this._proxyInited && current.fetch_instrumentation) {
                 this._proxyInited = true;
                 window.fetch = this._instrumentFetch();
@@ -21433,9 +21433,9 @@ var InstrumentFetch = function () {
             }
 
             // http://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
-            function escapeRegExp(str) {}
-            // return (`${str}`).replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
-
+            function escapeRegExp(str) {
+                return ('' + str).replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
+            }
 
             // Check against the hostname without the port as well as the canonicalized
             // URL may drop the standard port.
@@ -21451,7 +21451,7 @@ var InstrumentFetch = function () {
         }
 
         /**
-         * Check preconditions for the auto-instrumentation of XHRs to work properly.
+         * Check preconditions for the auto-instrumentation of fetch to work properly.
          * There are a lot of potential JavaScript platforms.
          */
 
