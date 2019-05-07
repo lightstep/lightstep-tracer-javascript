@@ -138,16 +138,6 @@ class InstrumentPageLoad {
             }, value);
         });
 
-        if (window.chrome && window.chrome.loadTimes) {
-            let chromeTimes = window.chrome.loadTimes();
-            if (chromeTimes) {
-                parentImp.log({
-                    message : 'window.chrome.loadTimes()',
-                    payload : chromeTimes,
-                }, timing.domComplete);
-            }
-        }
-
         parentImp.setBeginMicros(timing.navigationStart * 1000.0);
 
         parentImp.tracer().startSpan('document/time_to_first_byte', { childOf : parentImp })
