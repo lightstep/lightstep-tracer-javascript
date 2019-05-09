@@ -17510,6 +17510,13 @@ var LogRecordImp = function () {
     function LogRecordImp(logFieldKeyHardLimit, logFieldValueHardLimit, timestampMicros, fields) {
         _classCallCheck(this, LogRecordImp);
 
+        if (fields instanceof Error) {
+            fields = {
+                stack: fields.stack,
+                message: fields.message
+            };
+        }
+
         this._logFieldKeyHardLimit = logFieldKeyHardLimit;
         this._logFieldValueHardLimit = logFieldValueHardLimit;
         this._timestampMicros = timestampMicros;
@@ -17572,7 +17579,14 @@ var LogRecordImp = function () {
         key: 'getFieldValue',
         value: function getFieldValue(value) {
             var valStr = null;
-            if (value instanceof Object) {
+            if (value instanceof Error) {
+                try {
+                    // https://stackoverflow.com/a/26199752/9778850
+                    valStr = JSON.stringify(value, Object.getOwnPropertyNames(value));
+                } catch (e) {
+                    valStr = 'Could not encode value. Exception: ' + e;
+                }
+            } else if (value instanceof Object) {
                 try {
                     valStr = JSON.stringify(value, null, '  ');
                 } catch (e) {
@@ -18288,7 +18302,7 @@ var PlatformBrowser = function () {
     }, {
         key: 'plugins',
         value: function plugins(opts) {
-            return [__webpack_require__(/*! ../../../plugins/instrument_xhr */ "./src/plugins/instrument_xhr.js"), __webpack_require__(/*! ../../../plugins/instrument_document_load */ "./src/plugins/instrument_document_load.js")];
+            return [__webpack_require__(/*! ../../../plugins/instrument_xhr */ "./src/plugins/instrument_xhr.js"), __webpack_require__(/*! ../../../plugins/instrument_fetch */ "./src/plugins/instrument_fetch.js"), __webpack_require__(/*! ../../../plugins/instrument_document_load */ "./src/plugins/instrument_document_load.js")];
         }
     }, {
         key: 'options',
@@ -19624,7 +19638,6 @@ var Tracer = function (_opentracing$Tracer) {
 
             // Meta Event reporting options
             this.addOption('disable_meta_event_reporting', { type: 'bool', defaultValue: false });
-            this.addOption('meta_event_reporting', { type: 'bool', defaultValue: false });
 
             /* eslint-disable key-spacing, no-multi-spaces */
         }
@@ -19918,6 +19931,8 @@ var Tracer = function (_opentracing$Tracer) {
             if (opts.collector_encryption !== undefined && opts.collector_port === undefined) {
                 opts.collector_port = opts.collector_encryption !== 'none' ? DEFAULT_COLLECTOR_PORT_TLS : DEFAULT_COLLECTOR_PORT_PLAIN;
             }
+            // set meta event reporting to false by default, it will be enabled by the satellite
+            this.meta_event_reporting = false;
 
             // Track what options have been modified
             var modified = {};
@@ -20998,7 +21013,7 @@ var Util = function () {
     }, {
         key: 'shouldSendMetaSpan',
         value: function shouldSendMetaSpan(opts, tags) {
-            var shouldSendSpan = opts.meta_event_reporting === false && tags['lightstep.meta_event'] !== true;
+            var shouldSendSpan = opts.meta_event_reporting === true && tags['lightstep.meta_event'] !== true;
             return shouldSendSpan;
         }
     }]);
@@ -21263,6 +21278,320 @@ var InstrumentPageLoad = function () {
 }();
 
 module.exports = new InstrumentPageLoad();
+
+/***/ }),
+
+/***/ "./src/plugins/instrument_fetch.js":
+/*!*****************************************!*\
+  !*** ./src/plugins/instrument_fetch.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _opentracing = __webpack_require__(/*! opentracing */ "./node_modules/opentracing/lib/index.js");
+
+var opentracing = _interopRequireWildcard(_opentracing);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+// Capture the proxied values on script load (i.e. ASAP) in case there are
+// multiple layers of instrumentation.
+var proxiedFetch = void 0;
+if (typeof window === 'object' && typeof window.fetch !== 'undefined') {
+    proxiedFetch = window.fetch;
+}
+
+function getCookies() {
+    if (typeof document === 'undefined' || !document.cookie) {
+        return null;
+    }
+    var cookies = document.cookie.split(';');
+    var data = {};
+    var count = 0;
+    for (var i = 0; i < cookies.length; i++) {
+        var parts = cookies[i].split('=', 2);
+        if (parts.length === 2) {
+            var key = parts[0].replace(/^\s+/, '').replace(/\s+$/, '');
+            data[key] = decodeURIComponent(parts[1]);
+            try {
+                data[key] = JSON.parse(data[key]);
+            } catch (_ignored) {/* Ignored */}
+            count++;
+        }
+    }
+    if (count > 0) {
+        return data;
+    }
+    return null;
+}
+
+// Normalize the getAllResponseHeaders output
+function getResponseHeaders(response) {
+    var result = {};
+    for (var pair of response.headers.entries()) {
+        result[pair[0]] = pair[1];
+    }
+    return result;
+}
+
+// Automatically create spans for all requests made via window.fetch.
+//
+// NOTE: this code currently works only with a single Tracer.
+//
+
+var InstrumentFetch = function () {
+    function InstrumentFetch() {
+        _classCallCheck(this, InstrumentFetch);
+
+        this._enabled = this._isValidContext();
+        this._proxyInited = false;
+        this._internalExclusions = [];
+        this._tracer = null;
+        this._handleOptions = this._handleOptions.bind(this);
+
+        if (!this._enabled) {
+            return;
+        }
+    }
+
+    _createClass(InstrumentFetch, [{
+        key: 'name',
+        value: function name() {
+            return 'instrument_fetch';
+        }
+    }, {
+        key: 'addOptions',
+        value: function addOptions(tracerImp) {
+            tracerImp.addOption('fetch_instrumentation', { type: 'bool', defaultValue: false });
+            tracerImp.addOption('fetch_url_inclusion_patterns', { type: 'array', defaultValue: [/.*/] });
+            tracerImp.addOption('fetch_url_exclusion_patterns', { type: 'array', defaultValue: [] });
+        }
+    }, {
+        key: 'start',
+        value: function start(tracerImp) {
+            if (!this._enabled) {
+                return;
+            }
+            this._tracer = tracerImp;
+
+            var currentOptions = tracerImp.options();
+            this._addServiceHostToExclusions(currentOptions);
+            this._handleOptions({}, currentOptions);
+            tracerImp.on('options', this._handleOptions);
+        }
+    }, {
+        key: 'stop',
+        value: function stop() {
+            if (!this._enabled) {
+                return;
+            }
+            window.fetch = proxiedFetch;
+        }
+
+        /**
+         * Respond to options changes on the Tracer.
+         *
+         * Note that `modified` is the options that have changed in this call,
+         * along with their previous and new values. `current` is the full set of
+         * current options *including* the newly modified values.
+         */
+
+    }, {
+        key: '_handleOptions',
+        value: function _handleOptions(modified, current) {
+            // Automatically add the service host itself to the list of exclusions
+            // to avoid reporting on the reports themselves
+            var serviceHost = modified.collector_host;
+            if (serviceHost) {
+                this._addServiceHostToExclusions(current);
+            }
+
+            // Set up the proxied fetch calls unless disabled
+            if (!this._proxyInited && current.fetch_instrumentation) {
+                this._proxyInited = true;
+                window.fetch = this._instrumentFetch();
+            }
+        }
+
+        /**
+         * Ensure that the reports to the collector don't get instrumented as well,
+         * as that recursive instrumentation is more confusing than valuable!
+         */
+
+    }, {
+        key: '_addServiceHostToExclusions',
+        value: function _addServiceHostToExclusions(opts) {
+            if (opts.collector_host.length === 0) {
+                return;
+            }
+
+            // http://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
+            function escapeRegExp(str) {
+                return ('' + str).replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
+            }
+
+            // Check against the hostname without the port as well as the canonicalized
+            // URL may drop the standard port.
+            var host = escapeRegExp(opts.collector_host);
+            var port = escapeRegExp(opts.collector_port);
+            var set = [new RegExp('^https?://' + host + ':' + port)];
+            if (port === '80') {
+                set.push(new RegExp('^http://' + host));
+            } else if (port === '443') {
+                set.push(new RegExp('^https://' + host));
+            }
+            this._internalExclusions = set;
+        }
+
+        /**
+         * Check preconditions for the auto-instrumentation of fetch to work properly.
+         * There are a lot of potential JavaScript platforms.
+         */
+
+    }, {
+        key: '_isValidContext',
+        value: function _isValidContext() {
+            if (typeof window === 'undefined') {
+                return false;
+            }
+            if (!window.fetch) {
+                return false;
+            }
+            return true;
+        }
+    }, {
+        key: '_instrumentFetch',
+        value: function _instrumentFetch() {
+            var self = this;
+            var tracer = this._tracer;
+
+            return function (request) {
+                var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+                var url = typeof request === 'string' ? request : request.url;
+
+                if (!self._shouldTrace(tracer, url)) {
+                    return proxiedFetch.apply(null, arguments);
+                }
+
+                var span = tracer.startSpan('fetch');
+                tracer.addActiveRootSpan(span);
+
+                var tags = {
+                    method: options && options.method ? options.method : 'GET',
+                    url: url
+                };
+                if (url) {
+                    tags.url_pathname = url.split('?')[0];
+                }
+
+                var fetchPayload = Object.assign({}, tags, { cookies: getCookies() });
+
+                options.headers = new Headers(options.headers);
+                // Add Open-Tracing headers
+                var headersCarrier = {};
+                tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
+                var keys = Object.keys(headersCarrier);
+                keys.forEach(function (key) {
+                    options.headers.append(key, headersCarrier[key]);
+                });
+                span.log({
+                    event: 'sending',
+                    method: options.method || 'GET',
+                    url: url,
+                    openPayload: fetchPayload
+                });
+                span.addTags(tags);
+
+                return proxiedFetch(request, options).then(function (response) {
+                    if (!response.ok) {
+                        span.addTags({ error: true });
+                    }
+                    span.log({
+                        method: options.method || 'GET',
+                        headers: getResponseHeaders(response),
+                        status: response.status,
+                        statusText: response.statusText,
+                        responseType: response.type,
+                        url: response.url
+                    });
+                    tracer.removeActiveRootSpan(span);
+                    span.finish();
+                    return response;
+                }).catch(function (e) {
+                    span.addTags({ error: true });
+                    tracer.removeActiveRootSpan(span);
+                    span.log({
+                        event: 'error',
+                        error: e
+                    });
+                    span.finish();
+                    throw e;
+                });
+            };
+        }
+    }, {
+        key: '_shouldTrace',
+        value: function _shouldTrace(tracer, url) {
+            // This shouldn't be possible, but let's be paranoid
+            if (!tracer) {
+                return false;
+            }
+
+            var opts = tracer.options();
+            if (opts.disabled) {
+                return false;
+            }
+            if (!url) {
+                return false;
+            }
+            for (var key in this._internalExclusions) {
+                if (!this._internalExclusions.hasOwnProperty(key)) {
+                    continue;
+                }
+                var ex = this._internalExclusions[key];
+                if (ex.test(url)) {
+                    return false;
+                }
+            }
+            var include = false;
+            for (var _key in opts.fetch_url_inclusion_patterns) {
+                if (!opts.fetch_url_inclusion_patterns.hasOwnProperty(_key)) {
+                    continue;
+                }
+                var inc = opts.fetch_url_inclusion_patterns[_key];
+                if (inc.test(url)) {
+                    include = true;
+                    break;
+                }
+            }
+            if (!include) {
+                return false;
+            }
+            for (var _key2 in opts.fetch_url_exclusion_patterns) {
+                if (!opts.fetch_url_exclusion_patterns.hasOwnProperty(_key2)) {
+                    continue;
+                }
+                var _ex = opts.fetch_url_exclusion_patterns[_key2];
+                if (_ex.test(url)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }]);
+
+    return InstrumentFetch;
+}();
+
+module.exports = new InstrumentFetch();
 
 /***/ }),
 
