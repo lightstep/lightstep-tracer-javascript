@@ -2,6 +2,8 @@
 
 *Log of significant changes, especially those affecting the supported API.*
 
+## vNext
+
 ## 0.22.0
 
 * The default transport has been changed to `proto`.
