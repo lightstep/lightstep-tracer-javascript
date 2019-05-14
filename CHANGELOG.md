@@ -12,6 +12,7 @@
 * Addresses an issue with `proto` transport usage in the browser.
 * Fixes bug where error objects are not converted to log objects correctly.
 * Implements plugin for fetch.
+* Remove deprecated chrome.loadTimes() code.
 
 ## 0.21.1
 
