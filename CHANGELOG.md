@@ -2,12 +2,14 @@
 
 *Log of significant changes, especially those affecting the supported API.*
 
-## vNext
+## 0.22.0
 
 * The default transport has been changed to `proto`.
 * The tracer supports empty access tokens.
 * Several bugs have been fixed with the `proto` transport option around the report of LightStep-specific tags.
 * Addresses an issue with `proto` transport usage in the browser.
+* Fixes bug where error objects are not converted to log objects correctly.
+* Implements plugin for fetch.
 
 ## 0.21.1
 
