@@ -540,7 +540,7 @@ export default class Tracer extends opentracing.Tracer {
         }
         // set meta event reporting to false by default, it will be enabled by the satellite
         this.meta_event_reporting = false;
-        
+
         // Track what options have been modified
         let modified = {};
         let unchanged = {};
