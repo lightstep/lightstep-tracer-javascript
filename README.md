@@ -87,6 +87,8 @@ The OpenTracing standard JavaScript API is [documented here](https://doc.esdoc.o
 
 * `fetch_url_exclusion_patterns` `RegExp[]` - an array of regular expressions used to exclude URLs from `window.fetch` auto-instrumentation. The default value is an empty array. For a given URL to be instrumented, it must match at least one regular expression in `fetch_url_inclusion_patterns` and not match any regular expressions in `fetch_url_exclusion_patterns`.
 
+* `include_cookies` `bool` - if true, includes cookies in the span logs for both `window.fetch` and `XMLHttpRequest`. Defaults to true.
+
 **Non-standard options**
 
 *NOTE: Future API compatibility on non-standard options is not guaranteed.*
