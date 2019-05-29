@@ -72,6 +72,7 @@ class InstrumentXHR {
         tracerImp.addOption('xhr_instrumentation', { type : 'bool', defaultValue : false });
         tracerImp.addOption('xhr_url_inclusion_patterns', { type : 'array', defaultValue : [/.*/] });
         tracerImp.addOption('xhr_url_exclusion_patterns', { type : 'array', defaultValue : [] });
+        tracerImp.addOption('include_cookies', { type : 'bool', defaultValue : true });
     }
 
     start(tracerImp) {
@@ -180,6 +181,7 @@ class InstrumentXHR {
             if (!self._shouldTrace(tracer, this, url)) {
                 return proxied.open.apply(this, arguments);
             }
+            const opts = tracer.options();
 
             let span = tracer.startSpan('XMLHttpRequest');
             tracer.addActiveRootSpan(span);
@@ -200,7 +202,9 @@ class InstrumentXHR {
             _each(tags, (val, key) => {
                 openPayload[key] = val;
             });
-            openPayload.cookies = getCookies();
+            if (opts.include_cookies) {
+                openPayload.cookies = getCookies();
+            }
 
             // Note: async defaults to true
             let async = (asyncArg === undefined ? true : asyncArg);

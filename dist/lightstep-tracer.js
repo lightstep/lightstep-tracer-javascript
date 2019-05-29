@@ -21362,6 +21362,7 @@ var InstrumentFetch = function () {
             tracerImp.addOption('fetch_instrumentation', { type: 'bool', defaultValue: false });
             tracerImp.addOption('fetch_url_inclusion_patterns', { type: 'array', defaultValue: [/.*/] });
             tracerImp.addOption('fetch_url_exclusion_patterns', { type: 'array', defaultValue: [] });
+            tracerImp.addOption('include_cookies', { type: 'bool', defaultValue: true });
         }
     }, {
         key: 'start',
@@ -21466,6 +21467,7 @@ var InstrumentFetch = function () {
                 var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
                 var url = typeof request === 'string' ? request : request.url;
+                var opts = tracer.options();
 
                 if (!self._shouldTrace(tracer, url)) {
                     return proxiedFetch.apply(null, arguments);
@@ -21482,7 +21484,10 @@ var InstrumentFetch = function () {
                     tags.url_pathname = url.split('?')[0];
                 }
 
-                var fetchPayload = Object.assign({}, tags, { cookies: getCookies() });
+                var fetchPayload = Object.assign({}, tags);
+                if (opts.include_cookies) {
+                    fetchPayload.cookies = getCookies();
+                }
 
                 options.headers = new Headers(options.headers);
                 // Add Open-Tracing headers
@@ -21688,6 +21693,7 @@ var InstrumentXHR = function () {
             tracerImp.addOption('xhr_instrumentation', { type: 'bool', defaultValue: false });
             tracerImp.addOption('xhr_url_inclusion_patterns', { type: 'array', defaultValue: [/.*/] });
             tracerImp.addOption('xhr_url_exclusion_patterns', { type: 'array', defaultValue: [] });
+            tracerImp.addOption('include_cookies', { type: 'bool', defaultValue: true });
         }
     }, {
         key: 'start',
@@ -21809,6 +21815,7 @@ var InstrumentXHR = function () {
                 if (!self._shouldTrace(tracer, this, url)) {
                     return proxied.open.apply(this, arguments);
                 }
+                var opts = tracer.options();
 
                 var span = tracer.startSpan('XMLHttpRequest');
                 tracer.addActiveRootSpan(span);
@@ -21829,7 +21836,9 @@ var InstrumentXHR = function () {
                 (0, _each3.default)(tags, function (val, key) {
                     openPayload[key] = val;
                 });
-                openPayload.cookies = getCookies();
+                if (opts.include_cookies) {
+                    openPayload.cookies = getCookies();
+                }
 
                 // Note: async defaults to true
                 var async = asyncArg === undefined ? true : asyncArg;

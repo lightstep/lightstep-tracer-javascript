@@ -65,6 +65,7 @@ class InstrumentFetch {
         tracerImp.addOption('fetch_instrumentation', { type : 'bool', defaultValue : false });
         tracerImp.addOption('fetch_url_inclusion_patterns', { type : 'array', defaultValue : [/.*/] });
         tracerImp.addOption('fetch_url_exclusion_patterns', { type : 'array', defaultValue : [] });
+        tracerImp.addOption('include_cookies', { type : 'bool', defaultValue : true });
     }
 
     start(tracerImp) {
@@ -155,6 +156,7 @@ class InstrumentFetch {
 
         return function (request, options = {}) {
             const url = typeof request === 'string' ? request : request.url;
+            const opts = tracer.options();
 
             if (!self._shouldTrace(tracer, url)) {
                 return proxiedFetch.apply(null, arguments);
@@ -171,7 +173,10 @@ class InstrumentFetch {
                 tags.url_pathname = url.split('?')[0];
             }
 
-            const fetchPayload = Object.assign({}, tags, { cookies : getCookies() });
+            const fetchPayload = Object.assign({}, tags);
+            if (opts.include_cookies) {
+                fetchPayload.cookies = getCookies();
+            }
 
             options.headers = new Headers(options.headers);
             // Add Open-Tracing headers
