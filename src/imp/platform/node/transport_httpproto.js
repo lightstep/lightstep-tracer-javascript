@@ -106,12 +106,12 @@ export default class TransportHTTPProto {
                         err = new Error('unexpected empty response');
                     } else {
                         try {
-                            resp = proto.ReportResponse.deserializeBinary(buffer);
+                            resp = proto.ReportResponse.deserializeBinary(buffer).toObject();
                         } catch (exception) {
                             err = exception;
                         }
                     }
-                    return done(err, resp.toObject());
+                    return done(err, resp);
                 });
             });
             req.on('socket', (socket, head) => {
