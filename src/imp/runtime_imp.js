@@ -59,11 +59,20 @@ export default class RuntimeImp {
 
         let reporterId = converter.hexToDec(this._runtimeGUID);
 
+        let tracerTags = [];
+        _each(this._attributes, (val, key) => {
+            let ttag = new proto.KeyValue();
+            ttag.setKey(key);
+            ttag.setStringValue(val);
+            tracerTags.push(ttag);
+        });
+
+        let reporterTags = [tracerVersion, tracerPlatform, componentName, commandLine, hostname, tracerPlatformVersion];
+        let allTags = reporterTags.concat(tracerTags);
+
         let reporterProto = new proto.Reporter();
         reporterProto.setReporterId(reporterId);
-        reporterProto.setTagsList([
-            tracerVersion, tracerPlatform, componentName, commandLine, hostname, tracerPlatformVersion,
-        ]);
+        reporterProto.setTagsList(allTags);
 
         return reporterProto;
     }
