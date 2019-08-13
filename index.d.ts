@@ -38,17 +38,10 @@ declare module 'lightstep-tracer' {
     */
     collector_encryption?: string     
   }
-  export namespace lightstep{
-
-  }
+  
   export class Tracer extends opentracing.Tracer {
-    constructor(options: TracerOptions)
-
-    public startSpan(name: string, options?: opentracing.SpanOptions): Span
+    constructor(options: TracerOptions)    
   }
   
-  class Span extends opentracing.Span {
-      public generateTraceURL(): string
-  }
 }
 
