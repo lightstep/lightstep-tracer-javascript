@@ -2,7 +2,11 @@
 
 *Log of significant changes, especially those affecting the supported API.*
 
-## vNext
+## 0.22.1
+* Fixes a bug where certain tracer tags were not set when using `proto` transport.
+* Adds TypeScript definitions for LightStep tracer specific options/methods
+* Fixes a crash when `proto` transport was used and invalid responses were received.
+* Adds an option to exclude cookies from tracing payloads.
 
 ## 0.22.0
 
