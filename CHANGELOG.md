@@ -2,6 +2,9 @@
 
 *Log of significant changes, especially those affecting the supported API.*
 
+## vNext
+* Completely defines the `TracerOptions` interface.
+
 ## 0.22.1
 * Fixes a bug where certain tracer tags were not set when using `proto` transport.
 * Adds TypeScript definitions for LightStep tracer specific options/methods
