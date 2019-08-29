@@ -37,6 +37,125 @@ declare module 'lightstep-tracer' {
      * `none` - use HTTP plain-text connections
     */
     collector_encryption?: string     
+
+    /**
+     * optional tag object that will be applied to all reports.
+     */
+    tags?: any
+
+    /**
+     * optional, the maximum time before the tracer reports. default = 2500
+     */
+    max_reporting_interval_millis?: number
+
+    /**
+     * optional, disables clock skew correction. default = false
+     */
+    disable_clock_skew_correction?: boolean
+
+    /**
+     * optional, specifies the transport method used for communication to the Satellite. default = proto.
+     * `proto` - use protobuf over HTTP(S)
+     * `thrift` - use thrift
+     */
+    transport?: string
+
+    /**
+     * optional, disables the tracer. default = false
+     */
+    disabled?: boolean
+
+    /**
+     * optional, defines the maximum number of spans per report. default = 4096
+     */
+    max_span_records?: number
+
+    /**
+     * optional tag object that will be applied to all spans.
+     */
+    default_span_tags?: any
+
+    /**
+     * optional, sets the timeout for flushing reports to Satellite. default = 30000 (30s)
+     */
+    report_timeout_millis?: number
+
+    /**
+     * optional, if enabled will use gzip compression of reports from node.js. default = true
+     */
+    gzip_json_requests?: boolean
+
+    /**
+     * optional, if enabled the tracer will not flush reports to Satellite. default = false
+     */
+    disable_reporting_loop?: boolean
+
+    /**
+     * optional, if enabled the tracer will not attempt to flush at process exit. default = false
+     */
+    disable_report_on_exit?: boolean
+
+    /**
+     * optional, specifies how long the tracer should wait before its first flush in ms. default = 1000
+     */
+    delay_initial_report_millis?: number
+
+    /**
+     * optional, specifies how quickly error logging should throttle in ms. default = 60000
+     */
+    error_throttle_millis?: number
+
+    /**
+     * optional, an override of the existing logging function for the tracer. by default, log to console.
+     */
+    logger?: any
+
+    /**
+     * optional. browser-only. creates a single long-lived span for the entire page view. default = false
+     */
+    instrument_page_load?: boolean
+    
+    /**
+     * optional. browser-only. if enabled, automatically instruments all XHR requests with context headers.
+     * see `xhr_url_inclusion_patterns` and `xhr_url_exclusion_patterns`.
+     */
+    xhr_instrumentation?: boolean
+
+    /**
+     * optional. browser-only. a regex to indicate which URLs should be automatically instrumented for XHRs.
+     * default value is all urls.
+     */
+    xhr_url_inclusion_patterns?: any
+
+    /**
+     * optional. browser-only. a regex to indicate which URLs should not be automatically instrumented for XHRs.
+     * default value is no urls.
+     */
+    xhr_url_exclusion_patterns?: any
+    
+    /**
+     * optional. browser-only. if enabled, automatically instrument all window.fetch requests with context.headers.
+     * see `fetch_url_inclusion_patterns` and `fetch_url_exclusion_patterns`.
+     */
+    fetch_instrumentation?: boolean
+
+    /**
+     * optional. browser-only. a regex to indicate which URLs should be automatically instrumented for window.fetch.
+     * default value is all urls.
+     */
+    fetch_url_inclusion_patterns?: any
+
+    /**
+     * optional. browser-only. a regex to indicate which URLs should not be automatically instrumented for window.fetch.
+     * default value is no urls.
+     */
+    fetch_url_exclusion_patterns?: any
+
+    /**
+     * optional. browser-only. if true, includes cookies in the span logs for both `window.fetch` and `XMLHttpRequest`.
+     * defaults to true.
+     */
+    include_cookies?: boolean
   }
   
   export class Tracer extends opentracing.Tracer {
