@@ -2,8 +2,9 @@
 
 *Log of significant changes, especially those affecting the supported API.*
 
-## vNext
+## 0.22.2
 * Completely defines the `TracerOptions` interface.
+* Updates `thrift` package to address a security vulnerability.
 
 ## 0.22.1
 * Fixes a bug where certain tracer tags were not set when using `proto` transport.
