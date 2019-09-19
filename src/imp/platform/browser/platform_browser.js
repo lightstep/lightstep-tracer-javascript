@@ -39,7 +39,7 @@ class PlatformBrowser {
         // Account for the groupName in the same that multiple apps or services
         // are running on the same domain (and should not share the same
         // runtime GUID).
-        let cookieKey = `${kRuntimeGUIDCookiePrefix}/${groupName}`;
+        let cookieKey = encodeURIComponent(`${kRuntimeGUIDCookiePrefix}/${groupName}`);
         let uuid = util.cookie(cookieKey) || this._generateLongUUID();
         util.cookie(cookieKey, uuid, kCookieTimeToLiveSeconds, '/');
 

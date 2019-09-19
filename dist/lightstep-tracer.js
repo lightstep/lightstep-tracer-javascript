@@ -18292,7 +18292,7 @@ var PlatformBrowser = function () {
             // Account for the groupName in the same that multiple apps or services
             // are running on the same domain (and should not share the same
             // runtime GUID).
-            var cookieKey = kRuntimeGUIDCookiePrefix + '/' + groupName;
+            var cookieKey = encodeURIComponent(kRuntimeGUIDCookiePrefix + '/' + groupName);
             var uuid = util.cookie(cookieKey) || this._generateLongUUID();
             util.cookie(cookieKey, uuid, kCookieTimeToLiveSeconds, '/');
 
