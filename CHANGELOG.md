@@ -2,6 +2,11 @@
 
 *Log of significant changes, especially those affecting the supported API.*
 
+## vNext
+
+## 0.22.3
+* Fixes an issue where reporter cookies would be set with invalid key strings.
+
 ## 0.22.2
 * Completely defines the `TracerOptions` interface.
 * Updates `thrift` package to address a security vulnerability.
