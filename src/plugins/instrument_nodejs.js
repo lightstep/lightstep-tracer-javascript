@@ -1,18 +1,49 @@
 import * as opentracing from 'opentracing';
 import http from 'http';
 import https from 'https';
-import { URL } from 'url';
+import urlCreator, { URL } from 'url';
 // Capture the proxied values on script load (i.e. ASAP) in case there are
 // multiple layers of instrumentation.
 let proxiedHttpRequest;
 let proxiedHttpsRequest;
+let proxiedHttpGet;
+let proxiedHttpsGet;
 if (typeof window === 'undefined') {
     proxiedHttpRequest = http.request;
+    proxiedHttpGet = http.get;
+
     proxiedHttpsRequest = https.request;
+    proxiedHttpsGet = https.get;
 }
 
 
+// taken from following
+// https://github.com/nodejs/node/blob/8507485fb242dfcaf07092414871aa9c185a28e4/lib/internal/url.js#L1254-L1276
+// Utility function that converts a URL object into an ordinary
+// options object as expected by the http.request and https.request
+// APIs.
 
+function urlToOptions(url) {
+    const options = {
+        protocol : url.protocol,
+        hostname :
+            typeof url.hostname === 'string' && url.hostname.startsWith('[')
+                ? url.hostname.slice(1, -1)
+                : url.hostname,
+        hash     : url.hash,
+        search   : url.search,
+        pathname : url.pathname,
+        path     : `${url.pathname || ''}${url.search || ''}`,
+        href     : url.href,
+    };
+    if (url.port !== '') {
+        options.port = Number(url.port);
+    }
+    if (url.username || url.password) {
+        options.auth = `${url.username}:${url.password}`;
+    }
+    return options;
+}
 // Automatically create spans for all requests made via window.fetch.
 //
 // NOTE: this code currently works only with a single Tracer.
@@ -58,7 +89,10 @@ class InstrumentNodejs {
             return;
         }
         http.request = proxiedHttpRequest;
+        http.get = proxiedHttpGet;
+
         https.request = proxiedHttpsRequest;
+        https.get = proxiedHttpsGet;
     }
 
     /**
@@ -124,20 +158,32 @@ class InstrumentNodejs {
         let self = this;
         let tracer = this._tracer;
         function requestOverride(originalRequest, ...args) {
-            let url;
-            let method;
-            let protocol;
-
-            // http.request has two overrides, taking url first or options
-            if (typeof args[0] === 'string') {
-                url = args[0];
-                method = typeof args[1] === 'object' ? args[1].method || 'GET' : 'GET';
-                protocol = new URL(url).protocol.replace(':', '');
-            } else if (typeof args[0] === 'object') {
-                url = args[0].href;
-                method = args[0].method;
-                protocol = args[0].protocol ? args[0].protocol.replace(':', '') : 'http';
+            // http.request has two overrides, taking url/string first, or options
+            // if url or string morph into an options object
+            // make it so that options and possible callback are the only args passed
+            if (typeof args[0] === 'string' || args[0] instanceof URL) {
+                if (typeof args[0] === 'string') args[0] = new URL(args[0]);
+                const optionsFromUrl = urlToOptions(args[0]);
+                args[0] = optionsFromUrl;
+                if (typeof args[1] === 'object') {
+                    args[0] = Object.assign(optionsFromUrl, args[1]);
+                    if (typeof args[2] === 'function') {
+                        args[1] = args[2];
+                        args.pop();
+                    }
+                }
             }
+
+            // check if there are headers stated, and if not create them on the first arg
+            // then grab reference so that we can inject headers into the request before sending the request out
+            if (!args[0].headers) args[0].headers = {};
+
+            const headers = args[0].headers;
+            const method = args[0].method || 'GET';
+            const url = args[0].href || urlCreator.format(args[0]);
+            const protocol = args[0].protocol
+                ? args[0].protocol.replace(':', '')
+                : 'http';
             if (!self._shouldTrace(tracer, url)) {
                 return originalRequest(...args);
             }
@@ -156,15 +202,19 @@ class InstrumentNodejs {
 
 
             try {
-                const request = originalRequest(...args);
-
-                // add tracing headers to request
                 const headersCarrier = {};
                 tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
                 const keys = Object.keys(headersCarrier);
+                // add tracing headers to request
+                // have to set headers instead of modifying the request instance headers,
+                // In an http.get call case, req.end will automatically be called,
+                // setting headers will be impossible after that point
+                // reference https://nodejs.org/api/http.html#http_class_http_clientrequest
                 keys.forEach(key => {
-                    request.setHeader(key, headersCarrier[key]);
+                    headers[key] = headersCarrier[key];
                 });
+                const request = originalRequest(...args);
+
 
                 span.log({
                     event       : 'sending',
@@ -208,6 +258,9 @@ class InstrumentNodejs {
         }
         http.request = requestOverride.bind(undefined, http.request);
         https.request = requestOverride.bind(undefined, https.request);
+
+        http.get = requestOverride.bind(undefined, http.get);
+        https.get = requestOverride.bind(undefined, https.get);
     }
 
     _shouldTrace(tracer, url) {
