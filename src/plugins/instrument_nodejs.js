@@ -170,6 +170,11 @@ class InstrumentNodejs {
                     if (typeof args[2] === 'function') {
                         args[1] = args[2];
                         args.pop();
+                    } else {
+                        // need to pop off args[1] if it's an options object because if http/https.request see two
+                        // options objects it'll complain with this error
+                        // TypeError [ERR_INVALID_ARG_TYPE]: The "listener" argument must be of type Function.
+                        args.pop();
                     }
                 }
             }
@@ -183,7 +188,7 @@ class InstrumentNodejs {
             const url = args[0].href || urlCreator.format(args[0]);
             const protocol = args[0].protocol
                 ? args[0].protocol.replace(':', '')
-                : 'http';
+                : url.slice(0, url.indexOf(':'));
             if (!self._shouldTrace(tracer, url)) {
                 return originalRequest(...args);
             }
