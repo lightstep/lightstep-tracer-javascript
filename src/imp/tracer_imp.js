@@ -12,6 +12,7 @@ import { Platform, ProtoTransport, ThriftTransport } from '../platform_abstracti
 import AuthImp from './auth_imp';
 import RuntimeImp from './runtime_imp';
 import ReportImp from './report_imp';
+import FORMAT_B3 from '../constants';
 
 const ClockState    = require('./util/clock_state');
 const LogBuilder    = require('./log_builder');
@@ -20,6 +21,8 @@ const constants     = require('../constants');
 const globals       = require('./globals');
 const packageObject = require('../../package.json');
 const util          = require('./util/util');
+
+const CARRIER_B3_TRACER_STATE_PREFIX = 'x-b3-';
 
 const CARRIER_TRACER_STATE_PREFIX = 'ot-tracer-';
 const CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
@@ -282,7 +285,7 @@ export default class Tracer extends opentracing.Tracer {
             }
         }
 
-        let traceGUID = parentCtxImp ? parentCtxImp._traceGUID : this.generateTraceGUIDForRootSpan();
+        let traceGUID = parentCtxImp ? parentCtxImp.traceGUID() : this.generateTraceGUIDForRootSpan();
         let spanImp = new SpanImp(this, name, new SpanContextImp(this._platform.generateUUID(), traceGUID));
         spanImp.addTags(this._options.default_span_tags);
 
@@ -340,9 +343,12 @@ export default class Tracer extends opentracing.Tracer {
                     })
                 .finish();
             }
-            this._injectToTextMap(spanContext, carrier);
+            this._injectToTextMap(CARRIER_TRACER_STATE_PREFIX, spanContext, carrier);
             break;
 
+        case FORMAT_B3:
+            this._injectToTextMap(CARRIER_B3_TRACER_STATE_PREFIX, spanContext, carrier);
+            break;
         case this._opentracing.FORMAT_BINARY:
             this._error(`Unsupported format: ${format}`);
             break;
@@ -353,7 +359,7 @@ export default class Tracer extends opentracing.Tracer {
         }
     }
 
-    _injectToTextMap(spanContext, carrier) {
+    _injectToTextMap(carrierPrefix, spanContext, carrier) {
         if (!carrier) {
             this._error('Unexpected null FORMAT_TEXT_MAP carrier in call to inject');
             return;
@@ -363,12 +369,18 @@ export default class Tracer extends opentracing.Tracer {
             return;
         }
 
-        carrier[`${CARRIER_TRACER_STATE_PREFIX}spanid`] = spanContext._guid;
-        carrier[`${CARRIER_TRACER_STATE_PREFIX}traceid`] = spanContext._traceGUID;
+        carrier[`${carrierPrefix}spanid`] = spanContext._guid;
+        if (carrierPrefix === CARRIER_B3_TRACER_STATE_PREFIX) {
+            // propagate full 128 bit trace ID
+            carrier[`${carrierPrefix}traceid`] = spanContext.traceGUID();
+        } else {
+            carrier[`${carrierPrefix}traceid`] = spanContext._traceGUID;
+        }
+        console.log(carrier);
         spanContext.forEachBaggageItem((key, value) => {
             carrier[`${CARRIER_BAGGAGE_PREFIX}${key}`] = value;
         });
-        carrier[`${CARRIER_TRACER_STATE_PREFIX}sampled`] = 'true';
+        carrier[`${carrierPrefix}sampled`] = 'true';
         return carrier;
     }
 
@@ -377,52 +389,55 @@ export default class Tracer extends opentracing.Tracer {
         switch (format) {
         case this._opentracing.FORMAT_HTTP_HEADERS:
         case this._opentracing.FORMAT_TEXT_MAP:
-            sc = this._extractTextMap(format, carrier);
-            if (this.options().meta_event_reporting === true) {
-                this.startSpan(constants.LS_META_EXTRACT,
-                    {
-                        tags: {
-                            [constants.LS_META_EVENT_KEY]: true,
-                            [constants.LS_META_TRACE_KEY]: sc._traceGUID,
-                            [constants.LS_META_SPAN_KEY]: sc._guid,
-                            [constants.LS_META_PROPAGATION_KEY]: format,
-                        },
-                    })
-                .finish();
-            }
-            return sc;
+            sc = this._extractTextMap(CARRIER_TRACER_STATE_PREFIX, format, carrier);
+            break;
+        case FORMAT_B3:
+            sc = this._extractTextMap(CARRIER_B3_TRACER_STATE_PREFIX, format, carrier);
+            break;
         case this._opentracing.FORMAT_BINARY:
             this._error(`Unsupported format: ${format}`);
             return null;
-
         default:
             this._error(`Unsupported format: ${format}`);
             return null;
         }
+        if (this.options().meta_event_reporting === true) {
+            this.startSpan(constants.LS_META_EXTRACT,
+                {
+                    tags: {
+                        [constants.LS_META_EVENT_KEY]: true,
+                        [constants.LS_META_TRACE_KEY]: sc._traceGUID,
+                        [constants.LS_META_SPAN_KEY]: sc._guid,
+                        [constants.LS_META_PROPAGATION_KEY]: format,
+                    },
+                })
+            .finish();
+        }
+        return sc;
     }
 
-    _extractTextMap(format, carrier) {
-        // Begin with the empty SpanContextImp
-        let spanContext = new SpanContextImp(null, null);
-
+    _extractTextMap(carrierPrefix, format, carrier) {
         // Iterate over the contents of the carrier and set the properties
         // accordingly.
         let foundFields = 0;
+        let spanGUID = null;
+        let traceGUID = null;
+
         _each(carrier, (value, key) => {
             key = key.toLowerCase();
-            if (key.substr(0, CARRIER_TRACER_STATE_PREFIX.length) !== CARRIER_TRACER_STATE_PREFIX) {
+            if (key.substr(0, carrierPrefix.length) !== carrierPrefix) {
                 return;
             }
-            let suffix = key.substr(CARRIER_TRACER_STATE_PREFIX.length);
+            let suffix = key.substr(carrierPrefix.length);
 
             switch (suffix) {
             case 'traceid':
                 foundFields++;
-                spanContext._traceGUID = value;
+                traceGUID = value;
                 break;
             case 'spanid':
                 foundFields++;
-                spanContext._guid = value;
+                spanGUID = value;
                 break;
             case 'sampled':
                 // Ignored. The carrier may be coming from a different client
@@ -444,6 +459,8 @@ export default class Tracer extends opentracing.Tracer {
             this._error(`Only found a partial SpanContext: ${format}, ${carrier}`);
             return null;
         }
+
+        let spanContext = new SpanContextImp(spanGUID, traceGUID);
 
         _each(carrier, (value, key) => {
             key = key.toLowerCase();

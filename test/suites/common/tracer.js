@@ -112,6 +112,29 @@ describe("Tracer", function() {
             expect(extractedContext.getBaggageItem('creditcard')).to.equal('visa');
         });
 
+        it("should propagate B3 format", function() {
+            var span = Tracer.startSpan('my_span');
+            var spanContext = span.context();
+
+            spanContext.setBaggageItem('footwear', 'sandals');
+            spanContext.setBaggageItem('creditcard', 'visa');
+
+            var carrier = {};
+            Tracer.inject(spanContext, lightstep.FORMAT_B3, carrier);
+            expect(carrier['x-b3-traceid'].length).to.equal(32)
+            expect(carrier['x-b3-traceid'].substr(16)).to.equal(spanContext._traceGUID);
+            expect(carrier['x-b3-spanid']).to.equal(spanContext._guid);
+
+            expect(carrier['ot-baggage-footwear']).to.equal('sandals');
+            expect(carrier['ot-baggage-creditcard']).to.equal('visa');
+
+            var extractedContext = Tracer.extract(opentracing.FORMAT_B3, carrier);
+            expect(extractedContext._guid).to.equal(spanContext._guid);
+            expect(extractedContext.traceGUID()).to.equal(spanContext.traceGUID());
+            expect(extractedContext.getBaggageItem('footwear')).to.equal('sandals');
+            expect(extractedContext.getBaggageItem('creditcard')).to.equal('visa');
+        });
+
         it("should propagate binary carriers");
     });
 

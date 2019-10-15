@@ -13517,6 +13517,8 @@ var LS_META_SP_START = exports.LS_META_SP_START = 'lightstep.span_start';
 var LS_META_SP_FINISH = exports.LS_META_SP_FINISH = 'lightstep.span_finish';
 var LS_META_TRACER_CREATE = exports.LS_META_TRACER_CREATE = 'lightstep.tracer_create';
 
+var FORMAT_B3 = exports.FORMAT_B3 = 'format.b3';
+
 /***/ }),
 
 /***/ "./src/imp/auth_imp.js":
@@ -18987,6 +18989,11 @@ var SpanContextImp = function () {
                 f(key, val);
             });
         }
+    }, {
+        key: 'traceGUID',
+        value: function traceGUID() {
+            return '' + this._upperTraceGUID + this._traceGUID;
+        }
 
         // ---------------------------------------------------------------------- //
         // Private methods
@@ -18999,7 +19006,14 @@ var SpanContextImp = function () {
 
         this._baggage = {};
         this._guid = spanGUID;
+        // upperTraceGUID is the most significant 8 bytes of a B3/TraceContext
+        // 16 byte trace ID. Represented in base16.
+        this._upperTraceGUID = '0000000000000000';
         this._traceGUID = traceGUID;
+        if (this._traceGUID && this._traceGUID.length === 32) {
+            this._upperTraceGUID = traceGUID.substr(0, 16);
+            this._traceGUID = traceGUID.substr(16);
+        }
     }
 
     return SpanContextImp;
@@ -19426,6 +19440,10 @@ var _report_imp = __webpack_require__(/*! ./report_imp */ "./src/imp/report_imp.
 
 var _report_imp2 = _interopRequireDefault(_report_imp);
 
+var _constants = __webpack_require__(/*! ../constants */ "./src/constants.js");
+
+var _constants2 = _interopRequireDefault(_constants);
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -19447,6 +19465,8 @@ var constants = __webpack_require__(/*! ../constants */ "./src/constants.js");
 var globals = __webpack_require__(/*! ./globals */ "./src/imp/globals.js");
 var packageObject = __webpack_require__(/*! ../../package.json */ "./package.json");
 var util = __webpack_require__(/*! ./util/util */ "./src/imp/util/util.js");
+
+var CARRIER_B3_TRACER_STATE_PREFIX = 'x-b3-';
 
 var CARRIER_TRACER_STATE_PREFIX = 'ot-tracer-';
 var CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
@@ -19710,7 +19730,7 @@ var Tracer = function (_opentracing$Tracer) {
                 }
             }
 
-            var traceGUID = parentCtxImp ? parentCtxImp._traceGUID : this.generateTraceGUIDForRootSpan();
+            var traceGUID = parentCtxImp ? parentCtxImp.traceGUID() : this.generateTraceGUIDForRootSpan();
             var spanImp = new _span_imp2.default(this, name, new _span_context_imp2.default(this._platform.generateUUID(), traceGUID));
             spanImp.addTags(this._options.default_span_tags);
 
@@ -19760,9 +19780,12 @@ var Tracer = function (_opentracing$Tracer) {
                             tags: (_tags2 = {}, _defineProperty(_tags2, constants.LS_META_EVENT_KEY, true), _defineProperty(_tags2, constants.LS_META_TRACE_KEY, spanContext._traceGUID), _defineProperty(_tags2, constants.LS_META_SPAN_KEY, spanContext._guid), _defineProperty(_tags2, constants.LS_META_PROPAGATION_KEY, format), _tags2)
                         }).finish();
                     }
-                    this._injectToTextMap(spanContext, carrier);
+                    this._injectToTextMap(CARRIER_TRACER_STATE_PREFIX, spanContext, carrier);
                     break;
 
+                case _constants2.default:
+                    this._injectToTextMap(CARRIER_B3_TRACER_STATE_PREFIX, spanContext, carrier);
+                    break;
                 case this._opentracing.FORMAT_BINARY:
                     this._error('Unsupported format: ' + format);
                     break;
@@ -19774,7 +19797,7 @@ var Tracer = function (_opentracing$Tracer) {
         }
     }, {
         key: '_injectToTextMap',
-        value: function _injectToTextMap(spanContext, carrier) {
+        value: function _injectToTextMap(carrierPrefix, spanContext, carrier) {
             if (!carrier) {
                 this._error('Unexpected null FORMAT_TEXT_MAP carrier in call to inject');
                 return;
@@ -19784,12 +19807,18 @@ var Tracer = function (_opentracing$Tracer) {
                 return;
             }
 
-            carrier[CARRIER_TRACER_STATE_PREFIX + 'spanid'] = spanContext._guid;
-            carrier[CARRIER_TRACER_STATE_PREFIX + 'traceid'] = spanContext._traceGUID;
+            carrier[carrierPrefix + 'spanid'] = spanContext._guid;
+            if (carrierPrefix === CARRIER_B3_TRACER_STATE_PREFIX) {
+                // propagate full 128 bit trace ID
+                carrier[carrierPrefix + 'traceid'] = spanContext.traceGUID();
+            } else {
+                carrier[carrierPrefix + 'traceid'] = spanContext._traceGUID;
+            }
+            console.log(carrier);
             spanContext.forEachBaggageItem(function (key, value) {
                 carrier['' + CARRIER_BAGGAGE_PREFIX + key] = value;
             });
-            carrier[CARRIER_TRACER_STATE_PREFIX + 'sampled'] = 'true';
+            carrier[carrierPrefix + 'sampled'] = 'true';
             return carrier;
         }
     }, {
@@ -19799,50 +19828,53 @@ var Tracer = function (_opentracing$Tracer) {
             switch (format) {
                 case this._opentracing.FORMAT_HTTP_HEADERS:
                 case this._opentracing.FORMAT_TEXT_MAP:
-                    sc = this._extractTextMap(format, carrier);
-                    if (this.options().meta_event_reporting === true) {
-                        var _tags3;
-
-                        this.startSpan(constants.LS_META_EXTRACT, {
-                            tags: (_tags3 = {}, _defineProperty(_tags3, constants.LS_META_EVENT_KEY, true), _defineProperty(_tags3, constants.LS_META_TRACE_KEY, sc._traceGUID), _defineProperty(_tags3, constants.LS_META_SPAN_KEY, sc._guid), _defineProperty(_tags3, constants.LS_META_PROPAGATION_KEY, format), _tags3)
-                        }).finish();
-                    }
-                    return sc;
+                    sc = this._extractTextMap(CARRIER_TRACER_STATE_PREFIX, format, carrier);
+                    break;
+                case _constants2.default:
+                    sc = this._extractTextMap(CARRIER_B3_TRACER_STATE_PREFIX, format, carrier);
+                    break;
                 case this._opentracing.FORMAT_BINARY:
                     this._error('Unsupported format: ' + format);
                     return null;
-
                 default:
                     this._error('Unsupported format: ' + format);
                     return null;
             }
+            if (this.options().meta_event_reporting === true) {
+                var _tags3;
+
+                this.startSpan(constants.LS_META_EXTRACT, {
+                    tags: (_tags3 = {}, _defineProperty(_tags3, constants.LS_META_EVENT_KEY, true), _defineProperty(_tags3, constants.LS_META_TRACE_KEY, sc._traceGUID), _defineProperty(_tags3, constants.LS_META_SPAN_KEY, sc._guid), _defineProperty(_tags3, constants.LS_META_PROPAGATION_KEY, format), _tags3)
+                }).finish();
+            }
+            return sc;
         }
     }, {
         key: '_extractTextMap',
-        value: function _extractTextMap(format, carrier) {
+        value: function _extractTextMap(carrierPrefix, format, carrier) {
             var _this3 = this;
-
-            // Begin with the empty SpanContextImp
-            var spanContext = new _span_context_imp2.default(null, null);
 
             // Iterate over the contents of the carrier and set the properties
             // accordingly.
             var foundFields = 0;
+            var spanGUID = null;
+            var traceGUID = null;
+
             (0, _each3.default)(carrier, function (value, key) {
                 key = key.toLowerCase();
-                if (key.substr(0, CARRIER_TRACER_STATE_PREFIX.length) !== CARRIER_TRACER_STATE_PREFIX) {
+                if (key.substr(0, carrierPrefix.length) !== carrierPrefix) {
                     return;
                 }
-                var suffix = key.substr(CARRIER_TRACER_STATE_PREFIX.length);
+                var suffix = key.substr(carrierPrefix.length);
 
                 switch (suffix) {
                     case 'traceid':
                         foundFields++;
-                        spanContext._traceGUID = value;
+                        traceGUID = value;
                         break;
                     case 'spanid':
                         foundFields++;
-                        spanContext._guid = value;
+                        spanGUID = value;
                         break;
                     case 'sampled':
                         // Ignored. The carrier may be coming from a different client
@@ -19864,6 +19896,8 @@ var Tracer = function (_opentracing$Tracer) {
                 this._error('Only found a partial SpanContext: ' + format + ', ' + carrier);
                 return null;
             }
+
+            var spanContext = new _span_context_imp2.default(spanGUID, traceGUID);
 
             (0, _each3.default)(carrier, function (value, key) {
                 key = key.toLowerCase();

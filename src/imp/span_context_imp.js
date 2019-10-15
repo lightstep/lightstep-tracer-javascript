@@ -28,6 +28,10 @@ export default class SpanContextImp {
         });
     }
 
+    traceGUID() {
+        return `${this._upperTraceGUID}${this._traceGUID}`;
+    }
+
     // ---------------------------------------------------------------------- //
     // Private methods
     // ---------------------------------------------------------------------- //
@@ -35,6 +39,13 @@ export default class SpanContextImp {
     constructor(spanGUID, traceGUID) {
         this._baggage = {};
         this._guid        = spanGUID;
-        this._traceGUID   = traceGUID;
+        // upperTraceGUID is the most significant 8 bytes of a B3/TraceContext
+        // 16 byte trace ID. Represented in base16.
+        this._upperTraceGUID = '0000000000000000';
+        this._traceGUID = traceGUID;
+        if (this._traceGUID && this._traceGUID.length === 32) {
+            this._upperTraceGUID = traceGUID.substr(0, 16);
+            this._traceGUID = traceGUID.substr(16);
+        }
     }
 }
