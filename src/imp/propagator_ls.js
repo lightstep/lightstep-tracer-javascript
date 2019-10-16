@@ -13,7 +13,7 @@ export default class LightStepPropagator {
 
     inject(spanContext, carrier) {
         if (!carrier) {
-            this._tracer._error(`Unexpected null carrier in call to inject`);
+            this._tracer._error('Unexpected null carrier in call to inject');
             return;
         }
         if (typeof carrier !== 'object') {
@@ -70,7 +70,7 @@ export default class LightStepPropagator {
         }
         if (foundFields < 2) {
             // A partial SpanContext suggests some sort of data corruption.
-            this._tracer._error(`Only found a partial SpanContext: ${format}, ${carrier}`);
+            this._tracer._error(`Only found a partial SpanContext: ${carrier}`);
             return null;
         }
 

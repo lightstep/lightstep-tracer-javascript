@@ -18715,6 +18715,84 @@ module.exports = exports.default;
 
 /***/ }),
 
+/***/ "./src/imp/propagator_b3.js":
+/*!**********************************!*\
+  !*** ./src/imp/propagator_b3.js ***!
+  \**********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _propagator_ls = __webpack_require__(/*! ./propagator_ls */ "./src/imp/propagator_ls.js");
+
+var _propagator_ls2 = _interopRequireDefault(_propagator_ls);
+
+var _span_context_imp = __webpack_require__(/*! ./span_context_imp */ "./src/imp/span_context_imp.js");
+
+var _span_context_imp2 = _interopRequireDefault(_span_context_imp);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var CARRIER_B3_TRACER_STATE_PREFIX = 'x-b3-';
+
+var B3Propagator = function (_LightStepPropagator) {
+    _inherits(B3Propagator, _LightStepPropagator);
+
+    function B3Propagator(tracer) {
+        _classCallCheck(this, B3Propagator);
+
+        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(B3Propagator).call(this, tracer));
+
+        _this._carrierPrefix = CARRIER_B3_TRACER_STATE_PREFIX;
+        return _this;
+    }
+
+    _createClass(B3Propagator, [{
+        key: 'inject',
+        value: function inject(spanContext, carrier) {
+            var _this2 = this;
+
+            if (!carrier) {
+                this._tracer._error('Unexpected null carrier in call to inject');
+                return;
+            }
+            if (typeof carrier !== 'object') {
+                this._tracer._error('Unexpected \'' + typeof carrier + '\' FORMAT_TEXT_MAP carrier in call to inject');
+                return;
+            }
+
+            carrier[this._carrierPrefix + 'spanid'] = spanContext._guid;
+            carrier[this._carrierPrefix + 'traceid'] = spanContext.traceGUID();
+            carrier[this._carrierPrefix + 'sampled'] = 'true';
+            spanContext.forEachBaggageItem(function (key, value) {
+                carrier['' + _this2._baggagePrefix + key] = value;
+            });
+            return carrier;
+        }
+    }]);
+
+    return B3Propagator;
+}(_propagator_ls2.default);
+
+exports.default = B3Propagator;
+module.exports = exports.default;
+
+/***/ }),
+
 /***/ "./src/imp/propagator_ls.js":
 /*!**********************************!*\
   !*** ./src/imp/propagator_ls.js ***!
@@ -21213,12 +21291,22 @@ var _tracer_imp = __webpack_require__(/*! ./imp/tracer_imp */ "./src/imp/tracer_
 
 var _tracer_imp2 = _interopRequireDefault(_tracer_imp);
 
+var _propagator_ls = __webpack_require__(/*! ./imp/propagator_ls */ "./src/imp/propagator_ls.js");
+
+var _propagator_ls2 = _interopRequireDefault(_propagator_ls);
+
+var _propagator_b = __webpack_require__(/*! ./imp/propagator_b3 */ "./src/imp/propagator_b3.js");
+
+var _propagator_b2 = _interopRequireDefault(_propagator_b);
+
 var _platform_abstraction_layer = __webpack_require__(/*! ./platform_abstraction_layer */ "./src/platform_abstraction_layer.js");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var library = {
-    Tracer: _tracer_imp2.default
+    Tracer: _tracer_imp2.default,
+    LightStepPropagator: _propagator_ls2.default,
+    B3Propagator: _propagator_b2.default
 };
 
 _platform_abstraction_layer.Platform.initLibrary(library);

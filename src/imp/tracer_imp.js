@@ -12,7 +12,6 @@ import { Platform, ProtoTransport, ThriftTransport } from '../platform_abstracti
 import AuthImp from './auth_imp';
 import RuntimeImp from './runtime_imp';
 import ReportImp from './report_imp';
-import FORMAT_B3 from '../constants';
 import UnsupportedPropagator from './propagator';
 import LightStepPropagator from './propagator_ls';
 
@@ -23,9 +22,6 @@ const constants     = require('../constants');
 const globals       = require('./globals');
 const packageObject = require('../../package.json');
 const util          = require('./util/util');
-
-const CARRIER_TRACER_STATE_PREFIX = 'ot-tracer-';
-const CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
 
 const DEFAULT_COLLECTOR_HOSTNAME   = 'collector.lightstep.com';
 const DEFAULT_COLLECTOR_PORT_TLS   = 443;
@@ -92,7 +88,7 @@ export default class Tracer extends opentracing.Tracer {
         this._lastVisibleErrorMillis = 0;
         this._skippedVisibleErrors = 0;
 
-        this._propagators = {}
+        this._propagators = {};
         this._propagators[this._opentracing.FORMAT_HTTP_HEADERS] = new LightStepPropagator(this);
         this._propagators[this._opentracing.FORMAT_TEXT_MAP] = new LightStepPropagator(this);
         this._propagators[this._opentracing.FORMAT_BINARY] = new UnsupportedPropagator(this, this._opentracing.FORMAT_BINARY);
@@ -373,6 +369,7 @@ export default class Tracer extends opentracing.Tracer {
             break;
         case this._opentracing.FORMAT_BINARY:
             sc = this._propagators[this._opentracing.FORMAT_BINARY].extract(carrier);
+            break;
         default:
             this._error(`Unsupported format: ${format}`);
             return null;

@@ -1,5 +1,4 @@
-import  LightStepPropagator from './propagator_ls';
-import SpanContextImp from './span_context_imp';
+import LightStepPropagator from './propagator_ls';
 
 const CARRIER_B3_TRACER_STATE_PREFIX = 'x-b3-';
 
@@ -11,7 +10,7 @@ export default class B3Propagator extends LightStepPropagator {
 
     inject(spanContext, carrier) {
         if (!carrier) {
-            this._tracer._error(`Unexpected null carrier in call to inject`);
+            this._tracer._error('Unexpected null carrier in call to inject');
             return;
         }
         if (typeof carrier !== 'object') {
