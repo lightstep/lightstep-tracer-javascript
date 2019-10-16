@@ -13,6 +13,8 @@ import AuthImp from './auth_imp';
 import RuntimeImp from './runtime_imp';
 import ReportImp from './report_imp';
 import FORMAT_B3 from '../constants';
+import UnsupportedPropagator from './propagator';
+import LightStepPropagator from './propagator_ls';
 
 const ClockState    = require('./util/clock_state');
 const LogBuilder    = require('./log_builder');
@@ -21,8 +23,6 @@ const constants     = require('../constants');
 const globals       = require('./globals');
 const packageObject = require('../../package.json');
 const util          = require('./util/util');
-
-const CARRIER_B3_TRACER_STATE_PREFIX = 'x-b3-';
 
 const CARRIER_TRACER_STATE_PREFIX = 'ot-tracer-';
 const CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
@@ -83,6 +83,7 @@ export default class Tracer extends opentracing.Tracer {
             this._transport = opts.override_transport;
         }
 
+
         this._reportingLoopActive = false;
         this._first_report_has_run = false;
         this._reportYoungestMicros = now;
@@ -90,6 +91,11 @@ export default class Tracer extends opentracing.Tracer {
         this._reportErrorStreak = 0;    // Number of consecutive errors
         this._lastVisibleErrorMillis = 0;
         this._skippedVisibleErrors = 0;
+
+        this._propagators = {}
+        this._propagators[this._opentracing.FORMAT_HTTP_HEADERS] = new LightStepPropagator(this);
+        this._propagators[this._opentracing.FORMAT_TEXT_MAP] = new LightStepPropagator(this);
+        this._propagators[this._opentracing.FORMAT_BINARY] = new UnsupportedPropagator(this, this._opentracing.FORMAT_BINARY);
 
         // Set addActiveRootSpan() for detail
         this._activeRootSpanSet = {};
@@ -328,80 +334,50 @@ export default class Tracer extends opentracing.Tracer {
     }
 
     _inject(spanContext, format, carrier) {
+        if (this.options().meta_event_reporting === true) {
+            this.startSpan(constants.LS_META_INJECT,
+                {
+                    tags: {
+                        [constants.LS_META_EVENT_KEY]: true,
+                        [constants.LS_META_TRACE_KEY]: spanContext._traceGUID,
+                        [constants.LS_META_SPAN_KEY]: spanContext._guid,
+                        [constants.LS_META_PROPAGATION_KEY]: format,
+                    },
+                })
+                .finish();
+        }
         switch (format) {
         case this._opentracing.FORMAT_HTTP_HEADERS:
-        case this._opentracing.FORMAT_TEXT_MAP:
-            if (this.options().meta_event_reporting === true) {
-                this.startSpan(constants.LS_META_INJECT,
-                    {
-                        tags: {
-                            [constants.LS_META_EVENT_KEY]: true,
-                            [constants.LS_META_TRACE_KEY]: spanContext._traceGUID,
-                            [constants.LS_META_SPAN_KEY]: spanContext._guid,
-                            [constants.LS_META_PROPAGATION_KEY]: format,
-                        },
-                    })
-                .finish();
-            }
-            this._injectToTextMap(CARRIER_TRACER_STATE_PREFIX, spanContext, carrier);
+            this._propagators[this._opentracing.FORMAT_HTTP_HEADERS].inject(spanContext, carrier);
             break;
-
-        case FORMAT_B3:
-            this._injectToTextMap(CARRIER_B3_TRACER_STATE_PREFIX, spanContext, carrier);
+        case this._opentracing.FORMAT_TEXT_MAP:
+            this._propagators[this._opentracing.FORMAT_TEXT_MAP].inject(spanContext, carrier);
             break;
         case this._opentracing.FORMAT_BINARY:
-            this._error(`Unsupported format: ${format}`);
+            this._propagators[this._opentracing.FORMAT_BINARY].inject(spanContext, carrier);
             break;
-
         default:
             this._error(`Unknown format: ${format}`);
             break;
         }
     }
 
-    _injectToTextMap(carrierPrefix, spanContext, carrier) {
-        if (!carrier) {
-            this._error('Unexpected null FORMAT_TEXT_MAP carrier in call to inject');
-            return;
-        }
-        if (typeof carrier !== 'object') {
-            this._error(`Unexpected '${typeof carrier}' FORMAT_TEXT_MAP carrier in call to inject`);
-            return;
-        }
-
-        carrier[`${carrierPrefix}spanid`] = spanContext._guid;
-        if (carrierPrefix === CARRIER_B3_TRACER_STATE_PREFIX) {
-            // propagate full 128 bit trace ID
-            carrier[`${carrierPrefix}traceid`] = spanContext.traceGUID();
-        } else {
-            carrier[`${carrierPrefix}traceid`] = spanContext._traceGUID;
-        }
-        console.log(carrier);
-        spanContext.forEachBaggageItem((key, value) => {
-            carrier[`${CARRIER_BAGGAGE_PREFIX}${key}`] = value;
-        });
-        carrier[`${carrierPrefix}sampled`] = 'true';
-        return carrier;
-    }
-
     _extract(format, carrier) {
-        let sc;
+        let sc = null;
         switch (format) {
         case this._opentracing.FORMAT_HTTP_HEADERS:
-        case this._opentracing.FORMAT_TEXT_MAP:
-            sc = this._extractTextMap(CARRIER_TRACER_STATE_PREFIX, format, carrier);
+            sc = this._propagators[this._opentracing.FORMAT_HTTP_HEADERS].extract(carrier);
             break;
-        case FORMAT_B3:
-            sc = this._extractTextMap(CARRIER_B3_TRACER_STATE_PREFIX, format, carrier);
+        case this._opentracing.FORMAT_TEXT_MAP:
+            sc = this._propagators[this._opentracing.FORMAT_TEXT_MAP].extract(carrier);
             break;
         case this._opentracing.FORMAT_BINARY:
-            this._error(`Unsupported format: ${format}`);
-            return null;
+            sc = this._propagators[this._opentracing.FORMAT_BINARY].extract(carrier);
         default:
             this._error(`Unsupported format: ${format}`);
             return null;
         }
-        if (this.options().meta_event_reporting === true) {
+        if (this.options().meta_event_reporting === true && sc) {
             this.startSpan(constants.LS_META_EXTRACT,
                 {
                     tags: {
@@ -415,64 +391,6 @@ export default class Tracer extends opentracing.Tracer {
         }
         return sc;
     }
-
-    _extractTextMap(carrierPrefix, format, carrier) {
-        // Iterate over the contents of the carrier and set the properties
-        // accordingly.
-        let foundFields = 0;
-        let spanGUID = null;
-        let traceGUID = null;
-
-        _each(carrier, (value, key) => {
-            key = key.toLowerCase();
-            if (key.substr(0, carrierPrefix.length) !== carrierPrefix) {
-                return;
-            }
-            let suffix = key.substr(carrierPrefix.length);
-
-            switch (suffix) {
-            case 'traceid':
-                foundFields++;
-                traceGUID = value;
-                break;
-            case 'spanid':
-                foundFields++;
-                spanGUID = value;
-                break;
-            case 'sampled':
-                // Ignored. The carrier may be coming from a different client
-                // library that sends this (even though it's not used).
-                break;
-            default:
-                this._error(`Unrecognized carrier key '${key}' with recognized prefix. Ignoring.`);
-                break;
-            }
-        });
-
-        if (foundFields === 0) {
-            // This is not an error per se, there was simply no SpanContext
-            // in the carrier.
-            return null;
-        }
-        if (foundFields < 2) {
-            // A partial SpanContext suggests some sort of data corruption.
-            this._error(`Only found a partial SpanContext: ${format}, ${carrier}`);
-            return null;
-        }
-
-        let spanContext = new SpanContextImp(spanGUID, traceGUID);
-
-        _each(carrier, (value, key) => {
-            key = key.toLowerCase();
-            if (key.substr(0, CARRIER_BAGGAGE_PREFIX.length) !== CARRIER_BAGGAGE_PREFIX) {
-                return;
-            }
-            let suffix = key.substr(CARRIER_BAGGAGE_PREFIX.length);
-            spanContext.setBaggageItem(suffix, value);
-        });
-        return spanContext;
-    }
-
 
     // ---------------------------------------------------------------------- //
     // LightStep extensions
