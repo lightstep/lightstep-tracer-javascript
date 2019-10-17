@@ -18735,10 +18735,6 @@ var _propagator_ls = __webpack_require__(/*! ./propagator_ls */ "./src/imp/propa
 
 var _propagator_ls2 = _interopRequireDefault(_propagator_ls);
 
-var _span_context_imp = __webpack_require__(/*! ./span_context_imp */ "./src/imp/span_context_imp.js");
-
-var _span_context_imp2 = _interopRequireDefault(_span_context_imp);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -18899,7 +18895,7 @@ var LightStepPropagator = function () {
             }
             if (foundFields < 2) {
                 // A partial SpanContext suggests some sort of data corruption.
-                this._tracer._error('Only found a partial SpanContext: ' + format + ', ' + carrier);
+                this._tracer._error('Only found a partial SpanContext: ' + carrier);
                 return null;
             }
 
@@ -19697,10 +19693,6 @@ var _report_imp = __webpack_require__(/*! ./report_imp */ "./src/imp/report_imp.
 
 var _report_imp2 = _interopRequireDefault(_report_imp);
 
-var _constants = __webpack_require__(/*! ../constants */ "./src/constants.js");
-
-var _constants2 = _interopRequireDefault(_constants);
-
 var _propagator = __webpack_require__(/*! ./propagator */ "./src/imp/propagator.js");
 
 var _propagator2 = _interopRequireDefault(_propagator);
@@ -19730,9 +19722,6 @@ var constants = __webpack_require__(/*! ../constants */ "./src/constants.js");
 var globals = __webpack_require__(/*! ./globals */ "./src/imp/globals.js");
 var packageObject = __webpack_require__(/*! ../../package.json */ "./package.json");
 var util = __webpack_require__(/*! ./util/util */ "./src/imp/util/util.js");
-
-var CARRIER_TRACER_STATE_PREFIX = 'ot-tracer-';
-var CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
 
 var DEFAULT_COLLECTOR_HOSTNAME = 'collector.lightstep.com';
 var DEFAULT_COLLECTOR_PORT_TLS = 443;
@@ -19797,6 +19786,15 @@ var Tracer = function (_opentracing$Tracer) {
             _this._transport = opts.override_transport;
         }
 
+        _this._propagators = {};
+        _this._propagators[_this._opentracing.FORMAT_HTTP_HEADERS] = new _propagator_ls2.default(_this);
+        _this._propagators[_this._opentracing.FORMAT_TEXT_MAP] = new _propagator_ls2.default(_this);
+        _this._propagators[_this._opentracing.FORMAT_BINARY] = new _propagator2.default(_this, _this._opentracing.FORMAT_BINARY);
+
+        if (opts && opts.propagators) {
+            _this._propagators = Object.assign({}, _this._propagators, opts.propagators);
+        }
+
         _this._reportingLoopActive = false;
         _this._first_report_has_run = false;
         _this._reportYoungestMicros = now;
@@ -19804,11 +19802,6 @@ var Tracer = function (_opentracing$Tracer) {
         _this._reportErrorStreak = 0; // Number of consecutive errors
         _this._lastVisibleErrorMillis = 0;
         _this._skippedVisibleErrors = 0;
-
-        _this._propagators = {};
-        _this._propagators[_this._opentracing.FORMAT_HTTP_HEADERS] = new _propagator_ls2.default(_this);
-        _this._propagators[_this._opentracing.FORMAT_TEXT_MAP] = new _propagator_ls2.default(_this);
-        _this._propagators[_this._opentracing.FORMAT_BINARY] = new _propagator2.default(_this, _this._opentracing.FORMAT_BINARY);
 
         // Set addActiveRootSpan() for detail
         _this._activeRootSpanSet = {};
@@ -20073,6 +20066,7 @@ var Tracer = function (_opentracing$Tracer) {
                     break;
                 case this._opentracing.FORMAT_BINARY:
                     sc = this._propagators[this._opentracing.FORMAT_BINARY].extract(carrier);
+                    break;
                 default:
                     this._error('Unsupported format: ' + format);
                     return null;

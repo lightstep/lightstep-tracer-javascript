@@ -79,6 +79,16 @@ export default class Tracer extends opentracing.Tracer {
             this._transport = opts.override_transport;
         }
 
+        this._propagators = {};
+        this._propagators[this._opentracing.FORMAT_HTTP_HEADERS] = new LightStepPropagator(this);
+        this._propagators[this._opentracing.FORMAT_TEXT_MAP] = new LightStepPropagator(this);
+        this._propagators[this._opentracing.FORMAT_BINARY] = new UnsupportedPropagator(this,
+            this._opentracing.FORMAT_BINARY);
+
+        if (opts && opts.propagators) {
+            this._propagators = Object.assign({}, this._propagators, opts.propagators);
+        }
+
 
         this._reportingLoopActive = false;
         this._first_report_has_run = false;
@@ -88,10 +98,6 @@ export default class Tracer extends opentracing.Tracer {
         this._lastVisibleErrorMillis = 0;
         this._skippedVisibleErrors = 0;
 
-        this._propagators = {};
-        this._propagators[this._opentracing.FORMAT_HTTP_HEADERS] = new LightStepPropagator(this);
-        this._propagators[this._opentracing.FORMAT_TEXT_MAP] = new LightStepPropagator(this);
-        this._propagators[this._opentracing.FORMAT_BINARY] = new UnsupportedPropagator(this, this._opentracing.FORMAT_BINARY);
 
         // Set addActiveRootSpan() for detail
         this._activeRootSpanSet = {};
