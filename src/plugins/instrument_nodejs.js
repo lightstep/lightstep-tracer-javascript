@@ -55,7 +55,6 @@ class InstrumentNodejs {
         this._internalExclusions = [];
         this._tracer = null;
         this._handleOptions = this._handleOptions.bind(this);
-
         if (!this._enabled) {
             return;
         }
@@ -73,12 +72,14 @@ class InstrumentNodejs {
     }
 
     start(tracerImp) {
+        console.log('Here in start')
         if (!this._enabled) {
             return;
         }
         this._tracer = tracerImp;
 
         let currentOptions = tracerImp.options();
+        console.log('current options', currentOptions)
         this._addServiceHostToExclusions(currentOptions);
         this._handleOptions({}, currentOptions);
         tracerImp.on('options', this._handleOptions);
@@ -105,6 +106,7 @@ class InstrumentNodejs {
     _handleOptions(modified, current) {
         // Automatically add the service host itself to the list of exclusions
         // to avoid reporting on the reports themselves
+        console.log('Here in handle options')
         let serviceHost = modified.collector_host;
         if (serviceHost) {
             this._addServiceHostToExclusions(current);
@@ -112,6 +114,7 @@ class InstrumentNodejs {
 
         // Set up the proxied fetch calls unless disabled
         if (!this._proxyInited && current.nodejs_instrumentation) {
+            console.log("Here about to instrument nodejs")
             this._proxyInited = true;
             this._instrumentNodejs();
         }
@@ -159,35 +162,36 @@ class InstrumentNodejs {
         let tracer = this._tracer;
         function requestOverride(originalRequest, ...args) {
             // http.request has two overrides, taking url/string first, or options
-            // if url or string morph into an options object
-            // make it so that options and possible callback are the only args passed
+            // if url or string morph into an options object,
+            // make it so that options and possible callback are only args passed
+            let options;
             if (typeof args[0] === 'string' || args[0] instanceof URL) {
                 if (typeof args[0] === 'string') args[0] = new URL(args[0]);
-                const optionsFromUrl = urlToOptions(args[0]);
-                args[0] = optionsFromUrl;
+                options = urlToOptions(args[0]);
                 if (typeof args[1] === 'object') {
-                    args[0] = Object.assign(optionsFromUrl, args[1]);
+                    options = Object.assign({}, options, args[1]);
                     if (typeof args[2] === 'function') {
                         args[1] = args[2];
                         args.pop();
                     } else {
-                        // need to pop off args[1] if it's an options object because if http/https.request see two
-                        // options objects it'll complain with this error
-                        // TypeError [ERR_INVALID_ARG_TYPE]: The "listener" argument must be of type Function.
                         args.pop();
                     }
                 }
+            } else {
+                options = args[0];
             }
+            // After all the mutations above, args[1] can only be a function, or undefined
+            const callback = args[1];
 
             // check if there are headers stated, and if not create them on the first arg
             // then grab reference so that we can inject headers into the request before sending the request out
-            if (!args[0].headers) args[0].headers = {};
+            if (!options.headers) options.headers = {};
 
-            const headers = args[0].headers;
-            const method = args[0].method || 'GET';
-            const url = args[0].href || urlCreator.format(args[0]);
-            const protocol = args[0].protocol
-                ? args[0].protocol.replace(':', '')
+            const headers = options.headers;
+            const method = options.method || 'GET';
+            const url = options.href || urlCreator.format(options);
+            const protocol = options.protocol
+                ? options.protocol.replace(':', '')
                 : url.slice(0, url.indexOf(':'));
             if (!self._shouldTrace(tracer, url)) {
                 return originalRequest(...args);
@@ -218,8 +222,7 @@ class InstrumentNodejs {
                 keys.forEach(key => {
                     headers[key] = headersCarrier[key];
                 });
-                const request = originalRequest(...args);
-
+                const request = originalRequest(options, callback);
 
                 span.log({
                     event       : 'sending',
