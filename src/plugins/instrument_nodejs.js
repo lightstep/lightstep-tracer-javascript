@@ -165,23 +165,21 @@ class InstrumentNodejs {
             // if url or string morph into an options object,
             // make it so that options and possible callback are only args passed
             let options;
+            let callback;
+            let urlObject;
             if (typeof args[0] === 'string' || args[0] instanceof URL) {
-                if (typeof args[0] === 'string') args[0] = new URL(args[0]);
-                options = urlToOptions(args[0]);
+                urlObject = args[0] instanceof URL ? args[0] : new URL(args[0]);
+                options = urlToOptions(urlObject);
                 if (typeof args[1] === 'object') {
                     options = Object.assign({}, options, args[1]);
-                    if (typeof args[2] === 'function') {
-                        args[1] = args[2];
-                        args.pop();
-                    } else {
-                        args.pop();
-                    }
+                    callback = args[2];
+                } else if (typeof args[1] === 'function') {
+                    callback = args[1];
                 }
             } else {
                 options = args[0];
+                callback = args[1];
             }
-            // After all the mutations above, args[1] can only be a function, or undefined
-            const callback = args[1];
 
             // check if there are headers stated, and if not create them on the first arg
             // then grab reference so that we can inject headers into the request before sending the request out
