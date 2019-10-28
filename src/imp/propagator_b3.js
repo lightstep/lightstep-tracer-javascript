@@ -20,7 +20,11 @@ export default class B3Propagator extends LightStepPropagator {
 
         carrier[`${this._carrierPrefix}spanid`] = spanContext._guid;
         carrier[`${this._carrierPrefix}traceid`] = spanContext.traceGUID();
-        carrier[`${this._carrierPrefix}sampled`] = 'true';
+        if (spanContext._sampled) {
+            carrier[`${this._carrierPrefix}sampled`] = '1';
+        } else {
+            carrier[`${this._carrierPrefix}sampled`] = '0';
+        }
         spanContext.forEachBaggageItem((key, value) => {
             carrier[`${this._baggagePrefix}${key}`] = value;
         });

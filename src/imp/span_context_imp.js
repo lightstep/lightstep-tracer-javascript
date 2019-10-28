@@ -28,6 +28,7 @@ export default class SpanContextImp {
         });
     }
 
+    // traceGUID returns a 128 bit trace ID.
     traceGUID() {
         return `${this._upperTraceGUID}${this._traceGUID}`;
     }
@@ -36,9 +37,10 @@ export default class SpanContextImp {
     // Private methods
     // ---------------------------------------------------------------------- //
 
-    constructor(spanGUID, traceGUID) {
+    constructor(spanGUID, traceGUID, sampled) {
         this._baggage = {};
-        this._guid        = spanGUID;
+        this._guid = spanGUID;
+        this._sampled = sampled || true;
         // upperTraceGUID is the most significant 8 bytes of a B3/TraceContext
         // 16 byte trace ID. Represented in base16.
         this._upperTraceGUID = '0000000000000000';

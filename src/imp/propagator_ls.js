@@ -36,6 +36,7 @@ export default class LightStepPropagator {
         let foundFields = 0;
         let spanGUID = null;
         let traceGUID = null;
+        let sampled = true;
 
         _each(carrier, (value, key) => {
             key = key.toLowerCase();
@@ -54,8 +55,17 @@ export default class LightStepPropagator {
                 spanGUID = value;
                 break;
             case 'sampled':
-                // Ignored. The carrier may be coming from a different client
-                // library that sends this (even though it's not used).
+                switch (value) {
+                case 0:
+                case '0':
+                case false:
+                case 'false':
+                    sampled = false;
+                    break;
+                default:
+                    sampled = true;
+                    break;
+                }
                 break;
             default:
                 this._tracer._error(`Unrecognized carrier key '${key}' with recognized prefix. Ignoring.`);
@@ -75,6 +85,7 @@ export default class LightStepPropagator {
         }
 
         let spanContext = new SpanContextImp(spanGUID, traceGUID);
+        spanContext._sampled = sampled;
 
         _each(carrier, (value, key) => {
             key = key.toLowerCase();

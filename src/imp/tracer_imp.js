@@ -294,7 +294,8 @@ export default class Tracer extends opentracing.Tracer {
         }
 
         let traceGUID = parentCtxImp ? parentCtxImp.traceGUID() : this.generateTraceGUIDForRootSpan();
-        let spanImp = new SpanImp(this, name, new SpanContextImp(this._platform.generateUUID(), traceGUID));
+        let sampled = parentCtxImp ? parentCtxImp._sampled : true;
+        let spanImp = new SpanImp(this, name, new SpanContextImp(this._platform.generateUUID(), traceGUID, sampled));
         spanImp.addTags(this._options.default_span_tags);
 
         _each(fields, (value, key) => {

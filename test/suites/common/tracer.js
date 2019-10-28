@@ -114,10 +114,10 @@ describe("Tracer", function() {
         });
 
         it("should propagate B3 format", function() {
-            console.log(lightstep);
             Tracer._propagators[Tracer._opentracing.FORMAT_HTTP_HEADERS] = new lightstep.B3Propagator(Tracer);
             var span = Tracer.startSpan('my_span');
             var spanContext = span.context();
+            spanContext._sampled = false;
 
             spanContext.setBaggageItem('footwear', 'sandals');
             spanContext.setBaggageItem('creditcard', 'visa');
@@ -127,6 +127,7 @@ describe("Tracer", function() {
             expect(carrier['x-b3-traceid'].length).to.equal(32)
             expect(carrier['x-b3-traceid'].substr(16)).to.equal(spanContext._traceGUID);
             expect(carrier['x-b3-spanid']).to.equal(spanContext._guid);
+            expect(carrier['x-b3-sampled']).to.equal('0');
 
             expect(carrier['ot-baggage-footwear']).to.equal('sandals');
             expect(carrier['ot-baggage-creditcard']).to.equal('visa');
@@ -134,6 +135,7 @@ describe("Tracer", function() {
             var extractedContext = Tracer.extract(opentracing.FORMAT_HTTP_HEADERS, carrier);
             expect(extractedContext._guid).to.equal(spanContext._guid);
             expect(extractedContext.traceGUID()).to.equal(spanContext.traceGUID());
+            expect(extractedContext._sampled).to.equal(spanContext._sampled);
             expect(extractedContext.getBaggageItem('footwear')).to.equal('sandals');
             expect(extractedContext.getBaggageItem('creditcard')).to.equal('visa');
         });

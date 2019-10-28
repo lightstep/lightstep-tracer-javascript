@@ -18773,7 +18773,11 @@ var B3Propagator = function (_LightStepPropagator) {
 
             carrier[this._carrierPrefix + 'spanid'] = spanContext._guid;
             carrier[this._carrierPrefix + 'traceid'] = spanContext.traceGUID();
-            carrier[this._carrierPrefix + 'sampled'] = 'true';
+            if (spanContext._sampled) {
+                carrier[this._carrierPrefix + 'sampled'] = '1';
+            } else {
+                carrier[this._carrierPrefix + 'sampled'] = '0';
+            }
             spanContext.forEachBaggageItem(function (key, value) {
                 carrier['' + _this2._baggagePrefix + key] = value;
             });
@@ -18861,6 +18865,7 @@ var LightStepPropagator = function () {
             var foundFields = 0;
             var spanGUID = null;
             var traceGUID = null;
+            var sampled = true;
 
             (0, _each3.default)(carrier, function (value, key) {
                 key = key.toLowerCase();
@@ -18879,8 +18884,17 @@ var LightStepPropagator = function () {
                         spanGUID = value;
                         break;
                     case 'sampled':
-                        // Ignored. The carrier may be coming from a different client
-                        // library that sends this (even though it's not used).
+                        switch (value) {
+                            case 0:
+                            case '0':
+                            case false:
+                            case 'false':
+                                sampled = false;
+                                break;
+                            default:
+                                sampled = true;
+                                break;
+                        }
                         break;
                     default:
                         _this2._tracer._error('Unrecognized carrier key \'' + key + '\' with recognized prefix. Ignoring.');
@@ -18900,6 +18914,7 @@ var LightStepPropagator = function () {
             }
 
             var spanContext = new _span_context_imp2.default(spanGUID, traceGUID);
+            spanContext._sampled = sampled;
 
             (0, _each3.default)(carrier, function (value, key) {
                 key = key.toLowerCase();
@@ -19242,6 +19257,9 @@ var SpanContextImp = function () {
                 f(key, val);
             });
         }
+
+        // traceGUID returns a 128 bit trace ID.
+
     }, {
         key: 'traceGUID',
         value: function traceGUID() {
@@ -19254,11 +19272,12 @@ var SpanContextImp = function () {
 
     }]);
 
-    function SpanContextImp(spanGUID, traceGUID) {
+    function SpanContextImp(spanGUID, traceGUID, sampled) {
         _classCallCheck(this, SpanContextImp);
 
         this._baggage = {};
         this._guid = spanGUID;
+        this._sampled = sampled || true;
         // upperTraceGUID is the most significant 8 bytes of a B3/TraceContext
         // 16 byte trace ID. Represented in base16.
         this._upperTraceGUID = '0000000000000000';
@@ -19992,7 +20011,8 @@ var Tracer = function (_opentracing$Tracer) {
             }
 
             var traceGUID = parentCtxImp ? parentCtxImp.traceGUID() : this.generateTraceGUIDForRootSpan();
-            var spanImp = new _span_imp2.default(this, name, new _span_context_imp2.default(this._platform.generateUUID(), traceGUID));
+            var sampled = parentCtxImp ? parentCtxImp._sampled : true;
+            var spanImp = new _span_imp2.default(this, name, new _span_context_imp2.default(this._platform.generateUUID(), traceGUID, sampled));
             spanImp.addTags(this._options.default_span_tags);
 
             (0, _each3.default)(fields, function (value, key) {
