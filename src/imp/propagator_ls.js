@@ -84,8 +84,7 @@ export default class LightStepPropagator {
             return null;
         }
 
-        let spanContext = new SpanContextImp(spanGUID, traceGUID);
-        spanContext._sampled = sampled;
+        let spanContext = new SpanContextImp(spanGUID, traceGUID, sampled);
 
         _each(carrier, (value, key) => {
             key = key.toLowerCase();

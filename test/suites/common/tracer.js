@@ -33,6 +33,18 @@ describe("Tracer", function() {
             span.finish();
         });
 
+        it('propagates sampled flag correctly', function() {
+            var parent = Tracer.startSpan('test1');
+            var parentContext = parent.context();
+            parentContext._sampled = false;
+
+            var span = Tracer.startSpan('test2', {childOf : parentContext });
+            var childContext = span.context()
+            expect(childContext._sampled).to.equal(false);
+
+            span.finish();
+        });
+
         it('supports startTime', function() {
             var now = Date.now() - 5000;
             var span = Tracer.startSpan('test2', { startTime : now });
@@ -107,7 +119,6 @@ describe("Tracer", function() {
             expect(carrier['ot-baggage-creditcard']).to.equal('visa');
 
             var extractedContext = Tracer.extract(opentracing.FORMAT_HTTP_HEADERS, carrier);
-            console.log(extractedContext);
             expect(extractedContext._guid).to.equal(spanContext._guid);
             expect(extractedContext.getBaggageItem('footwear')).to.equal('sandals');
             expect(extractedContext.getBaggageItem('creditcard')).to.equal('visa');
@@ -138,6 +149,10 @@ describe("Tracer", function() {
             expect(extractedContext._sampled).to.equal(spanContext._sampled);
             expect(extractedContext.getBaggageItem('footwear')).to.equal('sandals');
             expect(extractedContext.getBaggageItem('creditcard')).to.equal('visa');
+
+            var span2 = Tracer.startSpan('my_child', { childOf: extractedContext});
+            expect(span2.context()._sampled).to.equal(false);
+
         });
 
         it("should propagate binary carriers");

@@ -40,7 +40,11 @@ export default class SpanContextImp {
     constructor(spanGUID, traceGUID, sampled) {
         this._baggage = {};
         this._guid = spanGUID;
-        this._sampled = sampled || true;
+        this._sampled = true;
+        // Ignore undefined or null when determining truthiness.
+        if (sampled === false) {
+            this._sampled = sampled;
+        }
         // upperTraceGUID is the most significant 8 bytes of a B3/TraceContext
         // 16 byte trace ID. Represented in base16.
         this._upperTraceGUID = '0000000000000000';
