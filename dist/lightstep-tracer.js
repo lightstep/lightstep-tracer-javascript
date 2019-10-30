@@ -13517,6 +13517,8 @@ var LS_META_SP_START = exports.LS_META_SP_START = 'lightstep.span_start';
 var LS_META_SP_FINISH = exports.LS_META_SP_FINISH = 'lightstep.span_finish';
 var LS_META_TRACER_CREATE = exports.LS_META_TRACER_CREATE = 'lightstep.tracer_create';
 
+var FORMAT_B3 = exports.FORMAT_B3 = 'format.b3';
+
 /***/ }),
 
 /***/ "./src/imp/auth_imp.js":
@@ -18666,6 +18668,273 @@ module.exports = {
 
 /***/ }),
 
+/***/ "./src/imp/propagator.js":
+/*!*******************************!*\
+  !*** ./src/imp/propagator.js ***!
+  \*******************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var UnsupportedPropagator = function () {
+    function UnsupportedPropagator(tracer, name) {
+        _classCallCheck(this, UnsupportedPropagator);
+
+        this._tracer = tracer;
+        this._name = name;
+    }
+
+    _createClass(UnsupportedPropagator, [{
+        key: "inject",
+        value: function inject(spanContext, carrier) {
+            this._tracer._error("Unsupported format: " + this._name);
+            return null;
+        }
+    }, {
+        key: "extract",
+        value: function extract(carrier) {
+            this._tracer._error("Unsupported format: " + this._name);
+        }
+    }]);
+
+    return UnsupportedPropagator;
+}();
+
+exports.default = UnsupportedPropagator;
+module.exports = exports.default;
+
+/***/ }),
+
+/***/ "./src/imp/propagator_b3.js":
+/*!**********************************!*\
+  !*** ./src/imp/propagator_b3.js ***!
+  \**********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _propagator_ls = __webpack_require__(/*! ./propagator_ls */ "./src/imp/propagator_ls.js");
+
+var _propagator_ls2 = _interopRequireDefault(_propagator_ls);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var CARRIER_B3_TRACER_STATE_PREFIX = 'x-b3-';
+
+var B3Propagator = function (_LightStepPropagator) {
+    _inherits(B3Propagator, _LightStepPropagator);
+
+    function B3Propagator(tracer) {
+        _classCallCheck(this, B3Propagator);
+
+        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(B3Propagator).call(this, tracer));
+
+        _this._carrierPrefix = CARRIER_B3_TRACER_STATE_PREFIX;
+        return _this;
+    }
+
+    _createClass(B3Propagator, [{
+        key: 'inject',
+        value: function inject(spanContext, carrier) {
+            var _this2 = this;
+
+            if (!carrier) {
+                this._tracer._error('Unexpected null carrier in call to inject');
+                return;
+            }
+            if (typeof carrier !== 'object') {
+                this._tracer._error('Unexpected \'' + typeof carrier + '\' FORMAT_TEXT_MAP carrier in call to inject');
+                return;
+            }
+
+            carrier[this._carrierPrefix + 'spanid'] = spanContext._guid;
+            carrier[this._carrierPrefix + 'traceid'] = spanContext.traceGUID();
+            if (spanContext._sampled) {
+                carrier[this._carrierPrefix + 'sampled'] = '1';
+            } else {
+                carrier[this._carrierPrefix + 'sampled'] = '0';
+            }
+            spanContext.forEachBaggageItem(function (key, value) {
+                carrier['' + _this2._baggagePrefix + key] = value;
+            });
+            return carrier;
+        }
+    }]);
+
+    return B3Propagator;
+}(_propagator_ls2.default);
+
+exports.default = B3Propagator;
+module.exports = exports.default;
+
+/***/ }),
+
+/***/ "./src/imp/propagator_ls.js":
+/*!**********************************!*\
+  !*** ./src/imp/propagator_ls.js ***!
+  \**********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _each2 = __webpack_require__(/*! ../_each */ "./src/_each.js");
+
+var _each3 = _interopRequireDefault(_each2);
+
+var _span_context_imp = __webpack_require__(/*! ./span_context_imp */ "./src/imp/span_context_imp.js");
+
+var _span_context_imp2 = _interopRequireDefault(_span_context_imp);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var CARRIER_TRACER_STATE_PREFIX = 'ot-tracer-';
+var CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
+
+var LightStepPropagator = function () {
+    function LightStepPropagator(tracer) {
+        _classCallCheck(this, LightStepPropagator);
+
+        this._tracer = tracer;
+        this._carrierPrefix = CARRIER_TRACER_STATE_PREFIX;
+        this._baggagePrefix = CARRIER_BAGGAGE_PREFIX;
+    }
+
+    _createClass(LightStepPropagator, [{
+        key: 'inject',
+        value: function inject(spanContext, carrier) {
+            var _this = this;
+
+            if (!carrier) {
+                this._tracer._error('Unexpected null carrier in call to inject');
+                return;
+            }
+            if (typeof carrier !== 'object') {
+                this._tracer._error('Unexpected \'' + typeof carrier + '\' FORMAT_TEXT_MAP carrier in call to inject');
+                return;
+            }
+
+            carrier[this._carrierPrefix + 'spanid'] = spanContext._guid;
+            carrier[this._carrierPrefix + 'traceid'] = spanContext._traceGUID;
+            carrier[this._carrierPrefix + 'sampled'] = 'true';
+            spanContext.forEachBaggageItem(function (key, value) {
+                carrier['' + _this._baggagePrefix + key] = value;
+            });
+            return carrier;
+        }
+    }, {
+        key: 'extract',
+        value: function extract(carrier) {
+            var _this2 = this;
+
+            // Iterate over the contents of the carrier and set the properties
+            // accordingly.
+            var foundFields = 0;
+            var spanGUID = null;
+            var traceGUID = null;
+            var sampled = true;
+
+            (0, _each3.default)(carrier, function (value, key) {
+                key = key.toLowerCase();
+                if (key.substr(0, _this2._carrierPrefix.length) !== _this2._carrierPrefix) {
+                    return;
+                }
+                var suffix = key.substr(_this2._carrierPrefix.length);
+
+                switch (suffix) {
+                    case 'traceid':
+                        foundFields++;
+                        traceGUID = value;
+                        break;
+                    case 'spanid':
+                        foundFields++;
+                        spanGUID = value;
+                        break;
+                    case 'sampled':
+                        switch (value) {
+                            case 0:
+                            case '0':
+                            case false:
+                            case 'false':
+                                sampled = false;
+                                break;
+                            default:
+                                sampled = true;
+                                break;
+                        }
+                        break;
+                    default:
+                        _this2._tracer._error('Unrecognized carrier key \'' + key + '\' with recognized prefix. Ignoring.');
+                        break;
+                }
+            });
+
+            if (foundFields === 0) {
+                // This is not an error per se, there was simply no SpanContext
+                // in the carrier.
+                return null;
+            }
+            if (foundFields < 2) {
+                // A partial SpanContext suggests some sort of data corruption.
+                this._tracer._error('Only found a partial SpanContext: ' + carrier);
+                return null;
+            }
+
+            var spanContext = new _span_context_imp2.default(spanGUID, traceGUID, sampled);
+
+            (0, _each3.default)(carrier, function (value, key) {
+                key = key.toLowerCase();
+                if (key.substr(0, _this2._baggagePrefix.length) !== _this2._baggagePrefix) {
+                    return;
+                }
+                var suffix = key.substr(_this2._baggagePrefix.length);
+                spanContext.setBaggageItem(suffix, value);
+            });
+            return spanContext;
+        }
+    }]);
+
+    return LightStepPropagator;
+}();
+
+exports.default = LightStepPropagator;
+module.exports = exports.default;
+
+/***/ }),
+
 /***/ "./src/imp/report_imp.js":
 /*!*******************************!*\
   !*** ./src/imp/report_imp.js ***!
@@ -18988,18 +19257,38 @@ var SpanContextImp = function () {
             });
         }
 
+        // traceGUID returns a 128 bit trace ID.
+
+    }, {
+        key: 'traceGUID',
+        value: function traceGUID() {
+            return '' + this._upperTraceGUID + this._traceGUID;
+        }
+
         // ---------------------------------------------------------------------- //
         // Private methods
         // ---------------------------------------------------------------------- //
 
     }]);
 
-    function SpanContextImp(spanGUID, traceGUID) {
+    function SpanContextImp(spanGUID, traceGUID, sampled) {
         _classCallCheck(this, SpanContextImp);
 
         this._baggage = {};
         this._guid = spanGUID;
+        this._sampled = true;
+        // Ignore undefined or null when determining truthiness.
+        if (sampled === false) {
+            this._sampled = sampled;
+        }
+        // upperTraceGUID is the most significant 8 bytes of a B3/TraceContext
+        // 16 byte trace ID. Represented in base16.
+        this._upperTraceGUID = '0000000000000000';
         this._traceGUID = traceGUID;
+        if (this._traceGUID && this._traceGUID.length === 32) {
+            this._upperTraceGUID = traceGUID.substr(0, 16);
+            this._traceGUID = traceGUID.substr(16);
+        }
     }
 
     return SpanContextImp;
@@ -19426,6 +19715,14 @@ var _report_imp = __webpack_require__(/*! ./report_imp */ "./src/imp/report_imp.
 
 var _report_imp2 = _interopRequireDefault(_report_imp);
 
+var _propagator = __webpack_require__(/*! ./propagator */ "./src/imp/propagator.js");
+
+var _propagator2 = _interopRequireDefault(_propagator);
+
+var _propagator_ls = __webpack_require__(/*! ./propagator_ls */ "./src/imp/propagator_ls.js");
+
+var _propagator_ls2 = _interopRequireDefault(_propagator_ls);
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -19447,9 +19744,6 @@ var constants = __webpack_require__(/*! ../constants */ "./src/constants.js");
 var globals = __webpack_require__(/*! ./globals */ "./src/imp/globals.js");
 var packageObject = __webpack_require__(/*! ../../package.json */ "./package.json");
 var util = __webpack_require__(/*! ./util/util */ "./src/imp/util/util.js");
-
-var CARRIER_TRACER_STATE_PREFIX = 'ot-tracer-';
-var CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
 
 var DEFAULT_COLLECTOR_HOSTNAME = 'collector.lightstep.com';
 var DEFAULT_COLLECTOR_PORT_TLS = 443;
@@ -19512,6 +19806,15 @@ var Tracer = function (_opentracing$Tracer) {
 
         if (opts) {
             _this._transport = opts.override_transport;
+        }
+
+        _this._propagators = {};
+        _this._propagators[_this._opentracing.FORMAT_HTTP_HEADERS] = new _propagator_ls2.default(_this);
+        _this._propagators[_this._opentracing.FORMAT_TEXT_MAP] = new _propagator_ls2.default(_this);
+        _this._propagators[_this._opentracing.FORMAT_BINARY] = new _propagator2.default(_this, _this._opentracing.FORMAT_BINARY);
+
+        if (opts && opts.propagators) {
+            _this._propagators = Object.assign({}, _this._propagators, opts.propagators);
         }
 
         _this._reportingLoopActive = false;
@@ -19710,8 +20013,9 @@ var Tracer = function (_opentracing$Tracer) {
                 }
             }
 
-            var traceGUID = parentCtxImp ? parentCtxImp._traceGUID : this.generateTraceGUIDForRootSpan();
-            var spanImp = new _span_imp2.default(this, name, new _span_context_imp2.default(this._platform.generateUUID(), traceGUID));
+            var traceGUID = parentCtxImp ? parentCtxImp.traceGUID() : this.generateTraceGUIDForRootSpan();
+            var sampled = parentCtxImp ? parentCtxImp._sampled : true;
+            var spanImp = new _span_imp2.default(this, name, new _span_context_imp2.default(this._platform.generateUUID(), traceGUID, sampled));
             spanImp.addTags(this._options.default_span_tags);
 
             (0, _each3.default)(fields, function (value, key) {
@@ -19750,130 +20054,54 @@ var Tracer = function (_opentracing$Tracer) {
     }, {
         key: '_inject',
         value: function _inject(spanContext, format, carrier) {
+            if (this.options().meta_event_reporting === true) {
+                var _tags2;
+
+                this.startSpan(constants.LS_META_INJECT, {
+                    tags: (_tags2 = {}, _defineProperty(_tags2, constants.LS_META_EVENT_KEY, true), _defineProperty(_tags2, constants.LS_META_TRACE_KEY, spanContext._traceGUID), _defineProperty(_tags2, constants.LS_META_SPAN_KEY, spanContext._guid), _defineProperty(_tags2, constants.LS_META_PROPAGATION_KEY, format), _tags2)
+                }).finish();
+            }
             switch (format) {
                 case this._opentracing.FORMAT_HTTP_HEADERS:
+                    this._propagators[this._opentracing.FORMAT_HTTP_HEADERS].inject(spanContext, carrier);
+                    break;
                 case this._opentracing.FORMAT_TEXT_MAP:
-                    if (this.options().meta_event_reporting === true) {
-                        var _tags2;
-
-                        this.startSpan(constants.LS_META_INJECT, {
-                            tags: (_tags2 = {}, _defineProperty(_tags2, constants.LS_META_EVENT_KEY, true), _defineProperty(_tags2, constants.LS_META_TRACE_KEY, spanContext._traceGUID), _defineProperty(_tags2, constants.LS_META_SPAN_KEY, spanContext._guid), _defineProperty(_tags2, constants.LS_META_PROPAGATION_KEY, format), _tags2)
-                        }).finish();
-                    }
-                    this._injectToTextMap(spanContext, carrier);
+                    this._propagators[this._opentracing.FORMAT_TEXT_MAP].inject(spanContext, carrier);
                     break;
-
                 case this._opentracing.FORMAT_BINARY:
-                    this._error('Unsupported format: ' + format);
+                    this._propagators[this._opentracing.FORMAT_BINARY].inject(spanContext, carrier);
                     break;
-
                 default:
                     this._error('Unknown format: ' + format);
                     break;
             }
         }
     }, {
-        key: '_injectToTextMap',
-        value: function _injectToTextMap(spanContext, carrier) {
-            if (!carrier) {
-                this._error('Unexpected null FORMAT_TEXT_MAP carrier in call to inject');
-                return;
-            }
-            if (typeof carrier !== 'object') {
-                this._error('Unexpected \'' + typeof carrier + '\' FORMAT_TEXT_MAP carrier in call to inject');
-                return;
-            }
-
-            carrier[CARRIER_TRACER_STATE_PREFIX + 'spanid'] = spanContext._guid;
-            carrier[CARRIER_TRACER_STATE_PREFIX + 'traceid'] = spanContext._traceGUID;
-            spanContext.forEachBaggageItem(function (key, value) {
-                carrier['' + CARRIER_BAGGAGE_PREFIX + key] = value;
-            });
-            carrier[CARRIER_TRACER_STATE_PREFIX + 'sampled'] = 'true';
-            return carrier;
-        }
-    }, {
         key: '_extract',
         value: function _extract(format, carrier) {
-            var sc = void 0;
+            var sc = null;
             switch (format) {
                 case this._opentracing.FORMAT_HTTP_HEADERS:
+                    sc = this._propagators[this._opentracing.FORMAT_HTTP_HEADERS].extract(carrier);
+                    break;
                 case this._opentracing.FORMAT_TEXT_MAP:
-                    sc = this._extractTextMap(format, carrier);
-                    if (this.options().meta_event_reporting === true) {
-                        var _tags3;
-
-                        this.startSpan(constants.LS_META_EXTRACT, {
-                            tags: (_tags3 = {}, _defineProperty(_tags3, constants.LS_META_EVENT_KEY, true), _defineProperty(_tags3, constants.LS_META_TRACE_KEY, sc._traceGUID), _defineProperty(_tags3, constants.LS_META_SPAN_KEY, sc._guid), _defineProperty(_tags3, constants.LS_META_PROPAGATION_KEY, format), _tags3)
-                        }).finish();
-                    }
-                    return sc;
+                    sc = this._propagators[this._opentracing.FORMAT_TEXT_MAP].extract(carrier);
+                    break;
                 case this._opentracing.FORMAT_BINARY:
-                    this._error('Unsupported format: ' + format);
-                    return null;
-
+                    sc = this._propagators[this._opentracing.FORMAT_BINARY].extract(carrier);
+                    break;
                 default:
                     this._error('Unsupported format: ' + format);
                     return null;
             }
-        }
-    }, {
-        key: '_extractTextMap',
-        value: function _extractTextMap(format, carrier) {
-            var _this3 = this;
+            if (this.options().meta_event_reporting === true && sc) {
+                var _tags3;
 
-            // Begin with the empty SpanContextImp
-            var spanContext = new _span_context_imp2.default(null, null);
-
-            // Iterate over the contents of the carrier and set the properties
-            // accordingly.
-            var foundFields = 0;
-            (0, _each3.default)(carrier, function (value, key) {
-                key = key.toLowerCase();
-                if (key.substr(0, CARRIER_TRACER_STATE_PREFIX.length) !== CARRIER_TRACER_STATE_PREFIX) {
-                    return;
-                }
-                var suffix = key.substr(CARRIER_TRACER_STATE_PREFIX.length);
-
-                switch (suffix) {
-                    case 'traceid':
-                        foundFields++;
-                        spanContext._traceGUID = value;
-                        break;
-                    case 'spanid':
-                        foundFields++;
-                        spanContext._guid = value;
-                        break;
-                    case 'sampled':
-                        // Ignored. The carrier may be coming from a different client
-                        // library that sends this (even though it's not used).
-                        break;
-                    default:
-                        _this3._error('Unrecognized carrier key \'' + key + '\' with recognized prefix. Ignoring.');
-                        break;
-                }
-            });
-
-            if (foundFields === 0) {
-                // This is not an error per se, there was simply no SpanContext
-                // in the carrier.
-                return null;
+                this.startSpan(constants.LS_META_EXTRACT, {
+                    tags: (_tags3 = {}, _defineProperty(_tags3, constants.LS_META_EVENT_KEY, true), _defineProperty(_tags3, constants.LS_META_TRACE_KEY, sc._traceGUID), _defineProperty(_tags3, constants.LS_META_SPAN_KEY, sc._guid), _defineProperty(_tags3, constants.LS_META_PROPAGATION_KEY, format), _tags3)
+                }).finish();
             }
-            if (foundFields < 2) {
-                // A partial SpanContext suggests some sort of data corruption.
-                this._error('Only found a partial SpanContext: ' + format + ', ' + carrier);
-                return null;
-            }
-
-            (0, _each3.default)(carrier, function (value, key) {
-                key = key.toLowerCase();
-                if (key.substr(0, CARRIER_BAGGAGE_PREFIX.length) !== CARRIER_BAGGAGE_PREFIX) {
-                    return;
-                }
-                var suffix = key.substr(CARRIER_BAGGAGE_PREFIX.length);
-                spanContext.setBaggageItem(suffix, value);
-            });
-            return spanContext;
+            return sc;
         }
 
         // ---------------------------------------------------------------------- //
@@ -19951,7 +20179,7 @@ var Tracer = function (_opentracing$Tracer) {
     }, {
         key: 'options',
         value: function options(opts) {
-            var _this4 = this;
+            var _this3 = this;
 
             if (arguments.length === 0) {
                 console.assert(typeof this._options === 'object', // eslint-disable-line
@@ -19978,7 +20206,7 @@ var Tracer = function (_opentracing$Tracer) {
             var modified = {};
             var unchanged = {};
             (0, _each3.default)(this._optionDescs, function (desc) {
-                _this4._setOptionInternal(modified, unchanged, opts, desc);
+                _this3._setOptionInternal(modified, unchanged, opts, desc);
             });
 
             // Check for any invalid options: is there a key in the specified operation
@@ -20108,7 +20336,7 @@ var Tracer = function (_opentracing$Tracer) {
     }, {
         key: '_initReportingDataIfNeeded',
         value: function _initReportingDataIfNeeded(modified) {
-            var _this5 = this;
+            var _this4 = this;
 
             // Ignore redundant initialization; complaint on inconsistencies
             if (this._auth !== null) {
@@ -20147,7 +20375,7 @@ var Tracer = function (_opentracing$Tracer) {
             var tags = {};
             (0, _each3.default)(this._options.tags, function (value, key) {
                 if (typeof value !== 'string') {
-                    _this5._error('Tracer tag value is not a string: key=' + key);
+                    _this4._error('Tracer tag value is not a string: key=' + key);
                     return;
                 }
                 tags[key] = value;
@@ -20184,11 +20412,11 @@ var Tracer = function (_opentracing$Tracer) {
     }, {
         key: 'addPlatformPlugins',
         value: function addPlatformPlugins(opts) {
-            var _this6 = this;
+            var _this5 = this;
 
             var pluginSet = this._platform.plugins(opts);
             (0, _each3.default)(pluginSet, function (val) {
-                _this6.addPlugin(val);
+                _this5.addPlugin(val);
             });
         }
     }, {
@@ -20206,10 +20434,10 @@ var Tracer = function (_opentracing$Tracer) {
     }, {
         key: 'startPlugins',
         value: function startPlugins() {
-            var _this7 = this;
+            var _this6 = this;
 
             (0, _each3.default)(this._plugins, function (val, key) {
-                _this7._plugins[key].start(_this7);
+                _this6._plugins[key].start(_this6);
             });
         }
 
@@ -20251,14 +20479,14 @@ var Tracer = function (_opentracing$Tracer) {
     }, {
         key: '_setActiveRootSpanToYoungest',
         value: function _setActiveRootSpanToYoungest() {
-            var _this8 = this;
+            var _this7 = this;
 
             // Set the _activeRootSpan to the youngest of the roots in case of
             // multiple.
             this._activeRootSpan = null;
             (0, _each3.default)(this._activeRootSpanSet, function (span) {
-                if (!_this8._activeRootSpan || span._beginMicros > _this8._activeRootSpan._beginMicros) {
-                    _this8._activeRootSpan = span;
+                if (!_this7._activeRootSpan || span._beginMicros > _this7._activeRootSpan._beginMicros) {
+                    _this7._activeRootSpan = span;
                 }
             });
         }
@@ -20389,24 +20617,24 @@ var Tracer = function (_opentracing$Tracer) {
     }, {
         key: '_restoreRecords',
         value: function _restoreRecords(spans, internalLogs, counters) {
-            var _this9 = this;
+            var _this8 = this;
 
             (0, _each3.default)(spans, function (span) {
-                _this9._internalAddSpanRecord(span);
+                _this8._internalAddSpanRecord(span);
             });
 
             var currentInternalLogs = this._internalLogs;
             this._internalLogs = [];
             var toAdd = internalLogs.concat(currentInternalLogs);
             (0, _each3.default)(toAdd, function (log) {
-                _this9._pushInternalLog(log);
+                _this8._pushInternalLog(log);
             });
 
             (0, _each3.default)(counters, function (value, key) {
-                if (key in _this9._counters) {
-                    _this9._counters[key] += value;
+                if (key in _this8._counters) {
+                    _this8._counters[key] += value;
                 } else {
-                    _this9._error('Bad counter name: ' + key);
+                    _this8._error('Bad counter name: ' + key);
                 }
             });
         }
@@ -20418,7 +20646,7 @@ var Tracer = function (_opentracing$Tracer) {
     }, {
         key: '_setupReportOnExit',
         value: function _setupReportOnExit() {
-            var _this10 = this;
+            var _this9 = this;
 
             if (this._options.disable_report_on_exit) {
                 this._debug('report-on-exit is disabled.');
@@ -20433,13 +20661,13 @@ var Tracer = function (_opentracing$Tracer) {
                 if (finalFlushOnce++ > 0) {
                     return;
                 }
-                _this10._info('Final flush before exit.');
-                _this10._flushReport(false, true, function (err) {
+                _this9._info('Final flush before exit.');
+                _this9._flushReport(false, true, function (err) {
                     if (err) {
-                        _this10._warn('Final report before exit failed', {
+                        _this9._warn('Final report before exit failed', {
                             error: err,
-                            unflushed_spans: _this10._spanRecords.length,
-                            buffer_youngest_micros: _this10._reportYoungestMicros
+                            unflushed_spans: _this9._spanRecords.length,
+                            buffer_youngest_micros: _this9._reportYoungestMicros
                         });
                     }
                 });
@@ -20449,7 +20677,7 @@ var Tracer = function (_opentracing$Tracer) {
     }, {
         key: '_startReportingLoop',
         value: function _startReportingLoop() {
-            var _this11 = this;
+            var _this10 = this;
 
             if (this._options.disabled) {
                 this._info('Not starting reporting loop: instrumentation is disabled.');
@@ -20479,14 +20707,14 @@ var Tracer = function (_opentracing$Tracer) {
                 if (stopReportingOnce++ > 0) {
                     return;
                 }
-                _this11._stopReportingLoop();
+                _this10._stopReportingLoop();
             };
             this._platform.onBeforeExit(stopReporting);
 
             // Begin the asynchronous reporting loop
             var loop = function () {
-                _this11._enqueueNextReport(function (err) {
-                    if (_this11._reportingLoopActive) {
+                _this10._enqueueNextReport(function (err) {
+                    if (_this10._reportingLoopActive) {
                         loop();
                     }
                 });
@@ -20509,7 +20737,7 @@ var Tracer = function (_opentracing$Tracer) {
     }, {
         key: '_enqueueNextReport',
         value: function _enqueueNextReport(done) {
-            var _this12 = this;
+            var _this11 = this;
 
             // If there's already a report request enqueued, ignore this new
             // request.
@@ -20537,8 +20765,8 @@ var Tracer = function (_opentracing$Tracer) {
 
             this._debug('Delaying next flush for ' + delay + 'ms');
             this._reportTimer = util.detachedTimeout(function () {
-                _this12._reportTimer = null;
-                _this12._flushReport(false, false, done);
+                _this11._reportTimer = null;
+                _this11._flushReport(false, false, done);
             }, delay);
         }
 
@@ -20559,7 +20787,7 @@ var Tracer = function (_opentracing$Tracer) {
     }, {
         key: '_flushReport',
         value: function _flushReport(manual, detached, done) {
-            var _this13 = this;
+            var _this12 = this;
 
             done = done || function (err) {};
 
@@ -20622,12 +20850,12 @@ var Tracer = function (_opentracing$Tracer) {
             }
 
             this._transport.report(detached, this._auth, report, function (err, res) {
-                var destinationMicros = _this13._platform.nowMicros();
+                var destinationMicros = _this12._platform.nowMicros();
                 var reportWindowSeconds = (now - report.oldest_micros) / 1e6;
 
                 if (err) {
                     // How many errors in a row? Influences the report backoff.
-                    _this13._reportErrorStreak++;
+                    _this12._reportErrorStreak++;
 
                     // On a failed report, re-enqueue the data that was going to be
                     // sent.
@@ -20637,56 +20865,56 @@ var Tracer = function (_opentracing$Tracer) {
                     } else {
                         errString = '' + err;
                     }
-                    _this13._warn('Error in report: ' + errString, {
+                    _this12._warn('Error in report: ' + errString, {
                         last_report_seconds_ago: reportWindowSeconds
                     });
 
-                    _this13._restoreRecords(report.getSpanRecords(), report.getInternalLogs(), report.getCounters());
+                    _this12._restoreRecords(report.getSpanRecords(), report.getInternalLogs(), report.getCounters());
 
                     // Increment the counter *after* the counters are restored
-                    _this13._counters['reports.errors.send']++;
+                    _this12._counters['reports.errors.send']++;
 
-                    _this13.emit('report_error', err, {
+                    _this12.emit('report_error', err, {
                         error: err,
-                        streak: _this13._reportErrorStreak,
+                        streak: _this12._reportErrorStreak,
                         detached: detached
                     });
                 } else {
-                    if (_this13.verbosity() >= 4) {
-                        _this13._debug('Report flushed for last ' + reportWindowSeconds + ' seconds', {
+                    if (_this12.verbosity() >= 4) {
+                        _this12._debug('Report flushed for last ' + reportWindowSeconds + ' seconds', {
                             spans_reported: report.getSpanRecords().length
                         });
                     }
 
                     // Update internal data after the successful report
-                    _this13._reportErrorStreak = 0;
-                    _this13._reportYoungestMicros = now;
+                    _this12._reportErrorStreak = 0;
+                    _this12._reportYoungestMicros = now;
 
                     // Update the clock state if there's info from the report
                     if (res) {
                         if (res.timing && res.timing.receive_micros && res.timing.transmit_micros) {
-                            _this13._clockState.addSample(originMicros, res.timing.receive_micros, res.timing.transmit_micros, destinationMicros);
+                            _this12._clockState.addSample(originMicros, res.timing.receive_micros, res.timing.transmit_micros, destinationMicros);
                         } else {
                             // The response does not have timing information. Disable
                             // the clock state assuming there'll never be timing data
                             // to use.
-                            _this13._useClockState = false;
+                            _this12._useClockState = false;
                         }
 
                         if (res.errors && res.errors.length > 0) {
-                            _this13._warn('Errors in report', res.errors);
+                            _this12._warn('Errors in report', res.errors);
                         }
 
                         if (res.commandsList && res.commandsList.length > 0) {
-                            if (res.commandsList[0].devMode && _this13.options().disable_meta_event_reporting !== true) {
-                                _this13.options().meta_event_reporting = true;
+                            if (res.commandsList[0].devMode && _this12.options().disable_meta_event_reporting !== true) {
+                                _this12.options().meta_event_reporting = true;
                             }
                         }
                     } else {
-                        _this13._useClockState = false;
+                        _this12._useClockState = false;
                     }
 
-                    _this13.emit('report', report, res);
+                    _this12.emit('report', report, res);
                 }
                 return done(err);
             });
@@ -21080,12 +21308,22 @@ var _tracer_imp = __webpack_require__(/*! ./imp/tracer_imp */ "./src/imp/tracer_
 
 var _tracer_imp2 = _interopRequireDefault(_tracer_imp);
 
+var _propagator_ls = __webpack_require__(/*! ./imp/propagator_ls */ "./src/imp/propagator_ls.js");
+
+var _propagator_ls2 = _interopRequireDefault(_propagator_ls);
+
+var _propagator_b = __webpack_require__(/*! ./imp/propagator_b3 */ "./src/imp/propagator_b3.js");
+
+var _propagator_b2 = _interopRequireDefault(_propagator_b);
+
 var _platform_abstraction_layer = __webpack_require__(/*! ./platform_abstraction_layer */ "./src/platform_abstraction_layer.js");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var library = {
-    Tracer: _tracer_imp2.default
+    Tracer: _tracer_imp2.default,
+    LightStepPropagator: _propagator_ls2.default,
+    B3Propagator: _propagator_b2.default
 };
 
 _platform_abstraction_layer.Platform.initLibrary(library);

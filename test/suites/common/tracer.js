@@ -33,6 +33,18 @@ describe("Tracer", function() {
             span.finish();
         });
 
+        it('propagates sampled flag correctly', function() {
+            var parent = Tracer.startSpan('test1');
+            var parentContext = parent.context();
+            parentContext._sampled = false;
+
+            var span = Tracer.startSpan('test2', {childOf : parentContext });
+            var childContext = span.context()
+            expect(childContext._sampled).to.equal(false);
+
+            span.finish();
+        });
+
         it('supports startTime', function() {
             var now = Date.now() - 5000;
             var span = Tracer.startSpan('test2', { startTime : now });
@@ -110,6 +122,37 @@ describe("Tracer", function() {
             expect(extractedContext._guid).to.equal(spanContext._guid);
             expect(extractedContext.getBaggageItem('footwear')).to.equal('sandals');
             expect(extractedContext.getBaggageItem('creditcard')).to.equal('visa');
+        });
+
+        it("should propagate B3 format", function() {
+            Tracer._propagators[Tracer._opentracing.FORMAT_HTTP_HEADERS] = new lightstep.B3Propagator(Tracer);
+            var span = Tracer.startSpan('my_span');
+            var spanContext = span.context();
+            spanContext._sampled = false;
+
+            spanContext.setBaggageItem('footwear', 'sandals');
+            spanContext.setBaggageItem('creditcard', 'visa');
+
+            var carrier = {};
+            Tracer.inject(spanContext, opentracing.FORMAT_HTTP_HEADERS, carrier);
+            expect(carrier['x-b3-traceid'].length).to.equal(32)
+            expect(carrier['x-b3-traceid'].substr(16)).to.equal(spanContext._traceGUID);
+            expect(carrier['x-b3-spanid']).to.equal(spanContext._guid);
+            expect(carrier['x-b3-sampled']).to.equal('0');
+
+            expect(carrier['ot-baggage-footwear']).to.equal('sandals');
+            expect(carrier['ot-baggage-creditcard']).to.equal('visa');
+
+            var extractedContext = Tracer.extract(opentracing.FORMAT_HTTP_HEADERS, carrier);
+            expect(extractedContext._guid).to.equal(spanContext._guid);
+            expect(extractedContext.traceGUID()).to.equal(spanContext.traceGUID());
+            expect(extractedContext._sampled).to.equal(spanContext._sampled);
+            expect(extractedContext.getBaggageItem('footwear')).to.equal('sandals');
+            expect(extractedContext.getBaggageItem('creditcard')).to.equal('visa');
+
+            var span2 = Tracer.startSpan('my_child', { childOf: extractedContext});
+            expect(span2.context()._sampled).to.equal(false);
+
         });
 
         it("should propagate binary carriers");
