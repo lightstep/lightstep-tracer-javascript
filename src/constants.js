@@ -34,5 +34,3 @@ export const LS_META_INJECT = 'lightstep.inject_span';
 export const LS_META_SP_START = 'lightstep.span_start';
 export const LS_META_SP_FINISH = 'lightstep.span_finish';
 export const LS_META_TRACER_CREATE = 'lightstep.tracer_create';
-
-export const FORMAT_B3 = 'format.b3';
