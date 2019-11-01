@@ -1,7 +1,6 @@
 import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
 import _each from '../_each'; // eslint-disable-line camelcase
 import * as coerce from './coerce.js';
-let proto = require('./generated_proto/collector_pb.js');
 
 export default class ReportImp {
     constructor(runtime, oldestMicros, youngestMicros, spanRecords, internalLogs, counters, timestampOffsetMicros) {
@@ -58,32 +57,5 @@ export default class ReportImp {
             }),
             timestamp_offset_micros : this._timestampOffsetMicros,
         });
-    }
-
-    toProto(auth) {
-        let spansList = [];
-        _each(this._spanRecords, (spanRecord) => {
-            spansList.push(spanRecord._toProto());
-        });
-
-        let countsList = [];
-        _each(this._counters, (count) => {
-            let metricSample = new proto.MetricsSample();
-            metricSample.setName(count.name);
-            metricSample.setIntValue(count.int64_value);
-            metricSample.setDoubleValue(count.double_value);
-            countsList.push(metricSample);
-        });
-
-        let internalMetrics = new proto.InternalMetrics();
-        internalMetrics.setCountsList(countsList);
-
-        let reportProto = new proto.ReportRequest();
-        reportProto.setAuth(auth.toProto());
-        reportProto.setReporter(this._runtime.toProto());
-        reportProto.setSpansList(spansList);
-        reportProto.setTimestampOffsetMicros(this._timestampOffsetMicros);
-        reportProto.setInternalMetrics(internalMetrics);
-        return reportProto;
     }
 }

@@ -8,7 +8,7 @@ import * as opentracing from 'opentracing';
 import SpanContextImp from './span_context_imp';
 import SpanImp from './span_imp';
 import _each from '../_each';
-import { Platform, ProtoTransport, ThriftTransport } from '../platform_abstraction_layer';
+import { Platform, ThriftTransport } from '../platform_abstraction_layer';
 import AuthImp from './auth_imp';
 import RuntimeImp from './runtime_imp';
 import ReportImp from './report_imp';
@@ -140,17 +140,13 @@ export default class Tracer extends opentracing.Tracer {
 
         if (typeof this._transport === 'undefined' || this._transport === null) {
             switch (this._options.transport) {
-            case 'proto':
-                this._transport = new ProtoTransport(logger);
-                this._info('Using protobuf over HTTP transport per user-defined option.');
-                break;
             case 'thrift':
                 this._transport = new ThriftTransport(logger);
                 this._info('Using thrift transport per user-defined option.');
                 break;
             default:
-                this._transport = new ProtoTransport(logger);
-                this._info('Using protobuf over HTTP transport as no user-defined option was supplied.');
+                this._transport = new ThriftTransport(logger);
+                this._info('Using thrift transport per user-defined option.');
             }
         }
 
@@ -232,7 +228,7 @@ export default class Tracer extends opentracing.Tracer {
         this.addOption('tags',                  { type: 'any',     defaultValue: {} });
         this.addOption('max_reporting_interval_millis',  { type: 'int',     defaultValue: 2500 });
         this.addOption('disable_clock_skew_correction', { type: 'bool', defaultValue: false });
-        this.addOption('transport',             { type: 'string', defaultValue: 'proto' });
+        this.addOption('transport',             { type: 'string', defaultValue: 'thrift' });
 
         // Non-standard, may be deprecated
         this.addOption('disabled',              { type: 'bool',    defaultValue: false });
