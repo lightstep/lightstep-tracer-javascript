@@ -22,7 +22,6 @@ if (typeof window === 'undefined') {
 // Utility function that converts a URL object into an ordinary
 // options object as expected by the http.request and https.request
 // APIs.
-
 function urlToOptions(url) {
     const options = {
         protocol : url.protocol,
@@ -44,6 +43,7 @@ function urlToOptions(url) {
     }
     return options;
 }
+
 // Automatically create spans for all requests made via window.fetch.
 //
 // NOTE: this code currently works only with a single Tracer.
@@ -72,14 +72,12 @@ class InstrumentNodejs {
     }
 
     start(tracerImp) {
-        console.log('Here in start')
         if (!this._enabled) {
             return;
         }
         this._tracer = tracerImp;
 
         let currentOptions = tracerImp.options();
-        console.log('current options', currentOptions)
         this._addServiceHostToExclusions(currentOptions);
         this._handleOptions({}, currentOptions);
         tracerImp.on('options', this._handleOptions);
@@ -106,7 +104,6 @@ class InstrumentNodejs {
     _handleOptions(modified, current) {
         // Automatically add the service host itself to the list of exclusions
         // to avoid reporting on the reports themselves
-        console.log('Here in handle options')
         let serviceHost = modified.collector_host;
         if (serviceHost) {
             this._addServiceHostToExclusions(current);
@@ -114,7 +111,6 @@ class InstrumentNodejs {
 
         // Set up the proxied fetch calls unless disabled
         if (!this._proxyInited && current.nodejs_instrumentation) {
-            console.log("Here about to instrument nodejs")
             this._proxyInited = true;
             this._instrumentNodejs();
         }
@@ -148,18 +144,19 @@ class InstrumentNodejs {
     }
 
     /**
-     * Check if window is here, if so then this can't be done
+     * Check if in node
      */
     _isValidContext() {
-        if (typeof window === 'undefined') {
-            return true;
-        }
-        return false;
+        const isNode = (typeof process !== 'undefined') &&
+            (typeof process.release !== 'undefined') &&
+            (process.release.name === 'node');
+        return isNode;
     }
 
     _instrumentNodejs() {
         let self = this;
         let tracer = this._tracer;
+
         function requestOverride(originalRequest, ...args) {
             // http.request has two overrides, taking url/string first, or options
             // if url or string morph into an options object,
@@ -262,6 +259,7 @@ class InstrumentNodejs {
                 throw e;
             }
         }
+
         http.request = requestOverride.bind(undefined, http.request);
         https.request = requestOverride.bind(undefined, https.request);
 
