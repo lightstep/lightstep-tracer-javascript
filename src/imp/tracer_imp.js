@@ -12,6 +12,8 @@ import { Platform, ProtoTransport, ThriftTransport } from '../platform_abstracti
 import AuthImp from './auth_imp';
 import RuntimeImp from './runtime_imp';
 import ReportImp from './report_imp';
+import UnsupportedPropagator from './propagator';
+import LightStepPropagator from './propagator_ls';
 
 const ClockState    = require('./util/clock_state');
 const LogBuilder    = require('./log_builder');
@@ -20,9 +22,6 @@ const constants     = require('../constants');
 const globals       = require('./globals');
 const packageObject = require('../../package.json');
 const util          = require('./util/util');
-
-const CARRIER_TRACER_STATE_PREFIX = 'ot-tracer-';
-const CARRIER_BAGGAGE_PREFIX = 'ot-baggage-';
 
 const DEFAULT_COLLECTOR_HOSTNAME   = 'collector.lightstep.com';
 const DEFAULT_COLLECTOR_PORT_TLS   = 443;
@@ -80,6 +79,17 @@ export default class Tracer extends opentracing.Tracer {
             this._transport = opts.override_transport;
         }
 
+        this._propagators = {};
+        this._propagators[this._opentracing.FORMAT_HTTP_HEADERS] = new LightStepPropagator(this);
+        this._propagators[this._opentracing.FORMAT_TEXT_MAP] = new LightStepPropagator(this);
+        this._propagators[this._opentracing.FORMAT_BINARY] = new UnsupportedPropagator(this,
+            this._opentracing.FORMAT_BINARY);
+
+        if (opts && opts.propagators) {
+            this._propagators = Object.assign({}, this._propagators, opts.propagators);
+        }
+
+
         this._reportingLoopActive = false;
         this._first_report_has_run = false;
         this._reportYoungestMicros = now;
@@ -87,6 +97,7 @@ export default class Tracer extends opentracing.Tracer {
         this._reportErrorStreak = 0;    // Number of consecutive errors
         this._lastVisibleErrorMillis = 0;
         this._skippedVisibleErrors = 0;
+
 
         // Set addActiveRootSpan() for detail
         this._activeRootSpanSet = {};
@@ -282,8 +293,9 @@ export default class Tracer extends opentracing.Tracer {
             }
         }
 
-        let traceGUID = parentCtxImp ? parentCtxImp._traceGUID : this.generateTraceGUIDForRootSpan();
-        let spanImp = new SpanImp(this, name, new SpanContextImp(this._platform.generateUUID(), traceGUID));
+        let traceGUID = parentCtxImp ? parentCtxImp.traceGUID() : this.generateTraceGUIDForRootSpan();
+        let sampled = parentCtxImp ? parentCtxImp._sampled : true;
+        let spanImp = new SpanImp(this, name, new SpanContextImp(this._platform.generateUUID(), traceGUID, sampled));
         spanImp.addTags(this._options.default_span_tags);
 
         _each(fields, (value, key) => {
@@ -325,137 +337,64 @@ export default class Tracer extends opentracing.Tracer {
     }
 
     _inject(spanContext, format, carrier) {
+        if (this.options().meta_event_reporting === true) {
+            this.startSpan(constants.LS_META_INJECT,
+                {
+                    tags: {
+                        [constants.LS_META_EVENT_KEY]: true,
+                        [constants.LS_META_TRACE_KEY]: spanContext._traceGUID,
+                        [constants.LS_META_SPAN_KEY]: spanContext._guid,
+                        [constants.LS_META_PROPAGATION_KEY]: format,
+                    },
+                })
+                .finish();
+        }
         switch (format) {
         case this._opentracing.FORMAT_HTTP_HEADERS:
+            this._propagators[this._opentracing.FORMAT_HTTP_HEADERS].inject(spanContext, carrier);
+            break;
         case this._opentracing.FORMAT_TEXT_MAP:
-            if (this.options().meta_event_reporting === true) {
-                this.startSpan(constants.LS_META_INJECT,
-                    {
-                        tags: {
-                            [constants.LS_META_EVENT_KEY]: true,
-                            [constants.LS_META_TRACE_KEY]: spanContext._traceGUID,
-                            [constants.LS_META_SPAN_KEY]: spanContext._guid,
-                            [constants.LS_META_PROPAGATION_KEY]: format,
-                        },
-                    })
-                .finish();
-            }
-            this._injectToTextMap(spanContext, carrier);
+            this._propagators[this._opentracing.FORMAT_TEXT_MAP].inject(spanContext, carrier);
             break;
-
         case this._opentracing.FORMAT_BINARY:
-            this._error(`Unsupported format: ${format}`);
+            this._propagators[this._opentracing.FORMAT_BINARY].inject(spanContext, carrier);
             break;
-
         default:
             this._error(`Unknown format: ${format}`);
             break;
         }
     }
 
-    _injectToTextMap(spanContext, carrier) {
-        if (!carrier) {
-            this._error('Unexpected null FORMAT_TEXT_MAP carrier in call to inject');
-            return;
-        }
-        if (typeof carrier !== 'object') {
-            this._error(`Unexpected '${typeof carrier}' FORMAT_TEXT_MAP carrier in call to inject`);
-            return;
-        }
-
-        carrier[`${CARRIER_TRACER_STATE_PREFIX}spanid`] = spanContext._guid;
-        carrier[`${CARRIER_TRACER_STATE_PREFIX}traceid`] = spanContext._traceGUID;
-        spanContext.forEachBaggageItem((key, value) => {
-            carrier[`${CARRIER_BAGGAGE_PREFIX}${key}`] = value;
-        });
-        carrier[`${CARRIER_TRACER_STATE_PREFIX}sampled`] = 'true';
-        return carrier;
-    }
-
     _extract(format, carrier) {
-        let sc;
+        let sc = null;
         switch (format) {
         case this._opentracing.FORMAT_HTTP_HEADERS:
+            sc = this._propagators[this._opentracing.FORMAT_HTTP_HEADERS].extract(carrier);
+            break;
         case this._opentracing.FORMAT_TEXT_MAP:
-            sc = this._extractTextMap(format, carrier);
-            if (this.options().meta_event_reporting === true) {
-                this.startSpan(constants.LS_META_EXTRACT,
-                    {
-                        tags: {
-                            [constants.LS_META_EVENT_KEY]: true,
-                            [constants.LS_META_TRACE_KEY]: sc._traceGUID,
-                            [constants.LS_META_SPAN_KEY]: sc._guid,
-                            [constants.LS_META_PROPAGATION_KEY]: format,
-                        },
-                    })
-                .finish();
-            }
-            return sc;
+            sc = this._propagators[this._opentracing.FORMAT_TEXT_MAP].extract(carrier);
+            break;
         case this._opentracing.FORMAT_BINARY:
-            this._error(`Unsupported format: ${format}`);
-            return null;
-
+            sc = this._propagators[this._opentracing.FORMAT_BINARY].extract(carrier);
+            break;
         default:
             this._error(`Unsupported format: ${format}`);
             return null;
         }
-    }
-
-    _extractTextMap(format, carrier) {
-        // Begin with the empty SpanContextImp
-        let spanContext = new SpanContextImp(null, null);
-
-        // Iterate over the contents of the carrier and set the properties
-        // accordingly.
-        let foundFields = 0;
-        _each(carrier, (value, key) => {
-            key = key.toLowerCase();
-            if (key.substr(0, CARRIER_TRACER_STATE_PREFIX.length) !== CARRIER_TRACER_STATE_PREFIX) {
-                return;
-            }
-            let suffix = key.substr(CARRIER_TRACER_STATE_PREFIX.length);
-
-            switch (suffix) {
-            case 'traceid':
-                foundFields++;
-                spanContext._traceGUID = value;
-                break;
-            case 'spanid':
-                foundFields++;
-                spanContext._guid = value;
-                break;
-            case 'sampled':
-                // Ignored. The carrier may be coming from a different client
-                // library that sends this (even though it's not used).
-                break;
-            default:
-                this._error(`Unrecognized carrier key '${key}' with recognized prefix. Ignoring.`);
-                break;
-            }
-        });
-
-        if (foundFields === 0) {
-            // This is not an error per se, there was simply no SpanContext
-            // in the carrier.
-            return null;
+        if (this.options().meta_event_reporting === true && sc) {
+            this.startSpan(constants.LS_META_EXTRACT,
+                {
+                    tags: {
+                        [constants.LS_META_EVENT_KEY]: true,
+                        [constants.LS_META_TRACE_KEY]: sc._traceGUID,
+                        [constants.LS_META_SPAN_KEY]: sc._guid,
+                        [constants.LS_META_PROPAGATION_KEY]: format,
+                    },
+                })
+            .finish();
         }
-        if (foundFields < 2) {
-            // A partial SpanContext suggests some sort of data corruption.
-            this._error(`Only found a partial SpanContext: ${format}, ${carrier}`);
-            return null;
-        }
-
-        _each(carrier, (value, key) => {
-            key = key.toLowerCase();
-            if (key.substr(0, CARRIER_BAGGAGE_PREFIX.length) !== CARRIER_BAGGAGE_PREFIX) {
-                return;
-            }
-            let suffix = key.substr(CARRIER_BAGGAGE_PREFIX.length);
-            spanContext.setBaggageItem(suffix, value);
-        });
-        return spanContext;
+        return sc;
     }
-
 
     // ---------------------------------------------------------------------- //
     // LightStep extensions

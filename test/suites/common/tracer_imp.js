@@ -106,15 +106,15 @@ describe("TracerImp", function() {
             expect(makeLSTracer().options().collector_port).to.equal(443);
         });
 
-        it('should default to correct ports when collector_encryption is set', function() {	
-            expect(makeLSTracer({	
-                collector_encryption : 'none',	
-            }).options().collector_port).to.equal(80);	
-            expect(makeLSTracer({	
-                collector_encryption : 'tls',	
+        it('should default to correct ports when collector_encryption is set', function() {
+            expect(makeLSTracer({
+                collector_encryption : 'none',
+            }).options().collector_port).to.equal(80);
+            expect(makeLSTracer({
+                collector_encryption : 'tls',
             }).options().collector_port).to.equal(443);
         });
-            
+
         it('should treat collector_port=0 as meaning "use the default"', function() {
             expect(makeLSTracer({
                 collector_port : 4000,
@@ -177,7 +177,7 @@ describe("TracerImp", function() {
             expect(count).to.equal(2);
             s.finish();
             expect(count).to.equal(2);
-        });        
+        });
     });
     describe("TracerImp#once", function() {
         it('is a method', function() {
