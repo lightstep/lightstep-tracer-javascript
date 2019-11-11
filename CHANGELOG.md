@@ -5,6 +5,11 @@
 ## vNext
 
 ## 0.22.3
+
+* Add NodeJS instrumentation and shims (#184)
+* Adds B3 propagator (#177)
+
+## 0.22.3
 * Fixes an issue where reporter cookies would be set with invalid key strings.
 
 ## 0.22.2
