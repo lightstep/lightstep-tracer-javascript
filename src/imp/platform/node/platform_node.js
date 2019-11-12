@@ -98,7 +98,9 @@ export default class PlatformNode {
     }
 
     plugins() {
-        return [];
+        return [
+            require('../../../plugins/instrument_nodejs'),
+        ];
     }
 
     options() {

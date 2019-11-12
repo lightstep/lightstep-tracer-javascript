@@ -152,15 +152,35 @@ declare module 'lightstep-tracer' {
     fetch_url_exclusion_patterns?: any
 
     /**
+     * optional. node-only. if enabled, automatically instrument all node requests with
+     * context.headers.
+     */
+    nodejs_instrumentation?: boolean
+
+    /**
+     * optional. node-only. a regex to indicate which URLs should be automatically instrumented for
+     * node's native http, https modules.
+     * default value is all urls.
+     */
+    nodejs_inclusion_patterns?: any
+
+    /**
+     * optional. node-only. a regex to indicate which URLs should not be automatically instrumented
+     * for node's native http, https modules.
+     * default value is no urls.
+     */
+    nodejs_exclusion_patterns?: any
+
+    /**
      * optional. browser-only. if true, includes cookies in the span logs for both `window.fetch` and `XMLHttpRequest`.
      * defaults to true.
      */
     include_cookies?: boolean
   }
-  
+
   export class Tracer extends opentracing.Tracer {
-    constructor(options: TracerOptions)    
+    constructor(options: TracerOptions)
   }
-  
+
 }
 
