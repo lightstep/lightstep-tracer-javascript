@@ -55,7 +55,6 @@
     "istanbul": "^0.4.5",
     "mocha": "^5.2.0",
     "opentracing": "^0.14.4",
-    "protobufjs": "6.8.8",
     "shelljs": "0.5.3",
     "sprintf-js": "1.0.3",
     "underscore": "1.8.3",
