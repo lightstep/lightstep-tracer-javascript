@@ -2,14 +2,14 @@
 /** Original definitions by felixfbecker: https://github.com/lightstep/lightstep-tracer-javascript/issues/99#issuecomment-436823685 */
 declare module 'lightstep-tracer' {
   import * as opentracing from 'opentracing';
-  
+
   export interface TracerOptions {
     /** the project access token. Access tokens are used by the LightStep tracer client libraries to identify the project the tracer is reporting for */
     access_token: string
-  
+
     /** the string identifier for the application, service, or process. A Component is a logical service (or client) in a distributed system. The component usually represents a particular process or script in the distributed system */
     component_name: string
-  
+
     /**
      * controls the level of logging to the console
      *
@@ -22,21 +22,21 @@ declare module 'lightstep-tracer' {
      * @default 1
      */
     verbosity?: number
-  
+
     /** custom collector hostname */
     collector_host?: string
-  
+
     /** custom collector port */
     collector_port?: number
 
     /** custom collector base path (if served behind a reverse proxy) */
     collector_path?: string
-    
+
     /** optional, default='tls'
      * `tls` - use HTTPS encrypted connections
      * `none` - use HTTP plain-text connections
     */
-    collector_encryption?: string     
+    collector_encryption?: string
 
     /**
      * optional tag object that will be applied to all reports.
@@ -114,7 +114,7 @@ declare module 'lightstep-tracer' {
      * optional. browser-only. creates a single long-lived span for the entire page view. default = false
      */
     instrument_page_load?: boolean
-    
+
     /**
      * optional. browser-only. if enabled, automatically instruments all XHR requests with context headers.
      * see `xhr_url_inclusion_patterns` and `xhr_url_exclusion_patterns`.
@@ -125,14 +125,14 @@ declare module 'lightstep-tracer' {
      * optional. browser-only. a regex to indicate which URLs should be automatically instrumented for XHRs.
      * default value is all urls.
      */
-    xhr_url_inclusion_patterns?: any
+    xhr_url_inclusion_patterns?: RegExp[]
 
     /**
      * optional. browser-only. a regex to indicate which URLs should not be automatically instrumented for XHRs.
      * default value is no urls.
      */
-    xhr_url_exclusion_patterns?: any
-    
+    xhr_url_exclusion_patterns?: RegExp[]
+
     /**
      * optional. browser-only. if enabled, automatically instrument all window.fetch requests with context.headers.
      * see `fetch_url_inclusion_patterns` and `fetch_url_exclusion_patterns`.
@@ -143,13 +143,13 @@ declare module 'lightstep-tracer' {
      * optional. browser-only. a regex to indicate which URLs should be automatically instrumented for window.fetch.
      * default value is all urls.
      */
-    fetch_url_inclusion_patterns?: any
+    fetch_url_inclusion_patterns?: RegExp[]
 
     /**
      * optional. browser-only. a regex to indicate which URLs should not be automatically instrumented for window.fetch.
      * default value is no urls.
      */
-    fetch_url_exclusion_patterns?: any
+    fetch_url_exclusion_patterns?: RegExp[]
 
     /**
      * optional. node-only. if enabled, automatically instrument all node requests with
@@ -162,14 +162,14 @@ declare module 'lightstep-tracer' {
      * node's native http, https modules.
      * default value is all urls.
      */
-    nodejs_inclusion_patterns?: any
+    nodejs_inclusion_patterns?: RegExp[]
 
     /**
      * optional. node-only. a regex to indicate which URLs should not be automatically instrumented
      * for node's native http, https modules.
      * default value is no urls.
      */
-    nodejs_exclusion_patterns?: any
+    nodejs_exclusion_patterns?: RegExp[]
 
     /**
      * optional. browser-only. if true, includes cookies in the span logs for both `window.fetch` and `XMLHttpRequest`.
