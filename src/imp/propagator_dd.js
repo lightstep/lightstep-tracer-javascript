@@ -25,9 +25,14 @@ export default class DDProgagator {
         // Per https://github.com/lightstep/lightstep-tracer-javascript/blob/master/src/imp/platform/node/platform_node.js#L91
         // all generated GUIDs are base 16 strings.
         // DD headers expect integers, not base 16 values.
-        carrier[`${this._carrierPrefix}span-id`] = parseInt(spanContext._guid, 16).toString();
+        carrier[`${this._carrierPrefix}parent-id`] = parseInt(spanContext._guid, 16).toString();
         carrier[`${this._carrierPrefix}trace-id`] = parseInt(spanContext.traceGUID(), 16).toString();
-        //  TODO: support sampling priority?
+        if (spanContext._sampled) {
+            carrier[`${this._carrierPrefix}sampling-priority`] = '1';
+        } else {
+            carrier[`${this._carrierPrefix}sampling-priority`] = '0';
+        }
+
         spanContext.forEachBaggageItem((key, value) => {
             carrier[`${this._baggagePrefix}${key}`] = value;
         });
@@ -54,13 +59,16 @@ export default class DDProgagator {
                 foundFields++;
                 traceGUID = parseInt(value, 10).toString(16);
                 break;
-            case 'span-id':
+            case 'parent-id':
                 foundFields++;
                 spanGUID = parseInt(value, 10).toString(16);
                 break;
             case 'sampling-priority':
                 // TODO: support sampling priority somehow. This is a float64 that does not
                 // necessarily represent the sampling decision
+                if (value === 0) {
+                    sampled = false;
+                }
                 break;
             default:
                 this._tracer._error(`Unrecognized carrier key '${key}' with recognized prefix. Ignoring.`);
