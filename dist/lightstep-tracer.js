@@ -21756,7 +21756,9 @@ function getCookies() {
 // Normalize the getAllResponseHeaders output
 function getResponseHeaders(response) {
     var result = {};
-    for (var pair of response.headers.entries()) {
+    var entries = response.headers.entries();
+    for (var i = 0; i < entries.length; i++) {
+        var pair = entries[i];
         result[pair[0]] = pair[1];
     }
     return result;
