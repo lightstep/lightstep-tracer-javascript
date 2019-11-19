@@ -1709,7 +1709,7 @@ exports.default = Tracer;
 /*! exports provided: name, version, main, types, browser, engines, scripts, license, repository, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"lightstep-tracer","version":"0.23.1-no-protobuf","main":"index.js","types":"index.d.ts","browser":"browser.js","engines":{"node":">=0.12.0"},"scripts":{"test":"rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js"},"license":"MIT","repository":{"type":"git","url":"http://github.com/lightstep/lightstep-tracer-javascript.git"},"dependencies":{"async":"1.5.0","eventemitter3":"1.1.1","hex2dec":"1.0.1","source-map-support":"0.3.3","thrift":"0.12.0"},"devDependencies":{"babel-cli":"6.14.0","babel-core":"^6.26.3","babel-loader":"7","babel-plugin-add-module-exports":"^1.0.0","babel-plugin-check-es2015-constants":"6.7.2","babel-plugin-transform-es2015-arrow-functions":"6.5.2","babel-plugin-transform-es2015-block-scoped-functions":"6.6.5","babel-plugin-transform-es2015-block-scoping":"^6.26.0","babel-plugin-transform-es2015-classes":"6.6.5","babel-plugin-transform-es2015-computed-properties":"6.6.5","babel-plugin-transform-es2015-destructuring":"6.6.5","babel-plugin-transform-es2015-duplicate-keys":"6.6.4","babel-plugin-transform-es2015-literals":"6.5.0","babel-plugin-transform-es2015-modules-commonjs":"6.7.4","babel-plugin-transform-es2015-object-super":"6.6.5","babel-plugin-transform-es2015-parameters":"6.7.0","babel-plugin-transform-es2015-spread":"6.6.5","babel-plugin-transform-es2015-sticky-regex":"6.5.0","babel-plugin-transform-es2015-template-literals":"6.6.5","babel-plugin-transform-es2015-unicode-regex":"6.5.0","babel-polyfill":"6.3.14","babel-preset-es2015":"6.3.13","chai":"3.4.1","clone":"1.0.2","colors":"1.1.2","eslint":"2.4.0","eslint-config-airbnb":"6.2.0","eslint-plugin-react":"4.2.3","express":"^4.16.3","istanbul":"^0.4.5","mocha":"^5.2.0","opentracing":"^0.14.4","shelljs":"0.5.3","sprintf-js":"1.0.3","underscore":"1.8.3","watch-trigger":"0.0.5","webpack":"^4.25.1","webpack-cli":"^3.1.2"}};
+module.exports = {"name":"lightstep-tracer","version":"0.24.0","main":"index.js","types":"index.d.ts","browser":"browser.js","engines":{"node":">=0.12.0"},"scripts":{"test":"rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js"},"license":"MIT","repository":{"type":"git","url":"http://github.com/lightstep/lightstep-tracer-javascript.git"},"dependencies":{"async":"1.5.0","eventemitter3":"1.1.1","hex2dec":"1.0.1","source-map-support":"0.3.3","thrift":"0.12.0"},"devDependencies":{"babel-cli":"6.14.0","babel-core":"^6.26.3","babel-loader":"7","babel-plugin-add-module-exports":"^1.0.0","babel-plugin-check-es2015-constants":"6.7.2","babel-plugin-transform-es2015-arrow-functions":"6.5.2","babel-plugin-transform-es2015-block-scoped-functions":"6.6.5","babel-plugin-transform-es2015-block-scoping":"^6.26.0","babel-plugin-transform-es2015-classes":"6.6.5","babel-plugin-transform-es2015-computed-properties":"6.6.5","babel-plugin-transform-es2015-destructuring":"6.6.5","babel-plugin-transform-es2015-duplicate-keys":"6.6.4","babel-plugin-transform-es2015-literals":"6.5.0","babel-plugin-transform-es2015-modules-commonjs":"6.7.4","babel-plugin-transform-es2015-object-super":"6.6.5","babel-plugin-transform-es2015-parameters":"6.7.0","babel-plugin-transform-es2015-spread":"6.6.5","babel-plugin-transform-es2015-sticky-regex":"6.5.0","babel-plugin-transform-es2015-template-literals":"6.6.5","babel-plugin-transform-es2015-unicode-regex":"6.5.0","babel-polyfill":"6.3.14","babel-preset-es2015":"6.3.13","chai":"3.4.1","clone":"1.0.2","colors":"1.1.2","eslint":"2.4.0","eslint-config-airbnb":"6.2.0","eslint-plugin-react":"4.2.3","express":"^4.16.3","istanbul":"^0.4.5","mocha":"^5.2.0","opentracing":"^0.14.4","shelljs":"0.5.3","sprintf-js":"1.0.3","underscore":"1.8.3","watch-trigger":"0.0.5","webpack":"^4.25.1","webpack-cli":"^3.1.2"}};
 
 /***/ }),
 
@@ -3214,6 +3214,154 @@ var B3Propagator = function (_LightStepPropagator) {
 }(_propagator_ls2.default);
 
 exports.default = B3Propagator;
+module.exports = exports.default;
+
+/***/ }),
+
+/***/ "./src/imp/propagator_dd.js":
+/*!**********************************!*\
+  !*** ./src/imp/propagator_dd.js ***!
+  \**********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _each2 = __webpack_require__(/*! ../_each */ "./src/_each.js");
+
+var _each3 = _interopRequireDefault(_each2);
+
+var _span_context_imp = __webpack_require__(/*! ./span_context_imp */ "./src/imp/span_context_imp.js");
+
+var _span_context_imp2 = _interopRequireDefault(_span_context_imp);
+
+var _propagator_ls = __webpack_require__(/*! ./propagator_ls */ "./src/imp/propagator_ls.js");
+
+var _propagator_ls2 = _interopRequireDefault(_propagator_ls);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var CARRIER_DD_TRACER_STATE_PREFIX = 'x-datadog-';
+
+var DDProgagator = function () {
+    function DDProgagator(tracer) {
+        _classCallCheck(this, DDProgagator);
+
+        this._tracer = tracer;
+        this._baggagePrefix = _propagator_ls2.default;
+        this._carrierPrefix = CARRIER_DD_TRACER_STATE_PREFIX;
+    }
+
+    _createClass(DDProgagator, [{
+        key: 'inject',
+        value: function inject(spanContext, carrier) {
+            var _this = this;
+
+            if (!carrier) {
+                this._tracer._error('Unexpected null carrier in call to inject');
+                return;
+            }
+            if (typeof carrier !== 'object') {
+                this._tracer._error('Unexpected \'' + typeof carrier + '\' FORMAT_TEXT_MAP carrier in call to inject');
+                return;
+            }
+
+            // eslint-disable-next-line max-len
+            // Per https://github.com/lightstep/lightstep-tracer-javascript/blob/master/src/imp/platform/node/platform_node.js#L91
+            // all generated GUIDs are base 16 strings.
+            // DD headers expect integers, not base 16 values.
+            carrier[this._carrierPrefix + 'parent-id'] = parseInt(spanContext._guid, 16).toString();
+            carrier[this._carrierPrefix + 'trace-id'] = parseInt(spanContext.traceGUID(), 16).toString();
+            if (spanContext._sampled) {
+                carrier[this._carrierPrefix + 'sampling-priority'] = '1';
+            } else {
+                carrier[this._carrierPrefix + 'sampling-priority'] = '0';
+            }
+
+            spanContext.forEachBaggageItem(function (key, value) {
+                carrier['' + _this._baggagePrefix + key] = value;
+            });
+            return carrier;
+        }
+    }, {
+        key: 'extract',
+        value: function extract(carrier) {
+            var _this2 = this;
+
+            // Iterate over the contents of the carrier and set the properties
+            // accordingly.
+            var foundFields = 0;
+            var spanGUID = null;
+            var traceGUID = null;
+            var sampled = true;
+
+            (0, _each3.default)(carrier, function (value, key) {
+                key = key.toLowerCase();
+                if (key.substr(0, _this2._carrierPrefix.length) !== _this2._carrierPrefix) {
+                    return;
+                }
+                var suffix = key.substr(_this2._carrierPrefix.length);
+
+                switch (suffix) {
+                    case 'trace-id':
+                        foundFields++;
+                        traceGUID = parseInt(value, 10).toString(16);
+                        break;
+                    case 'parent-id':
+                        foundFields++;
+                        spanGUID = parseInt(value, 10).toString(16);
+                        break;
+                    case 'sampling-priority':
+                        // TODO: support sampling priority somehow. This is a float64 that does not
+                        // necessarily represent the sampling decision
+                        if (value === 0) {
+                            sampled = false;
+                        }
+                        break;
+                    default:
+                        _this2._tracer._error('Unrecognized carrier key \'' + key + '\' with recognized prefix. Ignoring.');
+                        break;
+                }
+            });
+
+            if (foundFields === 0) {
+                // This is not an error per se, there was simply no SpanContext
+                // in the carrier.
+                return null;
+            }
+            if (foundFields < 2) {
+                // A partial SpanContext suggests some sort of data corruption.
+                this._tracer._error('Only found a partial SpanContext: ' + carrier);
+                return null;
+            }
+
+            var spanContext = new _span_context_imp2.default(spanGUID, traceGUID, sampled);
+
+            (0, _each3.default)(carrier, function (value, key) {
+                key = key.toLowerCase();
+                if (key.substr(0, _this2._baggagePrefix.length) !== _this2._baggagePrefix) {
+                    return;
+                }
+                var suffix = key.substr(_this2._baggagePrefix.length);
+                spanContext.setBaggageItem(suffix, value);
+            });
+            return spanContext;
+        }
+    }]);
+
+    return DDProgagator;
+}();
+
+exports.default = DDProgagator;
 module.exports = exports.default;
 
 /***/ }),
@@ -5600,6 +5748,10 @@ var _propagator_b = __webpack_require__(/*! ./imp/propagator_b3 */ "./src/imp/pr
 
 var _propagator_b2 = _interopRequireDefault(_propagator_b);
 
+var _propagator_dd = __webpack_require__(/*! ./imp/propagator_dd */ "./src/imp/propagator_dd.js");
+
+var _propagator_dd2 = _interopRequireDefault(_propagator_dd);
+
 var _platform_abstraction_layer = __webpack_require__(/*! ./platform_abstraction_layer */ "./src/platform_abstraction_layer.js");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -5607,7 +5759,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var library = {
     Tracer: _tracer_imp2.default,
     LightStepPropagator: _propagator_ls2.default,
-    B3Propagator: _propagator_b2.default
+    B3Propagator: _propagator_b2.default,
+    DDPropagator: _propagator_dd2.default
 };
 
 _platform_abstraction_layer.Platform.initLibrary(library);
@@ -5885,7 +6038,9 @@ function getCookies() {
 // Normalize the getAllResponseHeaders output
 function getResponseHeaders(response) {
     var result = {};
-    for (var pair of response.headers.entries()) {
+    var entries = response.headers.entries();
+    for (var i = 0; i < entries.length; i++) {
+        var pair = entries[i];
         result[pair[0]] = pair[1];
     }
     return result;
