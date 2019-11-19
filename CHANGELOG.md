@@ -3,8 +3,11 @@
 *Log of significant changes, especially those affecting the supported API.*
 
 ## vNext
+## 0.24.0
+* Adds DataDog header support (#187)
+* Removes for..of loop to support IE11 (#189)
 
-## 0.22.3
+## 0.23.0
 
 * Add NodeJS instrumentation and shims (#184)
 * Adds B3 propagator (#177)
