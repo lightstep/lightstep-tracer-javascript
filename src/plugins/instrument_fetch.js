@@ -34,7 +34,9 @@ function getCookies() {
 // Normalize the getAllResponseHeaders output
 function getResponseHeaders(response) {
     const result = {};
-    for (let pair of response.headers.entries()) {
+    const entries = response.headers.entries();
+    for (let i = 0; i < entries.length; i++) {
+        const pair = entries[i];
         result[pair[0]] = pair[1];
     }
     return result;

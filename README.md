@@ -89,6 +89,24 @@ The OpenTracing standard JavaScript API is [documented here](https://doc.esdoc.o
 
 * `include_cookies` `bool` - if true, includes cookies in the span logs for both `window.fetch` and `XMLHttpRequest`. Defaults to true.
 
+**node-specific initialization options**
+
+* `nodejs_instrumentation` `bool` - if false, disables automatic instrumentation of node requests.
+This must be set at initialization; changes after initialization will have no effect. Defaults to false.
+
+* `nodejs_url_inclusion_patterns` `RegExp[]` - an array of regular expressions used to whitelist
+URLs
+for `XMLHttpRequest` auto-instrumentation. The default value is wildcard matching all strings.
+For a given URL to be instrumented, it must match at least one regular expression in
+`nodejs_url_inclusion_patterns` and not match any regular expressions in
+`nodejs_url_exclusion_patterns`.
+
+* `nodejs_url_exclusion_patterns` `RegExp[]` - an array of regular expressions used to exclude URLs
+from `XMLHttpRequest` auto-instrumentation. The default value is an empty array. For a given URL
+to be instrumented, it must match at least one regular expression in
+`nodejs_url_inclusion_patterns`
+and not match any regular expressions in `nodejs_url_exclusion_patterns`.
+
 **Non-standard options**
 
 *NOTE: Future API compatibility on non-standard options is not guaranteed.*
@@ -103,7 +121,7 @@ The OpenTracing standard JavaScript API is [documented here](https://doc.esdoc.o
 * `transport` `string` *optional*, *default=proto* - when `transport` is set to `thrift`, the Tracer will use Thrift as its transport instead of Proto over HTTP.
 * `logger` `function(level: string, message: string, payload: any): void` *optional* - specify a custom logger function. Possible `level` values are `debug`, `info`, `warn` and `error`. By default messages will be logged to the console.
 * `disable_meta_event_reporting` `bool` *optional*, *default=false* - when `disable_meta_event_reporting` is set to `true`, the tracer will disable meta event reporting even if requested by the Satellite.
-* `propagator` `dictionary` *optional*, *defaults=*`{opentracing.FORMAT_HTTP: LightStepPropagator, opentracing.FORMAT_TEXT_MAP: LightStepPropagator, opentracing.FORMAT_BINARY: UnsupportedPropagator}`: Allows inject/extract to use custom propagators for different formats. This package includes a `B3Propagator` that supports B3 headers on text maps and http headers.
+* `propagator` `dictionary` *optional*, *defaults=*`{opentracing.FORMAT_HTTP: LightStepPropagator, opentracing.FORMAT_TEXT_MAP: LightStepPropagator, opentracing.FORMAT_BINARY: UnsupportedPropagator}`: Allows inject/extract to use custom propagators for different formats. This package includes a `B3Propagator` that supports B3 headers on text maps and http headers. `DDPropagator` supports DataDog trace headers.
 
 ### SpanImp
 
