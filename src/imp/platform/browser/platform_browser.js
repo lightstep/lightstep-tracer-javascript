@@ -123,6 +123,7 @@ class PlatformBrowser {
             // Accessing `sessionStorage` or `localStorage` in an `<iframe>` in Chrome throws when
             // the user setting "block third-party cookies and site data" is turned on.
             //
+            // eslint-disable-next-line max-len
             // https://www.chromium.org/for-testers/bug-reporting-guidelines/uncaught-securityerror-failed-to-read-the-localstorage-property-from-window-access-is-denied-for-this-document
             return null;
         }
