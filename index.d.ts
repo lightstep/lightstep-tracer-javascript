@@ -36,7 +36,7 @@ declare module 'lightstep-tracer' {
      * `tls` - use HTTPS encrypted connections
      * `none` - use HTTP plain-text connections
     */
-    collector_encryption?: string
+    collector_encryption?: "tls" | "none"
 
     /**
      * optional tag object that will be applied to all reports.
