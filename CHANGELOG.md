@@ -3,6 +3,8 @@
 *Log of significant changes, especially those affecting the supported API.*
 
 ## vNext
+## 0.24.1
+* Fixes a security error when 3rd-party cookies are disabled in chrome (thank you @calebmer!)
 ## 0.24.0
 * Adds DataDog header support (#187)
 * Removes for..of loop to support IE11 (#189)
