@@ -115,7 +115,16 @@ class PlatformBrowser {
     }
 
     localStoreGet(key) {
-        if (!window.sessionStorage) {
+        try {
+            if (!window.sessionStorage) {
+                return null;
+            }
+        } catch (_ignored) {
+            // Accessing `sessionStorage` or `localStorage` in an `<iframe>` in Chrome throws when
+            // the user setting "block third-party cookies and site data" is turned on.
+            //
+            // eslint-disable-next-line max-len
+            // https://www.chromium.org/for-testers/bug-reporting-guidelines/uncaught-securityerror-failed-to-read-the-localstorage-property-from-window-access-is-denied-for-this-document
             return null;
         }
         try {
@@ -126,7 +135,12 @@ class PlatformBrowser {
     }
 
     localStoreSet(key, value) {
-        if (!window.sessionStorage) {
+        try {
+            if (!window.sessionStorage) {
+                return;
+            }
+        } catch (_ignored) {
+            // (See comment above)
             return;
         }
         try {
