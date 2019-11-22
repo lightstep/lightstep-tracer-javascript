@@ -2881,7 +2881,16 @@ var PlatformBrowser = function () {
     }, {
         key: 'localStoreGet',
         value: function localStoreGet(key) {
-            if (!window.sessionStorage) {
+            try {
+                if (!window.sessionStorage) {
+                    return null;
+                }
+            } catch (_ignored) {
+                // Accessing `sessionStorage` or `localStorage` in an `<iframe>` in Chrome throws when
+                // the user setting "block third-party cookies and site data" is turned on.
+                //
+                // eslint-disable-next-line max-len
+                // https://www.chromium.org/for-testers/bug-reporting-guidelines/uncaught-securityerror-failed-to-read-the-localstorage-property-from-window-access-is-denied-for-this-document
                 return null;
             }
             try {
@@ -2893,7 +2902,12 @@ var PlatformBrowser = function () {
     }, {
         key: 'localStoreSet',
         value: function localStoreSet(key, value) {
-            if (!window.sessionStorage) {
+            try {
+                if (!window.sessionStorage) {
+                    return;
+                }
+            } catch (_ignored) {
+                // (See comment above)
                 return;
             }
             try {
@@ -3252,16 +3266,16 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var CARRIER_DD_TRACER_STATE_PREFIX = 'x-datadog-';
 
-var DDProgagator = function () {
-    function DDProgagator(tracer) {
-        _classCallCheck(this, DDProgagator);
+var DDPropagator = function () {
+    function DDPropagator(tracer) {
+        _classCallCheck(this, DDPropagator);
 
         this._tracer = tracer;
         this._baggagePrefix = _propagator_ls2.default;
         this._carrierPrefix = CARRIER_DD_TRACER_STATE_PREFIX;
     }
 
-    _createClass(DDProgagator, [{
+    _createClass(DDPropagator, [{
         key: 'inject',
         value: function inject(spanContext, carrier) {
             var _this = this;
@@ -3358,10 +3372,10 @@ var DDProgagator = function () {
         }
     }]);
 
-    return DDProgagator;
+    return DDPropagator;
 }();
 
-exports.default = DDProgagator;
+exports.default = DDPropagator;
 module.exports = exports.default;
 
 /***/ }),

@@ -36,7 +36,7 @@ declare module 'lightstep-tracer' {
      * `tls` - use HTTPS encrypted connections
      * `none` - use HTTP plain-text connections
     */
-    collector_encryption?: string
+    collector_encryption?: "tls" | "none"
 
     /**
      * optional tag object that will be applied to all reports.
@@ -124,13 +124,13 @@ declare module 'lightstep-tracer' {
      * optional. browser-only. a regex to indicate which URLs should be automatically instrumented for XHRs.
      * default value is all urls.
      */
-    xhr_url_inclusion_patterns?: any
+    xhr_url_inclusion_patterns?: RegExp[]
 
     /**
      * optional. browser-only. a regex to indicate which URLs should not be automatically instrumented for XHRs.
      * default value is no urls.
      */
-    xhr_url_exclusion_patterns?: any
+    xhr_url_exclusion_patterns?: RegExp[]
 
     /**
      * optional. browser-only. if enabled, automatically instrument all window.fetch requests with context.headers.
@@ -142,13 +142,13 @@ declare module 'lightstep-tracer' {
      * optional. browser-only. a regex to indicate which URLs should be automatically instrumented for window.fetch.
      * default value is all urls.
      */
-    fetch_url_inclusion_patterns?: any
+    fetch_url_inclusion_patterns?: RegExp[]
 
     /**
      * optional. browser-only. a regex to indicate which URLs should not be automatically instrumented for window.fetch.
      * default value is no urls.
      */
-    fetch_url_exclusion_patterns?: any
+    fetch_url_exclusion_patterns?: RegExp[]
 
     /**
      * optional. node-only. if enabled, automatically instrument all node requests with
@@ -161,14 +161,14 @@ declare module 'lightstep-tracer' {
      * node's native http, https modules.
      * default value is all urls.
      */
-    nodejs_inclusion_patterns?: any
+    nodejs_inclusion_patterns?: RegExp[]
 
     /**
      * optional. node-only. a regex to indicate which URLs should not be automatically instrumented
      * for node's native http, https modules.
      * default value is no urls.
      */
-    nodejs_exclusion_patterns?: any
+    nodejs_exclusion_patterns?: RegExp[]
 
     /**
      * optional. browser-only. if true, includes cookies in the span logs for both `window.fetch` and `XMLHttpRequest`.
