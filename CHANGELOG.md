@@ -3,6 +3,13 @@
 *Log of significant changes, especially those affecting the supported API.*
 
 ## vNext
+
+## 0.24.1
+* Guard session storage access
+* update type of collector_encryption
+* Fix propagator typo
+* Update typing on inclusion/exclusion patterns to match docs
+
 ## 0.24.0
 * Adds DataDog header support (#187)
 * Removes for..of loop to support IE11 (#189)
