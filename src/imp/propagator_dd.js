@@ -4,7 +4,7 @@ import CARRIER_BAGGAGE_PREFIX from './propagator_ls';
 
 const CARRIER_DD_TRACER_STATE_PREFIX = 'x-datadog-';
 
-export default class DDProgagator {
+export default class DDPropagator {
     constructor(tracer) {
         this._tracer = tracer;
         this._baggagePrefix = CARRIER_BAGGAGE_PREFIX;
