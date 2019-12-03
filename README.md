@@ -121,7 +121,17 @@ and not match any regular expressions in `nodejs_url_exclusion_patterns`.
 * `transport` `string` *optional*, *default=proto* - when `transport` is set to `thrift`, the Tracer will use Thrift as its transport instead of Proto over HTTP.
 * `logger` `function(level: string, message: string, payload: any): void` *optional* - specify a custom logger function. Possible `level` values are `debug`, `info`, `warn` and `error`. By default messages will be logged to the console.
 * `disable_meta_event_reporting` `bool` *optional*, *default=false* - when `disable_meta_event_reporting` is set to `true`, the tracer will disable meta event reporting even if requested by the Satellite.
-* `propagator` `dictionary` *optional*, *defaults=*`{opentracing.FORMAT_HTTP_HEADERS: LightStepPropagator, opentracing.FORMAT_TEXT_MAP: LightStepPropagator, opentracing.FORMAT_BINARY: UnsupportedPropagator}`: Allows inject/extract to use custom propagators for different formats. This package includes a `B3Propagator` that supports B3 headers on text maps and http headers. `DDPropagator` supports DataDog trace headers.
+* `propagators` `dictionary` *optional*, *defaults=*`{ [opentracing.FORMAT_HTTP_HEADERS]: new lightstep.LightStepPropagator(), [opentracing.FORMAT_TEXT_MAP]: new lightstep.LightStepPropagator(), [opentracing.FORMAT_BINARY]: new lightstep.UnsupportedPropagator() }`: Allows inject/extract to use custom propagators for different formats. This package includes `B3Propagator` that supports B3 headers on text maps and http headers. `DDPropagator` supports DataDog trace headers.
+
+An example configuration using custom propagators might look like:
+```js
+const tracer = new lightstep.Tracer({
+  propagators: {
+    [opentracing.FORMAT_HTTP_HEADERS]: new lightstep.DDPropagator(),
+    [opentracing.FORMAT_TEXT_MAP]: new lightstep.B3Propagator()
+  }
+})
+```
 
 ### SpanImp
 
