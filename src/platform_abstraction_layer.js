@@ -17,7 +17,7 @@ if ((typeof PLATFORM_BROWSER !== 'undefined') && PLATFORM_BROWSER) {
         Platform        : require('./imp/platform/node/platform_node.js'),
         ThriftTransport : require('./imp/platform/node/transport_httpthrift.js'),
         ProtoTransport  : require('./imp/platform/node/transport_httpproto.js'),
-        thrift          : require('thrift'),
+        thrift          : require('thrift/src/thrift'),
         crouton_thrift  : require('./imp/platform/node/crouton_thrift.js'),
         proto           : require('./imp/generated_proto/collector_pb.js'),
     };
