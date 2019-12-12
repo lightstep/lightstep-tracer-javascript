@@ -1,6 +1,6 @@
 {
   "name": "lightstep-tracer",
-  "version": "0.24.1",
+  "version": "0.24.2",
   "main": "index.js",
   "types": "index.d.ts",
   "browser": "browser.js",
