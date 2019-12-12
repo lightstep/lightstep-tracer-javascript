@@ -49,7 +49,7 @@
     "chai": "3.4.1",
     "clone": "1.0.2",
     "colors": "1.1.2",
-    "eslint": "2.4.0",
+    "eslint": "4.18.2",
     "eslint-config-airbnb": "6.2.0",
     "eslint-plugin-react": "4.2.3",
     "express": "^4.16.3",
