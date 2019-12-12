@@ -5,7 +5,10 @@ var crouton_thrift = {};
 //
 // DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
 //
-var thrift = require('thrift');
+
+// Note: THRIFT-5029 requires us to use a non-standard require
+// TODO: remove non-standard require after https://github.com/apache/thrift/pull/1947 merges
+var thrift = require('thrift/src/thrift');
 var Thrift = thrift.Thrift;
 var Q = thrift.Q;
 
@@ -1706,4 +1709,3 @@ crouton_thrift.ReportResponse.prototype.write = function(output) {
   output.writeStructEnd();
   return;
 };
-

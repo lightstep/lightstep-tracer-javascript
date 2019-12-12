@@ -4,6 +4,9 @@
 
 ## vNext
 
+## 0.24.2
+* Upgrade thrift to 0.13.0 (#198)
+
 ## 0.24.1
 * Guard session storage access
 * update type of collector_encryption
