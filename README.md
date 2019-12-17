@@ -96,13 +96,13 @@ This must be set at initialization; changes after initialization will have no ef
 
 * `nodejs_url_inclusion_patterns` `RegExp[]` - an array of regular expressions used to whitelist
 URLs
-for `XMLHttpRequest` auto-instrumentation. The default value is wildcard matching all strings.
+for the `http` and `https` modules auto-instrumentation. The default value is wildcard matching all strings.
 For a given URL to be instrumented, it must match at least one regular expression in
 `nodejs_url_inclusion_patterns` and not match any regular expressions in
 `nodejs_url_exclusion_patterns`.
 
 * `nodejs_url_exclusion_patterns` `RegExp[]` - an array of regular expressions used to exclude URLs
-from `XMLHttpRequest` auto-instrumentation. The default value is an empty array. For a given URL
+from the `http` and `https` modules auto-instrumentation. The default value is an empty array. For a given URL
 to be instrumented, it must match at least one regular expression in
 `nodejs_url_inclusion_patterns`
 and not match any regular expressions in `nodejs_url_exclusion_patterns`.
