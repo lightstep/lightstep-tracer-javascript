@@ -157,7 +157,8 @@ class InstrumentFetch {
         let tracer = this._tracer;
 
         return function (request, options = {}) {
-            const url = typeof request === 'string' ? request : request.url;
+            request = typeof request !== 'string' ? request : new Request(request);
+            const url = request.url;
             const opts = tracer.options();
 
             if (!self._shouldTrace(tracer, url)) {
@@ -176,17 +177,32 @@ class InstrumentFetch {
             }
 
             const fetchPayload = Object.assign({}, tags);
+
             if (opts.include_cookies) {
                 fetchPayload.cookies = getCookies();
             }
 
-            options.headers = new Headers(options.headers);
+            if (options.headers instanceof Headers) {
+                options.headers.forEach((value, key) => {
+                    request.headers.set(key, value);
+                });
+            } else if (options.headers) {
+                for (let [key, value] of Object.entries(options.headers)) {
+                    request.headers.set(key, value);
+                }
+            }
+
+            // Combine request and options into one Request object to send to fetch
+            // And delete headers from options object so they don't override headers in Request object
+            delete options.headers;
+            request = new Request(request, options);
+
             // Add Open-Tracing headers
             const headersCarrier = {};
             tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
             const keys = Object.keys(headersCarrier);
             keys.forEach((key) => {
-                options.headers.append(key, headersCarrier[key]);
+                request.headers.set(key, headersCarrier[key]);
             });
             span.log({
                 event       : 'sending',
@@ -196,7 +212,7 @@ class InstrumentFetch {
             });
             span.addTags(tags);
 
-            return proxiedFetch(request, options).then((response) => {
+            return proxiedFetch(request).then((response) => {
                 if (!response.ok) {
                     span.addTags({ error : true });
                 }
