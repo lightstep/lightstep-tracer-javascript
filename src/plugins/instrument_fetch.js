@@ -157,7 +157,7 @@ class InstrumentFetch {
         let tracer = this._tracer;
 
         return function (request, options = {}) {
-            request = typeof request !== 'string' ? request : new Request(request);
+            request = new Request(request, options);
             const url = request.url;
             const opts = tracer.options();
 
@@ -182,27 +182,12 @@ class InstrumentFetch {
                 fetchPayload.cookies = getCookies();
             }
 
-            if (options.headers instanceof Headers) {
-                options.headers.forEach((value, key) => {
-                    request.headers.set(key, value);
-                });
-            } else if (options.headers) {
-                for (let [key, value] of Object.entries(options.headers)) {
-                    request.headers.set(key, value);
-                }
-            }
-
-            // Combine request and options into one Request object to send to fetch
-            // And delete headers from options object so they don't override headers in Request object
-            delete options.headers;
-            request = new Request(request, options);
-
             // Add Open-Tracing headers
             const headersCarrier = {};
             tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
             const keys = Object.keys(headersCarrier);
             keys.forEach((key) => {
-                request.headers.set(key, headersCarrier[key]);
+                if (!request.headers.get(key)) request.headers.set(key, headersCarrier[key]);
             });
             span.log({
                 event       : 'sending',
