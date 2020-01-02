@@ -4,6 +4,12 @@
 
 ## vNext
 
+## 0.24.3
+* Fix how the `fetch` shim so that it does not overwrite user-provided `Response.headers`
+* Add clock correction and error handling for the protobuf transport's responses
+* Specify correct modules in node instrumentation docs
+* Add a CONTRIBUTING.md guide
+
 ## 0.24.2
 * Upgrade thrift to 0.13.0 (#198)
 

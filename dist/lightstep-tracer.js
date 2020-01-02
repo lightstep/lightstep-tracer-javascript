@@ -13432,7 +13432,7 @@ module.exports = g;
 /*! exports provided: name, version, main, types, browser, engines, scripts, license, repository, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"lightstep-tracer","version":"0.24.2","main":"index.js","types":"index.d.ts","browser":"browser.js","engines":{"node":">=0.12.0"},"scripts":{"test":"rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js"},"license":"MIT","repository":{"type":"git","url":"http://github.com/lightstep/lightstep-tracer-javascript.git"},"dependencies":{"async":"1.5.0","eventemitter3":"1.1.1","google-protobuf":"3.6.1","hex2dec":"1.0.1","source-map-support":"0.3.3","thrift":"0.13.0"},"devDependencies":{"babel-cli":"6.14.0","babel-core":"^6.26.3","babel-loader":"7","babel-plugin-add-module-exports":"^1.0.0","babel-plugin-check-es2015-constants":"6.7.2","babel-plugin-transform-es2015-arrow-functions":"6.5.2","babel-plugin-transform-es2015-block-scoped-functions":"6.6.5","babel-plugin-transform-es2015-block-scoping":"^6.26.0","babel-plugin-transform-es2015-classes":"6.6.5","babel-plugin-transform-es2015-computed-properties":"6.6.5","babel-plugin-transform-es2015-destructuring":"6.6.5","babel-plugin-transform-es2015-duplicate-keys":"6.6.4","babel-plugin-transform-es2015-literals":"6.5.0","babel-plugin-transform-es2015-modules-commonjs":"6.7.4","babel-plugin-transform-es2015-object-super":"6.6.5","babel-plugin-transform-es2015-parameters":"6.7.0","babel-plugin-transform-es2015-spread":"6.6.5","babel-plugin-transform-es2015-sticky-regex":"6.5.0","babel-plugin-transform-es2015-template-literals":"6.6.5","babel-plugin-transform-es2015-unicode-regex":"6.5.0","babel-polyfill":"6.3.14","babel-preset-es2015":"6.3.13","chai":"3.4.1","clone":"1.0.2","colors":"1.1.2","eslint":"2.4.0","eslint-config-airbnb":"6.2.0","eslint-plugin-react":"4.2.3","express":"^4.16.3","istanbul":"^0.4.5","mocha":"^5.2.0","opentracing":"^0.14.4","protobufjs":"6.8.8","shelljs":"0.5.3","sprintf-js":"1.0.3","underscore":"1.8.3","watch-trigger":"0.0.5","webpack":"^4.25.1","webpack-cli":"^3.1.2"}};
+module.exports = {"name":"lightstep-tracer","version":"0.24.3","main":"index.js","types":"index.d.ts","browser":"browser.js","engines":{"node":">=0.12.0"},"scripts":{"test":"rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js"},"license":"MIT","repository":{"type":"git","url":"http://github.com/lightstep/lightstep-tracer-javascript.git"},"dependencies":{"async":"1.5.0","eventemitter3":"1.1.1","google-protobuf":"3.6.1","hex2dec":"1.0.1","source-map-support":"0.3.3","thrift":"0.13.0"},"devDependencies":{"babel-cli":"6.14.0","babel-core":"^6.26.3","babel-loader":"7","babel-plugin-add-module-exports":"^1.0.0","babel-plugin-check-es2015-constants":"6.7.2","babel-plugin-transform-es2015-arrow-functions":"6.5.2","babel-plugin-transform-es2015-block-scoped-functions":"6.6.5","babel-plugin-transform-es2015-block-scoping":"^6.26.0","babel-plugin-transform-es2015-classes":"6.6.5","babel-plugin-transform-es2015-computed-properties":"6.6.5","babel-plugin-transform-es2015-destructuring":"6.6.5","babel-plugin-transform-es2015-duplicate-keys":"6.6.4","babel-plugin-transform-es2015-literals":"6.5.0","babel-plugin-transform-es2015-modules-commonjs":"6.7.4","babel-plugin-transform-es2015-object-super":"6.6.5","babel-plugin-transform-es2015-parameters":"6.7.0","babel-plugin-transform-es2015-spread":"6.6.5","babel-plugin-transform-es2015-sticky-regex":"6.5.0","babel-plugin-transform-es2015-template-literals":"6.6.5","babel-plugin-transform-es2015-unicode-regex":"6.5.0","babel-polyfill":"6.3.14","babel-preset-es2015":"6.3.13","chai":"3.4.1","clone":"1.0.2","colors":"1.1.2","eslint":"2.4.0","eslint-config-airbnb":"6.2.0","eslint-plugin-react":"4.2.3","express":"^4.16.3","istanbul":"^0.4.5","mocha":"^5.2.0","opentracing":"^0.14.4","shelljs":"0.5.3","sprintf-js":"1.0.3","underscore":"1.8.3","watch-trigger":"0.0.5","webpack":"^4.25.1","webpack-cli":"^3.1.2"}};
 
 /***/ }),
 
@@ -21055,7 +21055,11 @@ var Tracer = function (_opentracing$Tracer) {
                     // Update the clock state if there's info from the report
                     if (res) {
                         if (res.timing && res.timing.receive_micros && res.timing.transmit_micros) {
+                            // Handle thrift transport timing response.
                             _this12._clockState.addSample(originMicros, res.timing.receive_micros, res.timing.transmit_micros, destinationMicros);
+                        } else if (res.receiveTimestamp && res.transmitTimestamp) {
+                            // Handle protobuf transport timing response.
+                            _this12._clockState.addSample(originMicros, res.receiveTimestamp.seconds * 1e6 + res.receiveTimestamp.nanos / 1e3, res.transmitTimestamp.seconds * 1e6 + res.transmitTimestamp.nanos / 1e3, destinationMicros);
                         } else {
                             // The response does not have timing information. Disable
                             // the clock state assuming there'll never be timing data
@@ -21064,10 +21068,15 @@ var Tracer = function (_opentracing$Tracer) {
                         }
 
                         if (res.errors && res.errors.length > 0) {
+                            // Handle thrift errors.
                             _this12._warn('Errors in report', res.errors);
+                        } else if (res.errorsList && res.errorsList.length > 0) {
+                            // Handle protobuf errors.
+                            _this12._warn('Errors in report', res.errorsList);
                         }
 
                         if (res.commandsList && res.commandsList.length > 0) {
+                            // Handle both thrift and protobuf commands response.
                             if (res.commandsList[0].devMode && _this12.options().disable_meta_event_reporting !== true) {
                                 _this12.options().meta_event_reporting = true;
                             }
@@ -21726,6 +21735,8 @@ module.exports = new InstrumentPageLoad();
 "use strict";
 
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _opentracing = __webpack_require__(/*! opentracing */ "./node_modules/opentracing/lib/index.js");
@@ -21913,7 +21924,8 @@ var InstrumentFetch = function () {
             return function (request) {
                 var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
-                var url = typeof request === 'string' ? request : request.url;
+                request = typeof request !== 'string' ? request : new Request(request);
+                var url = request.url;
                 var opts = tracer.options();
 
                 if (!self._shouldTrace(tracer, url)) {
@@ -21932,17 +21944,37 @@ var InstrumentFetch = function () {
                 }
 
                 var fetchPayload = Object.assign({}, tags);
+
                 if (opts.include_cookies) {
                     fetchPayload.cookies = getCookies();
                 }
 
-                options.headers = new Headers(options.headers);
+                if (options.headers instanceof Headers) {
+                    options.headers.forEach(function (value, key) {
+                        request.headers.set(key, value);
+                    });
+                } else if (options.headers) {
+                    for (var _ref of Object.entries(options.headers)) {
+                        var _ref2 = _slicedToArray(_ref, 2);
+
+                        var key = _ref2[0];
+                        var value = _ref2[1];
+
+                        request.headers.set(key, value);
+                    }
+                }
+
+                // Combine request and options into one Request object to send to fetch
+                // And delete headers from options object so they don't override headers in Request object
+                delete options.headers;
+                request = new Request(request, options);
+
                 // Add Open-Tracing headers
                 var headersCarrier = {};
                 tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
                 var keys = Object.keys(headersCarrier);
                 keys.forEach(function (key) {
-                    options.headers.append(key, headersCarrier[key]);
+                    request.headers.set(key, headersCarrier[key]);
                 });
                 span.log({
                     event: 'sending',
@@ -21952,7 +21984,7 @@ var InstrumentFetch = function () {
                 });
                 span.addTags(tags);
 
-                return proxiedFetch(request, options).then(function (response) {
+                return proxiedFetch(request).then(function (response) {
                     if (!response.ok) {
                         span.addTags({ error: true });
                     }
