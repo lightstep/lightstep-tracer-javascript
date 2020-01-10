@@ -21735,8 +21735,6 @@ module.exports = new InstrumentPageLoad();
 "use strict";
 
 
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _opentracing = __webpack_require__(/*! opentracing */ "./node_modules/opentracing/lib/index.js");
@@ -21924,7 +21922,7 @@ var InstrumentFetch = function () {
             return function (request) {
                 var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
-                request = typeof request !== 'string' ? request : new Request(request);
+                request = new Request(request, options);
                 var url = request.url;
                 var opts = tracer.options();
 
@@ -21949,32 +21947,12 @@ var InstrumentFetch = function () {
                     fetchPayload.cookies = getCookies();
                 }
 
-                if (options.headers instanceof Headers) {
-                    options.headers.forEach(function (value, key) {
-                        request.headers.set(key, value);
-                    });
-                } else if (options.headers) {
-                    for (var _ref of Object.entries(options.headers)) {
-                        var _ref2 = _slicedToArray(_ref, 2);
-
-                        var key = _ref2[0];
-                        var value = _ref2[1];
-
-                        request.headers.set(key, value);
-                    }
-                }
-
-                // Combine request and options into one Request object to send to fetch
-                // And delete headers from options object so they don't override headers in Request object
-                delete options.headers;
-                request = new Request(request, options);
-
                 // Add Open-Tracing headers
                 var headersCarrier = {};
                 tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
                 var keys = Object.keys(headersCarrier);
                 keys.forEach(function (key) {
-                    request.headers.set(key, headersCarrier[key]);
+                    if (!request.headers.get(key)) request.headers.set(key, headersCarrier[key]);
                 });
                 span.log({
                     event: 'sending',
