@@ -4,6 +4,10 @@
 
 ## vNext
 
+## 0.24.4
+* Bug fix on `fetch` instrumentation options headers being overwritten in some cases.
+* Re-build dist to fix failed page load on IE11 (#207)
+
 ## 0.24.3
 * Fix how the `fetch` shim so that it does not overwrite user-provided `Response.headers`
 * Add clock correction and error handling for the protobuf transport's responses
