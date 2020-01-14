@@ -4,7 +4,7 @@
 
 ## vNext
 
-## 0.24.4
+## 0.25.0
 * Bug fix on `fetch` instrumentation options headers being overwritten in some cases.
 * Re-build dist to fix failed page load on IE11 (#207)
 
