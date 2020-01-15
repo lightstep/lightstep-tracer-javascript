@@ -1,8 +1,6 @@
 import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
 import _each from '../_each'; // eslint-disable-line camelcase
 import * as coerce from './coerce.js';
-let converter = require('hex2dec');
-const packageObject = require('../../package.json');
 
 export default class RuntimeImp {
     constructor(runtimeGUID, startMicros, componentName, attributes) {

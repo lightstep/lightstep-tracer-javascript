@@ -5,7 +5,6 @@ import * as opentracing from 'opentracing';
 import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
 import LogRecordImp from './log_record_imp'; // eslint-disable-line camelcase
 import util from './util/util.js';
-let converter = require('hex2dec');
 export default class SpanImp extends opentracing.Span {
 
     // ---------------------------------------------------------------------- //
