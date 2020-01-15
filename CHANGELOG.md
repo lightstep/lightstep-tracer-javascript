@@ -4,6 +4,9 @@
 
 ## vNext
 
+## 0.25.1
+* No changes (minor bump to align with 0.25.1-no-protobuf release)
+
 ## 0.25.0
 * Bug fix on `fetch` instrumentation options headers being overwritten in some cases.
 * Re-build dist to fix failed page load on IE11 (#207)

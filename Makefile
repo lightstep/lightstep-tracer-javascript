@@ -46,7 +46,6 @@ publish: test test-all coverage
 	echo "Current git branch does not appear to be 'master'. Refusing to publish."; exit 1; \
 	fi
 	npm version $(RELEASE_TYPE)
-	make build # need to rebuild with the new version number
 	git push
 	git push --tags
 	npm whoami

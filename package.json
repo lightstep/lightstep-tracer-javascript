@@ -1,6 +1,6 @@
 {
   "name": "lightstep-tracer",
-  "version": "0.25.0-no-protobuf",
+  "version": "0.25.1-no-protobuf",
   "main": "index.js",
   "types": "index.d.ts",
   "browser": "browser.js",
@@ -8,7 +8,8 @@
     "node": ">=0.12.0"
   },
   "scripts": {
-    "test": "rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js"
+    "test": "rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js",
+    "version": "make build && git add -A dist"
   },
   "license": "MIT",
   "repository": {
