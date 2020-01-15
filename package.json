@@ -1,6 +1,6 @@
 {
   "name": "lightstep-tracer",
-  "version": "0.24.1-no-protobuf",
+  "version": "0.25.0-no-protobuf",
   "main": "index.js",
   "types": "index.d.ts",
   "browser": "browser.js",
@@ -20,7 +20,7 @@
     "eventemitter3": "1.1.1",
     "hex2dec": "1.0.1",
     "source-map-support": "0.3.3",
-    "thrift": "0.12.0"
+    "thrift": "0.13.0"
   },
   "devDependencies": {
     "babel-cli": "6.14.0",

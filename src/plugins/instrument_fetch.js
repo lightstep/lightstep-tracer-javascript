@@ -157,7 +157,8 @@ class InstrumentFetch {
         let tracer = this._tracer;
 
         return function (request, options = {}) {
-            const url = typeof request === 'string' ? request : request.url;
+            request = new Request(request, options);
+            const url = request.url;
             const opts = tracer.options();
 
             if (!self._shouldTrace(tracer, url)) {
@@ -176,17 +177,17 @@ class InstrumentFetch {
             }
 
             const fetchPayload = Object.assign({}, tags);
+
             if (opts.include_cookies) {
                 fetchPayload.cookies = getCookies();
             }
 
-            options.headers = new Headers(options.headers);
             // Add Open-Tracing headers
             const headersCarrier = {};
             tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
             const keys = Object.keys(headersCarrier);
             keys.forEach((key) => {
-                options.headers.append(key, headersCarrier[key]);
+                if (!request.headers.get(key)) request.headers.set(key, headersCarrier[key]);
             });
             span.log({
                 event       : 'sending',
@@ -196,7 +197,7 @@ class InstrumentFetch {
             });
             span.addTags(tags);
 
-            return proxiedFetch(request, options).then((response) => {
+            return proxiedFetch(request).then((response) => {
                 if (!response.ok) {
                     span.addTags({ error : true });
                 }
