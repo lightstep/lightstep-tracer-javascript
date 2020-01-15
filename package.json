@@ -8,7 +8,8 @@
     "node": ">=0.12.0"
   },
   "scripts": {
-    "test": "rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js"
+    "test": "rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js",
+    "version": "make build && git add -A dist"
   },
   "license": "MIT",
   "repository": {
