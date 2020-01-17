@@ -172,11 +172,8 @@ class InstrumentFetch {
                 method : request.method,
                 url    : request.url,
 
-                // NOTE: these are potentially sensitive values, but if a
-                // consumer doesn't want them traced, they can exclude URLs
-                // matching this pattern.
-                username : parsed.username,
-                password : parsed.password,
+                // NOTE: Purposefully excluding username:password from tags.
+                // TODO: consider sanitizing URL to mask / remove that information from the trace in general
                 hash     : parsed.hash,
                 href     : parsed.href,
                 protocol : parsed.protocol,
