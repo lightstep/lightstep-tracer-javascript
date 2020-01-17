@@ -172,7 +172,11 @@ class InstrumentFetch {
                 method : request.method,
                 url    : request.url,
 
-                // NOTE: purposefully excluding username:password URL properties.
+                // NOTE: these are potentially sensitive values, but if a
+                // consumer doesn't want them traced, they can exclude URLs
+                // matching this pattern.
+                username : parsed.username,
+                password : parsed.password,
                 hash     : parsed.hash,
                 href     : parsed.href,
                 protocol : parsed.protocol,
@@ -245,7 +249,7 @@ class InstrumentFetch {
         }
 
         let include = false;
-        if (opts.fetch_url_inclusion_patterns.some(ex => ex.test(url))) {
+        if (opts.fetch_url_inclusion_patterns.some(inc => inc.test(url))) {
             include = true;
         }
         if (opts.fetch_url_exclusion_patterns.some(ex => ex.test(url))) {
