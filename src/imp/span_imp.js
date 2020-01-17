@@ -1,16 +1,16 @@
-import * as coerce from './coerce.js';
+import * as opentracing from 'opentracing';
+import * as coerce from './coerce';
 import * as constants from '../constants';
 import _each from '../_each';
-import * as opentracing from 'opentracing';
 import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
 import LogRecordImp from './log_record_imp'; // eslint-disable-line camelcase
-import util from './util/util.js';
+import util from './util/util';
+
 let converter = require('hex2dec');
-let proto = require('./generated_proto/collector_pb.js');
-let googleProtobufTimestampPB = require('google-protobuf/google/protobuf/timestamp_pb.js');
+let googleProtobufTimestampPB = require('google-protobuf/google/protobuf/timestamp_pb');
+let proto = require('./generated_proto/collector_pb');
 
 export default class SpanImp extends opentracing.Span {
-
     // ---------------------------------------------------------------------- //
     // opentracing.Span SPI
     // ---------------------------------------------------------------------- //
@@ -42,15 +42,16 @@ export default class SpanImp extends opentracing.Span {
             return;
         }
 
-        let tsMicros = timestamp ?
-            (timestamp * 1000) :
-            self._tracerImp._platform.nowMicros();
+        let tsMicros = timestamp
+            ? (timestamp * 1000)
+            : self._tracerImp._platform.nowMicros();
 
         let record = new LogRecordImp(
             self._tracerImp.getLogFieldKeyHardLimit(),
             self._tracerImp.getLogFieldValueHardLimit(),
             tsMicros,
-            keyValuePairs);
+            keyValuePairs,
+        );
         self._log_records = self._log_records || [];
         self._log_records.push(record);
         self._tracerImp.emit('log_added', record);
@@ -67,7 +68,7 @@ export default class SpanImp extends opentracing.Span {
     constructor(tracer, name, spanContext) {
         super();
 
-        console.assert(typeof tracer === 'object', 'Invalid runtime');  // eslint-disable-line no-console
+        console.assert(typeof tracer === 'object', 'Invalid runtime'); // eslint-disable-line no-console
 
         this._tracerImp = tracer;
         this._ctx = spanContext;
@@ -154,8 +155,8 @@ export default class SpanImp extends opentracing.Span {
      * Finishes the span.
      *
      * @param  {Number} finishTime
-     *         	Optional Unix timestamp in milliseconds setting an explicit
-     *         	finish time for the span.
+     *         Optional Unix timestamp in milliseconds setting an explicit
+     *         finish time for the span.
      */
     end(finishTime) {
         // Ensure a single span is not recorded multiple times
@@ -247,7 +248,7 @@ export default class SpanImp extends opentracing.Span {
         });
         spanProto.setLogsList(logs);
 
-        let parentSpanGUID = undefined;
+        let parentSpanGUID;
         let tags = [];
         _each(this._tags, (value, key) => {
             let strValue = coerce.toString(value);

@@ -56,7 +56,7 @@ class InstrumentNodejs {
         this._tracer = null;
         this._handleOptions = this._handleOptions.bind(this);
         if (!this._enabled) {
-            return;
+
         }
     }
 
@@ -127,7 +127,7 @@ class InstrumentNodejs {
 
         // http://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
         function escapeRegExp(str) {
-            return (`${str}`).replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
+            return (`${str}`).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
 
         // Check against the hostname without the port as well as the canonicalized
@@ -147,9 +147,9 @@ class InstrumentNodejs {
      * Check if in node
      */
     _isValidContext() {
-        const isNode = (typeof process !== 'undefined') &&
-            (typeof process.release !== 'undefined') &&
-            (process.release.name === 'node');
+        const isNode = (typeof process !== 'undefined')
+            && (typeof process.release !== 'undefined')
+            && (process.release.name === 'node');
         return isNode;
     }
 
@@ -168,7 +168,7 @@ class InstrumentNodejs {
                 urlObject = args[0] instanceof URL ? args[0] : new URL(args[0]);
                 options = urlToOptions(urlObject);
                 if (typeof args[1] === 'object') {
-                    options = Object.assign({}, options, args[1]);
+                    options = { ...options, ...args[1] };
                     callback = args[2];
                 } else if (typeof args[1] === 'function') {
                     callback = args[1];
@@ -182,7 +182,7 @@ class InstrumentNodejs {
             // then grab reference so that we can inject headers into the request before sending the request out
             if (!options.headers) options.headers = {};
 
-            const headers = options.headers;
+            const { headers } = options;
             const method = options.method || 'GET';
             const url = options.href || urlCreator.format(options);
             const protocol = options.protocol
@@ -214,7 +214,7 @@ class InstrumentNodejs {
                 // In an http.get call case, req.end will automatically be called,
                 // setting headers will be impossible after that point
                 // reference https://nodejs.org/api/http.html#http_class_http_clientrequest
-                keys.forEach(key => {
+                keys.forEach((key) => {
                     headers[key] = headersCarrier[key];
                 });
                 const request = originalRequest(options, callback);

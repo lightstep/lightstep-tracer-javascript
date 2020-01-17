@@ -7,10 +7,10 @@ const kCookieTimeToLiveSeconds = 7 * 24 * 60 * 60;
 
 let nowMicrosImp = (function () {
     // Is a hi-res timer available?
-    if (window.performance &&
-        window.performance.now &&
-        window.performance.timing &&
-        window.performance.timing.navigationStart) {
+    if (window.performance
+        && window.performance.now
+        && window.performance.timing
+        && window.performance.timing.navigationStart) {
         let start = performance.timing.navigationStart;
         return function () {
             return Math.floor((start + performance.now()) * 1000.0);
@@ -23,7 +23,6 @@ let nowMicrosImp = (function () {
 }());
 
 class PlatformBrowser {
-
     name() {
         return 'browser';
     }
@@ -92,6 +91,7 @@ class PlatformBrowser {
             PlatformBrowser.initGlobalTracer(lib, tracerOpts);
         }
     }
+
     static initGlobalTracer(lib, opts) {
         if (typeof window !== 'object') {
             return;
@@ -99,7 +99,7 @@ class PlatformBrowser {
         if (typeof window.opentracing !== 'object') {
             return;
         }
-        opentracing.initGlobalTracer(new lib.Tracer(opts));  // eslint-disable-line no-undef
+        opentracing.initGlobalTracer(new lib.Tracer(opts)); // eslint-disable-line no-undef
     }
 
     tracerTags() {

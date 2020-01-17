@@ -47,7 +47,7 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
         return;
     }
 
-    let dataset = hostScriptElement.dataset;
+    let { dataset } = hostScriptElement;
 
     let accessToken = dataset.access_token;
     if (typeof accessToken === 'string' && accessToken.length > 0) {
@@ -76,7 +76,7 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
         opts.collector_encryption = collectorEncryption;
     }
 
-    let enable = dataset.enable;
+    let { enable } = dataset;
     if (typeof enable === 'string') {
         if (enable === 'true') {
             opts.enable = true;
@@ -84,7 +84,7 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
             opts.enable = false;
         }
     }
-    let verbosity = dataset.verbosity;
+    let { verbosity } = dataset;
     if (typeof verbosity === 'string') {
         opts.verbosity = parseInt(verbosity, 10);
     }

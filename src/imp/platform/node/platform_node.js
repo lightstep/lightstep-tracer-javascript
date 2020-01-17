@@ -16,7 +16,6 @@ let startTimeMicros = computeStartMicros();
 let gLocalStorage = {};
 
 export default class PlatformNode {
-
     constructor(imp) {
         this._mustMatchVersion();
     }
@@ -55,11 +54,11 @@ export default class PlatformNode {
                 parseInt(requiredMatch[2], 10),
             ];
             if (actual[0] > required[0]) {
-                return;
+
             } else if (actual[0] < required[0]) {
                 this.fatal(err);
             } else if (actual[1] > required[1]) {
-                return;
+
             } else if (actual[1] < required[1]) {
                 this.fatal(err);
             } else if (actual[2] < required[2]) {
@@ -159,7 +158,7 @@ export default class PlatformNode {
     }
 
     fatal(message) {
-        console.error(message);     // eslint-disable-line no-console
+        console.error(message); // eslint-disable-line no-console
         process.exit(1);
     }
 

@@ -48,7 +48,7 @@ class InstrumentPageLoad {
 
         let span = this._span;
         let state = document.readyState;
-        let payload = undefined;
+        let payload;
         if (state === 'complete') {
             payload = {};
             if (window.performance && performance.timing) {
@@ -73,7 +73,6 @@ class InstrumentPageLoad {
             try {
                 let value = nav[key];
                 switch (key) {
-
                 case 'plugins': {
                     let p = [];
                     for (let i = 0; i < value.length; i++) {
@@ -125,7 +124,7 @@ class InstrumentPageLoad {
                 return;
             }
 
-            let payload = undefined;
+            let payload;
 
             if (key === 'navigationStart' && typeof navigator === 'object') {
                 payload = {

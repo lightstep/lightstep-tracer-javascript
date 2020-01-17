@@ -1,5 +1,5 @@
-import _each from '../_each';
 import * as opentracing from 'opentracing';
+import _each from '../_each';
 
 // Capture the proxied values on script load (i.e. ASAP) in case there are
 // multiple layers of instrumentation.
@@ -60,7 +60,7 @@ class InstrumentXHR {
         this._handleOptions = this._handleOptions.bind(this);
 
         if (!this._enabled) {
-            return;
+
         }
     }
 
@@ -132,7 +132,7 @@ class InstrumentXHR {
 
         // http://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
         function escapeRegExp(str) {
-            return (`${str}`).replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
+            return (`${str}`).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
 
         // Check against the hostname without the port as well as the canonicalized
@@ -236,7 +236,7 @@ class InstrumentXHR {
                             event      : 'loading',
                         });
                     } else if (this.readyState === 4) {
-                        let responseType = this.responseType;
+                        let { responseType } = this;
                         span.log({
                             readyState   : 4,
                             url          : url,
@@ -279,7 +279,7 @@ class InstrumentXHR {
             }
 
             let data = Array.prototype.slice.call(arguments);
-            let len = undefined;
+            let len;
             if (data.length === 1) {
                 if (data[0] && data[0].length) {
                     len = data[0].length;

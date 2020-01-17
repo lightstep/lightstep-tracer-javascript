@@ -55,7 +55,7 @@ class InstrumentFetch {
         this._handleOptions = this._handleOptions.bind(this);
 
         if (!this._enabled) {
-            return;
+
         }
     }
 
@@ -122,7 +122,7 @@ class InstrumentFetch {
 
         // http://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
         function escapeRegExp(str) {
-            return (`${str}`).replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
+            return (`${str}`).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
 
         // Check against the hostname without the port as well as the canonicalized

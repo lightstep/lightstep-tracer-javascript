@@ -43,7 +43,7 @@ class LogToConsole {
 
     _handleLogAdded(record) {
         let level = constants.LOG_STRING_TO_LEVEL[record.level];
-        let message = record.message;
+        let { message } = record;
 
         // Ignore records without a message (e.g. a stable_name log record)
         if (!message) {

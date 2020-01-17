@@ -36,7 +36,6 @@ const MAX_INTERNAL_LOGS = 20;
 let _singleton = null;
 
 export default class Tracer extends opentracing.Tracer {
-
     constructor(opts) {
         super();
 
@@ -51,7 +50,7 @@ export default class Tracer extends opentracing.Tracer {
 
         // Platform abstraction layer
         this._platform = new Platform(this);
-        this._runtimeGUID = opts.guid || this.override_runtime_guid || null;  // Set once the group name is set
+        this._runtimeGUID = opts.guid || this.override_runtime_guid || null; // Set once the group name is set
         this._plugins = {};
         this._options = {};
         this._optionDescs = [];
@@ -86,7 +85,7 @@ export default class Tracer extends opentracing.Tracer {
             this._opentracing.FORMAT_BINARY);
 
         if (opts && opts.propagators) {
-            this._propagators = Object.assign({}, this._propagators, opts.propagators);
+            this._propagators = { ...this._propagators, ...opts.propagators };
         }
 
 
@@ -94,7 +93,7 @@ export default class Tracer extends opentracing.Tracer {
         this._first_report_has_run = false;
         this._reportYoungestMicros = now;
         this._reportTimer = null;
-        this._reportErrorStreak = 0;    // Number of consecutive errors
+        this._reportErrorStreak = 0; // Number of consecutive errors
         this._lastVisibleErrorMillis = 0;
         this._skippedVisibleErrors = 0;
 
@@ -176,9 +175,10 @@ export default class Tracer extends opentracing.Tracer {
 
         if (this._options.access_token.length === 0) {
             this._warn(
-            `Access token not set -
+                `Access token not set -
             this requires a satellite with access token checking disabled,
-            such as a developer satellite.`);
+            such as a developer satellite.`,
+            );
         }
 
         this.startPlugins();
@@ -220,7 +220,9 @@ export default class Tracer extends opentracing.Tracer {
 
         // NOTE: make 'verbosity' the first option so it is processed first on
         // options changes and takes effect as soon as possible.
-        this.addOption('verbosity',             { type : 'int', min: 0, max: 9, defaultValue: 1 });
+        this.addOption('verbosity',             {
+            type : 'int', min: 0, max: 9, defaultValue: 1,
+        });
 
         // Core options
         this.addOption('access_token',          { type: 'string',  defaultValue: '' });
@@ -280,8 +282,8 @@ export default class Tracer extends opentracing.Tracer {
             for (let i = 0; i < fields.references.length; i++) {
                 let ref = fields.references[i];
                 let type = ref.type();
-                if (type === this._opentracing.REFERENCE_CHILD_OF ||
-                    type === this._opentracing.REFERENCE_FOLLOWS_FROM) {
+                if (type === this._opentracing.REFERENCE_CHILD_OF
+                    || type === this._opentracing.REFERENCE_FOLLOWS_FROM) {
                     let context = ref.referencedContext();
                     if (!context) {
                         this._error('Span reference has an invalid context', context);
@@ -391,7 +393,7 @@ export default class Tracer extends opentracing.Tracer {
                         [constants.LS_META_PROPAGATION_KEY]: format,
                     },
                 })
-            .finish();
+                .finish();
         }
         return sc;
     }
@@ -473,9 +475,9 @@ export default class Tracer extends opentracing.Tracer {
 
         // "collector_encryption" acts an alias for the common cases of 'collector_port'
         if (opts.collector_encryption !== undefined && opts.collector_port === undefined) {
-            opts.collector_port = opts.collector_encryption !== 'none' ?
-                DEFAULT_COLLECTOR_PORT_TLS :
-                DEFAULT_COLLECTOR_PORT_PLAIN;
+            opts.collector_port = opts.collector_encryption !== 'none'
+                ? DEFAULT_COLLECTOR_PORT_TLS
+                : DEFAULT_COLLECTOR_PORT_PLAIN;
         }
         // set meta event reporting to false by default, it will be enabled by the satellite
         this.meta_event_reporting = false;
@@ -519,7 +521,7 @@ export default class Tracer extends opentracing.Tracer {
     }
 
     _setOptionInternal(modified, unchanged, opts, desc) {
-        let name = desc.name;
+        let { name } = desc;
         let value = opts[name];
         let valueType = typeof value;
         if (value === undefined) {
@@ -528,7 +530,6 @@ export default class Tracer extends opentracing.Tracer {
 
         // Parse the option (and check constraints)
         switch (desc.type) {
-
         case 'any':
             break;
 
@@ -740,8 +741,8 @@ export default class Tracer extends opentracing.Tracer {
         // multiple.
         this._activeRootSpan = null;
         _each(this._activeRootSpanSet, (span) => {
-            if (!this._activeRootSpan ||
-                span._beginMicros > this._activeRootSpan._beginMicros) {
+            if (!this._activeRootSpan
+                || span._beginMicros > this._activeRootSpan._beginMicros) {
                 this._activeRootSpan = span;
             }
         });
@@ -979,9 +980,9 @@ export default class Tracer extends opentracing.Tracer {
         // However, do not use the shorter interval in the case of an error.
         // That does not provide sufficient backoff.
         let reportInterval = this._options.max_reporting_interval_millis;
-        if (this._reportErrorStreak === 0 &&
-            this._useClockState &&
-            !this._clockState.isReady()) {
+        if (this._reportErrorStreak === 0
+            && this._useClockState
+            && !this._clockState.isReady()) {
             reportInterval = Math.min(constants.CLOCK_STATE_REFRESH_INTERVAL_MS, reportInterval);
         }
 
@@ -1099,7 +1100,8 @@ export default class Tracer extends opentracing.Tracer {
                 this._restoreRecords(
                     report.getSpanRecords(),
                     report.getInternalLogs(),
-                    report.getCounters());
+                    report.getCounters(),
+                );
 
                 // Increment the counter *after* the counters are restored
                 this._counters['reports.errors.send']++;
@@ -1128,14 +1130,16 @@ export default class Tracer extends opentracing.Tracer {
                             originMicros,
                             res.timing.receive_micros,
                             res.timing.transmit_micros,
-                            destinationMicros);
+                            destinationMicros,
+                        );
                     } else if (res.receiveTimestamp && res.transmitTimestamp) {
                         // Handle protobuf transport timing response.
                         this._clockState.addSample(
                             originMicros,
                             res.receiveTimestamp.seconds * 1e6 + res.receiveTimestamp.nanos / 1e3,
                             res.transmitTimestamp.seconds * 1e6 + res.transmitTimestamp.nanos / 1e3,
-                            destinationMicros);
+                            destinationMicros,
+                        );
                     } else {
                         // The response does not have timing information. Disable
                         // the clock state assuming there'll never be timing data
