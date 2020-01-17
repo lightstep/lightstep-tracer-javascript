@@ -55,9 +55,6 @@ class InstrumentNodejs {
         this._internalExclusions = [];
         this._tracer = null;
         this._handleOptions = this._handleOptions.bind(this);
-        if (!this._enabled) {
-
-        }
     }
 
     name() {
@@ -164,6 +161,7 @@ class InstrumentNodejs {
             let options;
             let callback;
             let urlObject;
+            /* eslint-disable prefer-destructuring */
             if (typeof args[0] === 'string' || args[0] instanceof URL) {
                 urlObject = args[0] instanceof URL ? args[0] : new URL(args[0]);
                 options = urlToOptions(urlObject);
@@ -177,6 +175,7 @@ class InstrumentNodejs {
                 options = args[0];
                 callback = args[1];
             }
+            /* eslint-enable prefer-destructuring */
 
             // check if there are headers stated, and if not create them on the first arg
             // then grab reference so that we can inject headers into the request before sending the request out
@@ -201,6 +200,7 @@ class InstrumentNodejs {
                 protocol : protocol,
             };
             if (url) {
+                // eslint-disable-next-line prefer-destructuring
                 tags.url_pathname = url.split('?')[0];
             }
 
@@ -269,53 +269,27 @@ class InstrumentNodejs {
 
     _shouldTrace(tracer, url) {
         // This shouldn't be possible, but let's be paranoid
-        if (!tracer) {
+        if (!tracer || !url) {
             return false;
         }
 
         let opts = tracer.options();
-        if (opts.disabled) {
+        if (opts.disabled || !opts.nodejs_instrumentation) {
             return false;
         }
-        if (!opts.nodejs_instrumentation) {
+
+        if (this._internalExclusions.some((ex) => ex.test(url))) {
             return false;
         }
-        if (!url) {
-            return false;
-        }
-        for (let key in this._internalExclusions) {
-            if (!this._internalExclusions.hasOwnProperty(key)) {
-                continue;
-            }
-            const ex = this._internalExclusions[key];
-            if (ex.test(url)) {
-                return false;
-            }
-        }
+
         let include = false;
-        for (let key in opts.nodejs_inclusion_patterns) {
-            if (!opts.nodejs_inclusion_patterns.hasOwnProperty(key)) {
-                continue;
-            }
-            const inc = opts.nodejs_inclusion_patterns[key];
-            if (inc.test(url)) {
-                include = true;
-                break;
-            }
+        if (opts.nodejs_url_inclusion_patterns.some((inc) => inc.test(url))) {
+            include = true;
         }
-        if (!include) {
-            return false;
+        if (opts.nodejs_url_exclusion_patterns.some((ex) => ex.test(url))) {
+            include = false;
         }
-        for (let key in opts.nodejs_exclusion_patterns) {
-            if (!opts.nodejs_exclusion_patterns.hasOwnProperty(key)) {
-                continue;
-            }
-            const ex = opts.nodejs_exclusion_patterns[key];
-            if (ex.test(url)) {
-                return false;
-            }
-        }
-        return true;
+        return include;
     }
 }
 

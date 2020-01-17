@@ -5,6 +5,7 @@
 // this is run.
 let hostScriptElement = (function () {
     // check to see if we're in a webworker
+    // eslint-disable-next-line no-restricted-globals
     if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
         return null;
     }

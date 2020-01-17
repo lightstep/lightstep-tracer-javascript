@@ -55,9 +55,11 @@ class PlatformBrowser {
     }
 
     _generateLongUUID() {
+        /* eslint-disable no-bitwise */
         let p0 = `00000000${Math.abs((Math.random() * 0xFFFFFFFF) | 0).toString(16)}`.substr(-8);
         let p1 = `00000000${Math.abs((Math.random() * 0xFFFFFFFF) | 0).toString(16)}`.substr(-8);
         return `${p0}${p1}`;
+        /* eslint-enable no-bitwise */
     }
 
     onBeforeExit(...args) {

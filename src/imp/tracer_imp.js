@@ -209,6 +209,7 @@ export default class Tracer extends opentracing.Tracer {
         ], (methodName) => {
             self[methodName] = function () {
                 if (self._ee[methodName]) {
+                    // eslint-disable-next-line prefer-spread
                     self._ee[methodName].apply(self._ee, arguments);
                 }
             };
@@ -287,6 +288,7 @@ export default class Tracer extends opentracing.Tracer {
                     let context = ref.referencedContext();
                     if (!context) {
                         this._error('Span reference has an invalid context', context);
+                        // eslint-disable-next-line no-continue
                         continue;
                     }
                     parentCtxImp = context;
@@ -491,11 +493,11 @@ export default class Tracer extends opentracing.Tracer {
 
         // Check for any invalid options: is there a key in the specified operation
         // that didn't result either in a change or a reset to the existing value?
-        for (let key in opts) {
+        Object.keys(opts).forEach((key) => {
             if (modified[key] === undefined && unchanged[key] === undefined) {
                 this._warn(`Invalid option ${key} with value ${opts[key]}`);
             }
-        }
+        });
 
         //
         // Update the state information based on the changes

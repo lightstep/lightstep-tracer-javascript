@@ -69,7 +69,7 @@ class InstrumentPageLoad {
 
     _copyNavigatorProperties(nav) {
         let dst = {};
-        for (let key in nav) { // eslint-disable-line guard-for-in
+        for (let key in nav) { // eslint-disable-line guard-for-in, no-restricted-syntax
             try {
                 let value = nav[key];
                 switch (key) {
