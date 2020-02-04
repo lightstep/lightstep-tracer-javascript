@@ -17674,6 +17674,56 @@ module.exports = exports.default;
 
 /***/ }),
 
+/***/ "./src/imp/multi_transport.js":
+/*!************************************!*\
+  !*** ./src/imp/multi_transport.js ***!
+  \************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var MultiTransport = function () {
+  function MultiTransport(transports) {
+    _classCallCheck(this, MultiTransport);
+
+    this._transports = transports;
+  }
+
+  _createClass(MultiTransport, [{
+    key: "ensureConnection",
+    value: function ensureConnection(opts) {
+      this._transports.forEach(function (transport) {
+        transport.ensureConnection(opts);
+      });
+    }
+  }, {
+    key: "report",
+    value: function report(detached, auth, reportRequest, done) {
+      this._transports.forEach(function (transport) {
+        console.log("reporting for transport " + transport.constructor.name);
+        transport.report(detached, auth, reportRequest, done);
+      });
+    }
+  }]);
+
+  return MultiTransport;
+}();
+
+exports.default = MultiTransport;
+module.exports = exports.default;
+
+/***/ }),
+
 /***/ "./src/imp/platform/browser/crouton_thrift.js":
 /*!****************************************************!*\
   !*** ./src/imp/platform/browser/crouton_thrift.js ***!
@@ -19287,7 +19337,10 @@ var RuntimeImp = function () {
     _createClass(RuntimeImp, [{
         key: 'toThrift',
         value: function toThrift() {
-            var thriftAttrs = [];
+            var thriftAttrs = [new _platform_abstraction_layer.crouton_thrift.KeyValue({
+                Key: coerce.toString('transport'),
+                Value: coerce.toString('thrift')
+            })];
             (0, _each3.default)(this._attributes, function (val, key) {
                 thriftAttrs.push(new _platform_abstraction_layer.crouton_thrift.KeyValue({
                     Key: coerce.toString(key),
@@ -19334,6 +19387,10 @@ var RuntimeImp = function () {
             var reporterId = converter.hexToDec(this._runtimeGUID);
 
             var tracerTags = [];
+            var transportTag = new proto.KeyValue();
+            transportTag.setKey('transport');
+            transportTag.setStringValue('protobuf');
+            tracerTags.push(transportTag);
             (0, _each3.default)(this._attributes, function (val, key) {
                 var ttag = new proto.KeyValue();
                 ttag.setKey(key);
@@ -19733,9 +19790,16 @@ var SpanImp = function (_opentracing$Span) {
 
             var attributes = [];
             (0, _each3.default)(this._tags, function (value, key) {
+                var strKey = coerce.toString(key);
+                var strValue = coerce.toString(value);
+
+                if (strKey === 'parent_span_guid') {
+                    var parentSpanGUID = parseInt(strValue, 16) + 1;
+                    strValue = parentSpanGUID.toString(16);
+                }
                 attributes.push(new _platform_abstraction_layer.crouton_thrift.KeyValue({
-                    Key: coerce.toString(key),
-                    Value: coerce.toString(value)
+                    Key: strKey,
+                    Value: strValue
                 }));
             });
 
@@ -19747,9 +19811,14 @@ var SpanImp = function (_opentracing$Span) {
                 logs.push(logThrift);
             });
 
+            var spanGUID = parseInt(this.guid(), 16) + 1;
+            var traceGUID = parseInt(this.traceGUID(), 16) + 1;
+
             return new _platform_abstraction_layer.crouton_thrift.SpanRecord({
-                span_guid: this.guid(),
-                trace_guid: this.traceGUID(),
+                span_guid: spanGUID.toString(16),
+                trace_guid: traceGUID.toString(16),
+                // span_guid       : String(parseInt(this.guid(), 16) + 1),
+                // trace_guid      : String(parseInt(this.traceGUID(), 16) + 1),
                 runtime_guid: this._tracerImp.guid(),
                 span_name: this._operationName,
                 oldest_micros: this._beginMicros,
@@ -19885,6 +19954,10 @@ var _propagator_ls = __webpack_require__(/*! ./propagator_ls */ "./src/imp/propa
 
 var _propagator_ls2 = _interopRequireDefault(_propagator_ls);
 
+var _multi_transport = __webpack_require__(/*! ./multi_transport */ "./src/imp/multi_transport.js");
+
+var _multi_transport2 = _interopRequireDefault(_multi_transport);
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -19966,9 +20039,9 @@ var Tracer = function (_opentracing$Tracer) {
             }
         };
 
-        if (opts) {
-            _this._transport = opts.override_transport;
-        }
+        // if (opts) {
+        // this._transport = opts.override_transport;
+        // }
 
         _this._propagators = {};
         _this._propagators[_this._opentracing.FORMAT_HTTP_HEADERS] = new _propagator_ls2.default(_this);
@@ -20026,21 +20099,23 @@ var Tracer = function (_opentracing$Tracer) {
             _this.options(opts);
         }
 
-        if (typeof _this._transport === 'undefined' || _this._transport === null) {
-            switch (_this._options.transport) {
-                case 'proto':
-                    _this._transport = new _platform_abstraction_layer.ProtoTransport(logger);
-                    _this._info('Using protobuf over HTTP transport per user-defined option.');
-                    break;
-                case 'thrift':
-                    _this._transport = new _platform_abstraction_layer.ThriftTransport(logger);
-                    _this._info('Using thrift transport per user-defined option.');
-                    break;
-                default:
-                    _this._transport = new _platform_abstraction_layer.ProtoTransport(logger);
-                    _this._info('Using protobuf over HTTP transport as no user-defined option was supplied.');
-            }
-        }
+        _this._transport = new _multi_transport2.default([new _platform_abstraction_layer.ThriftTransport(logger), new _platform_abstraction_layer.ProtoTransport(logger)]);
+
+        // if (typeof this._transport === 'undefined' || this._transport === null) {
+        // switch (this._options.transport) {
+        // case 'proto':
+        // this._transport = new ProtoTransport(logger);
+        // this._info('Using protobuf over HTTP transport per user-defined option.');
+        // break;
+        // case 'thrift':
+        // this._transport = new ThriftTransport(logger);
+        // this._info('Using thrift transport per user-defined option.');
+        // break;
+        // default:
+        // this._transport = new ProtoTransport(logger);
+        // this._info('Using protobuf over HTTP transport as no user-defined option was supplied.');
+        // }
+        // }
 
         // For clock skew adjustment.
         // Must be set after options have been set.
@@ -21923,42 +21998,47 @@ var InstrumentFetch = function () {
                 var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
                 request = new Request(request, options);
-                var url = request.url;
                 var opts = tracer.options();
 
-                if (!self._shouldTrace(tracer, url)) {
+                if (!self._shouldTrace(tracer, request.url)) {
                     return proxiedFetch.apply(null, arguments);
                 }
 
                 var span = tracer.startSpan('fetch');
                 tracer.addActiveRootSpan(span);
 
+                var parsed = new URL(request.url);
                 var tags = {
-                    method: options && options.method ? options.method : 'GET',
-                    url: url
+                    method: request.method,
+                    url: request.url,
+
+                    // NOTE: Purposefully excluding username:password from tags.
+                    // TODO: consider sanitizing URL to mask / remove that information from the trace in general
+                    hash: parsed.hash,
+                    href: parsed.href,
+                    protocol: parsed.protocol,
+                    origin: parsed.origin,
+                    host: parsed.host,
+                    hostname: parsed.hostname,
+                    port: parsed.port,
+                    pathname: parsed.pathname,
+                    search: parsed.search
                 };
-                if (url) {
-                    tags.url_pathname = url.split('?')[0];
-                }
-
-                var fetchPayload = Object.assign({}, tags);
-
                 if (opts.include_cookies) {
-                    fetchPayload.cookies = getCookies();
+                    tags.cookies = getCookies();
                 }
 
                 // Add Open-Tracing headers
                 var headersCarrier = {};
                 tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
-                var keys = Object.keys(headersCarrier);
-                keys.forEach(function (key) {
+                Object.keys(headersCarrier).forEach(function (key) {
                     if (!request.headers.get(key)) request.headers.set(key, headersCarrier[key]);
                 });
                 span.log({
                     event: 'sending',
-                    method: options.method || 'GET',
-                    url: url,
-                    openPayload: fetchPayload
+                    method: request.method,
+                    url: request.url,
+                    openPayload: tags
                 });
                 span.addTags(tags);
 
@@ -21967,7 +22047,7 @@ var InstrumentFetch = function () {
                         span.addTags({ error: true });
                     }
                     span.log({
-                        method: options.method || 'GET',
+                        method: request.method,
                         headers: getResponseHeaders(response),
                         status: response.status,
                         statusText: response.statusText,
@@ -21993,7 +22073,7 @@ var InstrumentFetch = function () {
         key: '_shouldTrace',
         value: function _shouldTrace(tracer, url) {
             // This shouldn't be possible, but let's be paranoid
-            if (!tracer) {
+            if (!tracer || !url) {
                 return false;
             }
 
@@ -22001,42 +22081,25 @@ var InstrumentFetch = function () {
             if (opts.disabled) {
                 return false;
             }
-            if (!url) {
+
+            if (this._internalExclusions.some(function (ex) {
+                return ex.test(url);
+            })) {
                 return false;
             }
-            for (var key in this._internalExclusions) {
-                if (!this._internalExclusions.hasOwnProperty(key)) {
-                    continue;
-                }
-                var ex = this._internalExclusions[key];
-                if (ex.test(url)) {
-                    return false;
-                }
-            }
+
             var include = false;
-            for (var _key in opts.fetch_url_inclusion_patterns) {
-                if (!opts.fetch_url_inclusion_patterns.hasOwnProperty(_key)) {
-                    continue;
-                }
-                var inc = opts.fetch_url_inclusion_patterns[_key];
-                if (inc.test(url)) {
-                    include = true;
-                    break;
-                }
+            if (opts.fetch_url_inclusion_patterns.some(function (inc) {
+                return inc.test(url);
+            })) {
+                include = true;
             }
-            if (!include) {
-                return false;
+            if (opts.fetch_url_exclusion_patterns.some(function (ex) {
+                return ex.test(url);
+            })) {
+                include = false;
             }
-            for (var _key2 in opts.fetch_url_exclusion_patterns) {
-                if (!opts.fetch_url_exclusion_patterns.hasOwnProperty(_key2)) {
-                    continue;
-                }
-                var _ex = opts.fetch_url_exclusion_patterns[_key2];
-                if (_ex.test(url)) {
-                    return false;
-                }
-            }
-            return true;
+            return include;
         }
     }]);
 

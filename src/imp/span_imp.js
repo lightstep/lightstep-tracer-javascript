@@ -192,9 +192,16 @@ export default class SpanImp extends opentracing.Span {
     _toThrift() {
         let attributes = [];
         _each(this._tags, (value, key) => {
+          const strKey = coerce.toString(key);
+          let strValue = coerce.toString(value);
+
+          if (strKey === 'parent_span_guid') {
+            const parentSpanGUID = parseInt(strValue, 16) + 1;
+            strValue = parentSpanGUID.toString(16);
+          }
             attributes.push(new crouton_thrift.KeyValue({
-                Key   : coerce.toString(key),
-                Value : coerce.toString(value),
+                Key   : strKey,
+                Value : strValue,
             }));
         });
 
@@ -206,9 +213,14 @@ export default class SpanImp extends opentracing.Span {
             logs.push(logThrift);
         });
 
+      const spanGUID = parseInt(this.guid(), 16) + 1;
+      const traceGUID = parseInt(this.traceGUID(), 16) + 1;
+
         return new crouton_thrift.SpanRecord({
-            span_guid       : this.guid(),
-            trace_guid      : this.traceGUID(),
+            span_guid       : spanGUID.toString(16),
+            trace_guid      : traceGUID.toString(16),
+            // span_guid       : String(parseInt(this.guid(), 16) + 1),
+            // trace_guid      : String(parseInt(this.traceGUID(), 16) + 1),
             runtime_guid    : this._tracerImp.guid(),
             span_name       : this._operationName,
             oldest_micros   : this._beginMicros,

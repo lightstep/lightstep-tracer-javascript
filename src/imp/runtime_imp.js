@@ -14,7 +14,12 @@ export default class RuntimeImp {
     }
 
     toThrift() {
-        let thriftAttrs = [];
+        let thriftAttrs = [
+          new crouton_thrift.KeyValue({
+            Key: coerce.toString('transport'),
+            Value: coerce.toString('thrift'),
+        }),
+      ];
         _each(this._attributes, (val, key) => {
             thriftAttrs.push(new crouton_thrift.KeyValue({
                 Key   : coerce.toString(key),
@@ -60,6 +65,10 @@ export default class RuntimeImp {
         let reporterId = converter.hexToDec(this._runtimeGUID);
 
         let tracerTags = [];
+        let transportTag = new proto.KeyValue();
+        transportTag.setKey('transport');
+        transportTag.setStringValue('protobuf');
+        tracerTags.push(transportTag);
         _each(this._attributes, (val, key) => {
             let ttag = new proto.KeyValue();
             ttag.setKey(key);

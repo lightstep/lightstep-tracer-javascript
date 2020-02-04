@@ -14,6 +14,7 @@ import RuntimeImp from './runtime_imp';
 import ReportImp from './report_imp';
 import UnsupportedPropagator from './propagator';
 import LightStepPropagator from './propagator_ls';
+import MultiTransport from './multi_transport';
 
 const ClockState    = require('./util/clock_state');
 const LogBuilder    = require('./log_builder');
@@ -75,9 +76,9 @@ export default class Tracer extends opentracing.Tracer {
             error : (err, payload) => { this._error(err, payload); },
         };
 
-        if (opts) {
-            this._transport = opts.override_transport;
-        }
+        // if (opts) {
+            // this._transport = opts.override_transport;
+        // }
 
         this._propagators = {};
         this._propagators[this._opentracing.FORMAT_HTTP_HEADERS] = new LightStepPropagator(this);
@@ -138,21 +139,26 @@ export default class Tracer extends opentracing.Tracer {
             this.options(opts);
         }
 
-        if (typeof this._transport === 'undefined' || this._transport === null) {
-            switch (this._options.transport) {
-            case 'proto':
-                this._transport = new ProtoTransport(logger);
-                this._info('Using protobuf over HTTP transport per user-defined option.');
-                break;
-            case 'thrift':
-                this._transport = new ThriftTransport(logger);
-                this._info('Using thrift transport per user-defined option.');
-                break;
-            default:
-                this._transport = new ProtoTransport(logger);
-                this._info('Using protobuf over HTTP transport as no user-defined option was supplied.');
-            }
-        }
+        this._transport = new MultiTransport([
+          new ThriftTransport(logger),
+          new ProtoTransport(logger),
+        ]);
+
+        // if (typeof this._transport === 'undefined' || this._transport === null) {
+            // switch (this._options.transport) {
+            // case 'proto':
+                // this._transport = new ProtoTransport(logger);
+                // this._info('Using protobuf over HTTP transport per user-defined option.');
+                // break;
+            // case 'thrift':
+                // this._transport = new ThriftTransport(logger);
+                // this._info('Using thrift transport per user-defined option.');
+                // break;
+            // default:
+                // this._transport = new ProtoTransport(logger);
+                // this._info('Using protobuf over HTTP transport as no user-defined option was supplied.');
+            // }
+        // }
 
         // For clock skew adjustment.
         // Must be set after options have been set.
