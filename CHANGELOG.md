@@ -4,6 +4,8 @@
 
 ## vNext
 
+* Fix timestamp conversion for protobuf transport
+
 ## 0.25.1
 * No changes (minor bump to align with 0.25.1-no-protobuf release)
 

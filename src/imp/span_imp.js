@@ -230,9 +230,8 @@ export default class SpanImp extends opentracing.Span {
         spanProto.setOperationName(this._operationName);
 
         let startTimestamp = new googleProtobufTimestampPB.Timestamp();
-        let startMillis = Math.floor(this._beginMicros / 1000);
-        let startSeconds = Math.floor(startMillis / 1000);
-        let startNanos = (startMillis % 1000) * 1000000;
+        let startSeconds = Math.floor(this._beginMicros / 1000000);
+        let startNanos = (this._beginMicros % 1000000) * 1000;
         startTimestamp.setSeconds(startSeconds);
         startTimestamp.setNanos(startNanos);
         spanProto.setStartTimestamp(startTimestamp);

@@ -93,9 +93,8 @@ export default class LogRecordImp {
         this._clearOverLimits();
         let log = new proto.Log();
         let ts = new googleProtobufTimestampPB.Timestamp();
-        let millis = Math.floor(this._timestampMicros / 1000);
-        let secs = Math.floor(millis / 1000);
-        let nanos = (millis % 1000) * 1000000;
+        let secs = Math.floor(this._timestampMicros / 1000000);
+        let nanos = (this._timestampMicros % 1000000) * 1000;
         ts.setSeconds(secs);
         ts.setNanos(nanos);
         log.setTimestamp(ts);
