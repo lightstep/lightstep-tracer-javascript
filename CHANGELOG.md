@@ -4,6 +4,8 @@
 
 ## vNext
 
+## 0.25.2
+
 * Fix missing clock offsets over proto transport
 * Fix timestamp conversion for protobuf transport
 
