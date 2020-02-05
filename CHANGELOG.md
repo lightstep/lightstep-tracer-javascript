@@ -6,6 +6,7 @@
 
 ## 0.25.2
 
+* fix for fetch plugin: 'method' was always GET
 * Fix missing clock offsets over proto transport
 * Fix timestamp conversion for protobuf transport
 
