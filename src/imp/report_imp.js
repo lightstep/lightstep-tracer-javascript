@@ -82,7 +82,7 @@ export default class ReportImp {
         reportProto.setAuth(auth.toProto());
         reportProto.setReporter(this._runtime.toProto());
         reportProto.setSpansList(spansList);
-        reportProto.setTimestampOffsetMicros(this._timestampOffsetMicros);
+        reportProto.setTimestampOffsetMicros(this._timestampOffsetMicros.toString(10));
         reportProto.setInternalMetrics(internalMetrics);
         return reportProto;
     }
