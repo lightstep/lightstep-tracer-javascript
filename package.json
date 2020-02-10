@@ -1,6 +1,6 @@
 {
   "name": "lightstep-tracer",
-  "version": "0.25.1-no-protobuf",
+  "version": "0.25.2-no-protobuf",
   "main": "index.js",
   "types": "index.d.ts",
   "browser": "browser.js",

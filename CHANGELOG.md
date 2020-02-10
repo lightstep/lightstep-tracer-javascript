@@ -4,6 +4,12 @@
 
 ## vNext
 
+## 0.25.2
+
+* fix for fetch plugin: 'method' was always GET
+* Fix missing clock offsets over proto transport
+* Fix timestamp conversion for protobuf transport
+
 ## 0.25.1
 * No changes (minor bump to align with 0.25.1-no-protobuf release)
 

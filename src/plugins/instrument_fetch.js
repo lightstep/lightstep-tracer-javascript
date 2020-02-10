@@ -158,42 +158,47 @@ class InstrumentFetch {
 
         return function (request, options = {}) {
             request = new Request(request, options);
-            const url = request.url;
             const opts = tracer.options();
 
-            if (!self._shouldTrace(tracer, url)) {
+            if (!self._shouldTrace(tracer, request.url)) {
                 return proxiedFetch.apply(null, arguments);
             }
 
             let span = tracer.startSpan('fetch');
             tracer.addActiveRootSpan(span);
 
+            const parsed = new URL(request.url);
             let tags = {
-                method : options && options.method ? options.method : 'GET',
-                url    : url,
+                method : request.method,
+                url    : request.url,
+
+                // NOTE: Purposefully excluding username:password from tags.
+                // TODO: consider sanitizing URL to mask / remove that information from the trace in general
+                hash     : parsed.hash,
+                href     : parsed.href,
+                protocol : parsed.protocol,
+                origin   : parsed.origin,
+                host     : parsed.host,
+                hostname : parsed.hostname,
+                port     : parsed.port,
+                pathname : parsed.pathname,
+                search   : parsed.search,
             };
-            if (url) {
-                tags.url_pathname = url.split('?')[0];
-            }
-
-            const fetchPayload = Object.assign({}, tags);
-
             if (opts.include_cookies) {
-                fetchPayload.cookies = getCookies();
+                tags.cookies = getCookies();
             }
 
             // Add Open-Tracing headers
             const headersCarrier = {};
             tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
-            const keys = Object.keys(headersCarrier);
-            keys.forEach((key) => {
+            Object.keys(headersCarrier).forEach((key) => {
                 if (!request.headers.get(key)) request.headers.set(key, headersCarrier[key]);
             });
             span.log({
                 event       : 'sending',
-                method      : options.method || 'GET',
-                url         : url,
-                openPayload : fetchPayload,
+                method      : request.method,
+                url         : request.url,
+                openPayload : tags,
             });
             span.addTags(tags);
 
@@ -202,7 +207,7 @@ class InstrumentFetch {
                     span.addTags({ error : true });
                 }
                 span.log({
-                    method       : options.method || 'GET',
+                    method       : request.method,
                     headers      : getResponseHeaders(response),
                     status       : response.status,
                     statusText   : response.statusText,
@@ -227,7 +232,7 @@ class InstrumentFetch {
 
     _shouldTrace(tracer, url) {
         // This shouldn't be possible, but let's be paranoid
-        if (!tracer) {
+        if (!tracer || !url) {
             return false;
         }
 
@@ -235,42 +240,19 @@ class InstrumentFetch {
         if (opts.disabled) {
             return false;
         }
-        if (!url) {
+
+        if (this._internalExclusions.some(ex => ex.test(url))) {
             return false;
         }
-        for (let key in this._internalExclusions) {
-            if (!this._internalExclusions.hasOwnProperty(key)) {
-                continue;
-            }
-            const ex = this._internalExclusions[key];
-            if (ex.test(url)) {
-                return false;
-            }
-        }
+
         let include = false;
-        for (let key in opts.fetch_url_inclusion_patterns) {
-            if (!opts.fetch_url_inclusion_patterns.hasOwnProperty(key)) {
-                continue;
-            }
-            const inc = opts.fetch_url_inclusion_patterns[key];
-            if (inc.test(url)) {
-                include = true;
-                break;
-            }
+        if (opts.fetch_url_inclusion_patterns.some(inc => inc.test(url))) {
+            include = true;
         }
-        if (!include) {
-            return false;
+        if (opts.fetch_url_exclusion_patterns.some(ex => ex.test(url))) {
+            include = false;
         }
-        for (let key in opts.fetch_url_exclusion_patterns) {
-            if (!opts.fetch_url_exclusion_patterns.hasOwnProperty(key)) {
-                continue;
-            }
-            const ex = opts.fetch_url_exclusion_patterns[key];
-            if (ex.test(url)) {
-                return false;
-            }
-        }
-        return true;
+        return include;
     }
 }
 
