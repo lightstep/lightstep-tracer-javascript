@@ -149,6 +149,10 @@ describe("TracerImp", function() {
             });
             expect(hasLogged).to.equal(true);
         });
+
+        it('should default to not empty spans on errors', function() {
+            expect(makeLSTracer().options().flush_span_buffer_consecutive_errors).to.equal(null);
+        });
     });
 
     describe("TracerImp#on", function() {
@@ -187,6 +191,27 @@ describe("TracerImp", function() {
     describe("TracerImp#emit", function() {
         it('is a method', function() {
             expect(Tracer.emit).to.be.a("function");
+        });
+    });
+
+    describe("TracerImp#clearSpanRecordsIfMaxErrors", function() {
+        it('should leave spanRecords if not configured', function() {
+            const tracer = makeLSTracer();
+            const s = tracer.startSpan("test");
+            s.finish();
+            tracer._clearSpanRecordsIfMaxErrors();
+            expect(tracer._spanRecords.length).to.equal(1);
+        });
+
+        it('should drop spanRecords when threshold his reached', function() {
+            const tracer = makeLSTracer({
+                flush_span_buffer_consecutive_errors : 0,
+            });
+            const s = tracer.startSpan("test");
+            s.finish();
+            tracer._clearSpanRecordsIfMaxErrors();
+            expect(tracer._spanRecords.length).to.equal(0);
+            expect(tracer._counters['spans.dropped']).to.equal(1);
         });
     });
 });
