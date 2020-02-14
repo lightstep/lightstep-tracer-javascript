@@ -886,7 +886,9 @@ export default class Tracer extends opentracing.Tracer {
 
     /**
      * clearSpanRecordsIfMaxErrors checks to see if the tracer was configured to
-     * flush the span buffer after a fixed amount of errors.
+     * empty the span buffer after a fixed amount of errors. If it is configured,
+     * and there has been an error streak equal to the configured value,
+     * it will empty spanRecords and record that the spans were dropped.
      *
      * @private
      */
