@@ -151,7 +151,7 @@ describe("TracerImp", function() {
         });
 
         it('should default to not empty spans on errors', function() {
-            expect(makeLSTracer().options().flush_span_buffer_consecutive_errors).to.equal(null);
+            expect(makeLSTracer().options().clear_span_buffer_consecutive_errors).to.equal(null);
         });
     });
 
@@ -205,7 +205,7 @@ describe("TracerImp", function() {
 
         it('should drop spanRecords when threshold his reached', function() {
             const tracer = makeLSTracer({
-                flush_span_buffer_consecutive_errors : 0,
+                clear_span_buffer_consecutive_errors : 0,
             });
             const s = tracer.startSpan("test");
             s.finish();

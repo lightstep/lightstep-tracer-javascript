@@ -245,7 +245,7 @@ export default class Tracer extends opentracing.Tracer {
         this.addOption('delay_initial_report_millis', { type: 'int', defaultValue: 1000 });
         this.addOption('error_throttle_millis', { type: 'int',     defaultValue: 60000 });
         this.addOption('logger',                { type: 'function', defaultValue: this._printToConsole.bind(this) });
-        this.addOption('flush_span_buffer_consecutive_errors',
+        this.addOption('clear_span_buffer_consecutive_errors',
             { type: 'int', defaultValue: null });
 
         // Debugging options
@@ -893,7 +893,7 @@ export default class Tracer extends opentracing.Tracer {
      * @private
      */
     _clearSpanRecordsIfMaxErrors() {
-        const maxErrorsToEmpty = this.options().flush_span_buffer_consecutive_errors;
+        const maxErrorsToEmpty = this.options().clear_span_buffer_consecutive_errors;
         if (maxErrorsToEmpty === null || this._reportErrorStreak < maxErrorsToEmpty) {
             return;
         }

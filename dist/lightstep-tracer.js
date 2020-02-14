@@ -20122,7 +20122,7 @@ var Tracer = function (_opentracing$Tracer) {
             this.addOption('delay_initial_report_millis', { type: 'int', defaultValue: 1000 });
             this.addOption('error_throttle_millis', { type: 'int', defaultValue: 60000 });
             this.addOption('logger', { type: 'function', defaultValue: this._printToConsole.bind(this) });
-            this.addOption('flush_span_buffer_consecutive_errors', { type: 'int', defaultValue: null });
+            this.addOption('clear_span_buffer_consecutive_errors', { type: 'int', defaultValue: null });
 
             // Debugging options
             //
@@ -20812,7 +20812,7 @@ var Tracer = function (_opentracing$Tracer) {
     }, {
         key: '_clearSpanRecordsIfMaxErrors',
         value: function _clearSpanRecordsIfMaxErrors() {
-            var maxErrorsToEmpty = this.options().flush_span_buffer_consecutive_errors;
+            var maxErrorsToEmpty = this.options().clear_span_buffer_consecutive_errors;
             if (maxErrorsToEmpty === null || this._reportErrorStreak < maxErrorsToEmpty) {
                 return;
             }
