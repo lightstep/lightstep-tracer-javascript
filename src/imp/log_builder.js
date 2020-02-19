@@ -1,11 +1,12 @@
-import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
+// eslint-disable-next-line camelcase
+import { crouton_thrift } from '../platform_abstraction_layer';
+
 const constants = require('../constants');
 const coerce    = require('./coerce');
 
 // Facade on the thrift log data structure to make constructing log records more
 // convenient.
 class LogBuilder {
-
     constructor(runtime) {
         this._runtime = runtime;
         this._record = new crouton_thrift.LogRecord({

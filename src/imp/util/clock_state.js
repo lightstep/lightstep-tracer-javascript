@@ -8,7 +8,6 @@ const kMaxOffsetAge = 7;
 const kStoredSamplesTTLMicros = 60 * 60 * 1000 * 1000; // 1 hour
 
 class ClockState {
-
     constructor(opts) {
         this._nowMicros     = opts.nowMicros;
         this._localStoreGet = opts.localStoreGet;
@@ -25,9 +24,9 @@ class ClockState {
         // Try to load samples from the local store.
         // Only use the data if it's recent.
         let storedData = this._localStoreGet();
-        if (storedData &&
-            storedData.timestamp_micros &&
-            storedData.timestamp_micros > this._nowMicros() - kStoredSamplesTTLMicros) {
+        if (storedData
+            && storedData.timestamp_micros
+            && storedData.timestamp_micros > this._nowMicros() - kStoredSamplesTTLMicros) {
             // Make sure there are no more than (kMaxOffsetAge+1) elements
             this._samples = storedData.samples.slice(-(kMaxOffsetAge + 1));
         }
@@ -37,20 +36,19 @@ class ClockState {
 
     // Add a new timing sample and update the offset.
     addSample(originMicros,
-              receiveMicros,
-              transmitMicros,
-              destinationMicros
-    ) {
+        receiveMicros,
+        transmitMicros,
+        destinationMicros) {
         let latestDelayMicros = Number.MAX_VALUE;
         let latestOffsetMicros = 0;
         // Ensure that all of the data are valid before using them. If
         // not, we'll push a {0, MAX} record into the queue.
-        if (originMicros > 0 && receiveMicros > 0 &&
-            transmitMicros > 0 && destinationMicros > 0) {
-            latestDelayMicros = (destinationMicros - originMicros) -
-                (transmitMicros - receiveMicros);
-            latestOffsetMicros = ((receiveMicros - originMicros) +
-                           (transmitMicros - destinationMicros)) / 2;
+        if (originMicros > 0 && receiveMicros > 0
+            && transmitMicros > 0 && destinationMicros > 0) {
+            latestDelayMicros = (destinationMicros - originMicros)
+                - (transmitMicros - receiveMicros);
+            latestOffsetMicros = ((receiveMicros - originMicros)
+                           + (transmitMicros - destinationMicros)) / 2;
         }
 
         // Discard the oldest sample and push the new one.
@@ -112,6 +110,7 @@ class ClockState {
         // offset were we to use it.
         let jitter = 0;
         _each(this._samples, (sample) => {
+            // eslint-disable-next-line no-restricted-properties
             jitter += Math.pow(bestOffsetMicros - sample.offsetMicros, 2);
         });
         jitter = Math.sqrt(jitter / this._samples.length);
@@ -121,8 +120,8 @@ class ClockState {
         // condition is also triggered when update() is called from the
         // constructor.
         const kSGATE = 3; // See RFC 5905
-        if (this._currentOffsetAge > kMaxOffsetAge ||
-            Math.abs(this._currentOffsetMicros - bestOffsetMicros) < kSGATE * jitter) {
+        if (this._currentOffsetAge > kMaxOffsetAge
+            || Math.abs(this._currentOffsetMicros - bestOffsetMicros) < kSGATE * jitter) {
             this._currentOffsetMicros = bestOffsetMicros;
             this._currentOffsetAge = 0;
         }
