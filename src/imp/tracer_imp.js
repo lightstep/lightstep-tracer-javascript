@@ -248,6 +248,8 @@ export default class Tracer extends opentracing.Tracer {
         this.addOption('delay_initial_report_millis', { type: 'int', defaultValue: 1000 });
         this.addOption('error_throttle_millis', { type: 'int',     defaultValue: 60000 });
         this.addOption('logger',                { type: 'function', defaultValue: this._printToConsole.bind(this) });
+        this.addOption('clear_span_buffer_consecutive_errors',
+            { type: 'int', defaultValue: null });
 
         // Debugging options
         //
@@ -885,6 +887,33 @@ export default class Tracer extends opentracing.Tracer {
         });
     }
 
+    /**
+     * clearSpanRecordsIfMaxErrors checks to see if the tracer was configured to
+     * empty the span buffer after a fixed amount of errors. If it is configured,
+     * and there has been an error streak equal to the configured value,
+     * it will empty spanRecords and record that the spans were dropped.
+     *
+     * @private
+     */
+    _clearSpanRecordsIfMaxErrors() {
+        const maxErrorsToEmpty = this.options().clear_span_buffer_consecutive_errors;
+        if (maxErrorsToEmpty === null || this._reportErrorStreak < maxErrorsToEmpty) {
+            return;
+        }
+
+        // spanRecords is configured to be emptied
+        // the number of dropped spans and reporting errors should still be maintained since
+        // the loop may still in the process of a report.
+        const numSpansToDrop = this._spanRecords.length;
+        this._counters['spans.dropped'] += numSpansToDrop;
+        this._spanRecords = [];
+
+        this._warn('Span buffer flushed, max consecutive errors reached', {
+            max_consecutive_errors: maxErrorsToEmpty,
+            spans_dropped: numSpansToDrop,
+        });
+    }
+
     //-----------------------------------------------------------------------//
     // Reporting loop
     //-----------------------------------------------------------------------//
@@ -1107,6 +1136,8 @@ export default class Tracer extends opentracing.Tracer {
 
                 // Increment the counter *after* the counters are restored
                 this._counters['reports.errors.send']++;
+
+                this._clearSpanRecordsIfMaxErrors();
 
                 this.emit('report_error', err, {
                     error    : err,
