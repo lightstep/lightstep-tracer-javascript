@@ -4,6 +4,11 @@
 
 ## vNext
 
+## 0.26.0
+
+* New option to empty span buffer on max error streak `clear_span_buffer_consecutive_errors`
+* Upgrade eslint
+
 ## 0.25.2
 
 * fix for fetch plugin: 'method' was always GET
