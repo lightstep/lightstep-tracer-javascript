@@ -153,13 +153,13 @@ class InstrumentFetch {
         let self = this;
         let tracer = this._tracer;
 
-        return function (request, options = {}) {
-            request = new Request(request, options);
+        return function (input, init) {
+            const request = new Request(input, init);
             const opts = tracer.options();
 
             if (!self._shouldTrace(tracer, request.url)) {
                 // eslint-disable-next-line prefer-spread
-                return proxiedFetch.apply(null, arguments);
+                return proxiedFetch(request);
             }
 
             let span = tracer.startSpan('fetch');
