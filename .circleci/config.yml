@@ -1,7 +1,7 @@
 version: 2
 
 jobs:
-  test:
+  "node-8":
     docker:
       - image: circleci/node:8
     steps:
@@ -17,10 +17,64 @@ jobs:
             - ~/project/node_modules
           key: node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
       - run: make lint
-      - run: make build test-all
+      - run: make build test-node
+  "node-10":
+    docker:
+      - image: circleci/node:10
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+            - node-v1-{{ .Branch }}-
+            - node-v1-
+      - run: make node_modules
+      - save_cache:
+          paths:
+            - ~/project/node_modules
+          key: node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+      - run: make lint
+      - run: make build test-node
+  "node-12":
+    docker:
+      - image: circleci/node:12
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+            - node-v1-{{ .Branch }}-
+            - node-v1-
+      - run: make node_modules
+      - save_cache:
+          paths:
+            - ~/project/node_modules
+          key: node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+      - run: make lint
+      - run: make build test-node
+  "node-latest":
+    docker:
+      - image: circleci/node:latest
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+            - node-v1-{{ .Branch }}-
+            - node-v1-
+      - run: make node_modules
+      - save_cache:
+          paths:
+            - ~/project/node_modules
+          key: node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+      - run: make lint
+      - run: make build test-node
 
 workflows:
   version: 2
   test:
     jobs:
-      - test
+      - "node-8"
+      - "node-10"
+      - "node-12"
+      - "node-latest"
