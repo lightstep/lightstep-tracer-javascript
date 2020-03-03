@@ -99,7 +99,6 @@ test-all: build
 	scripts/docker_test.sh latest
 	scripts/docker_test.sh 10
 	scripts/docker_test.sh 8
-	scripts/docker_test.sh 6
 
 #
 # lint

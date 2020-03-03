@@ -6,6 +6,7 @@
 
 ## 0.26.0
 
+* Require node >= v8
 * New option to empty span buffer on max error streak `clear_span_buffer_consecutive_errors`
 * Upgrade eslint
 
