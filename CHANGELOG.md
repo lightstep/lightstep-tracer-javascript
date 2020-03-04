@@ -4,6 +4,10 @@
 
 ## vNext
 
+## 0.27.0
+
+* Equivalent to 0.26.0
+
 ## 0.26.0
 
 * Require node >= v8
