@@ -27,6 +27,14 @@ export default class SpanImp extends opentracing.Span {
         this._operationName = `${name}`;
     }
 
+    _setBaggageItem(key, value) {
+        this._ctx.setBaggageItem(key, value);
+    }
+
+    _getBaggageItem(key) {
+        return this._ctx.getBaggageItem(key);
+    }
+
     _addTags(keyValuePairs) {
         let self = this;
         _each(keyValuePairs, (value, key) => {
