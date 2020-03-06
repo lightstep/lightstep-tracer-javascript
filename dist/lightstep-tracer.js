@@ -19551,6 +19551,16 @@ var SpanImp = function (_opentracing$Span) {
             this._operationName = '' + name;
         }
     }, {
+        key: '_setBaggageItem',
+        value: function _setBaggageItem(key, value) {
+            this._ctx.setBaggageItem(key, value);
+        }
+    }, {
+        key: '_getBaggageItem',
+        value: function _getBaggageItem(key) {
+            return this._ctx.getBaggageItem(key);
+        }
+    }, {
         key: '_addTags',
         value: function _addTags(keyValuePairs) {
             var self = this;
@@ -20186,7 +20196,8 @@ var Tracer = function (_opentracing$Tracer) {
 
             var traceGUID = parentCtxImp ? parentCtxImp.traceGUID() : this.generateTraceGUIDForRootSpan();
             var sampled = parentCtxImp ? parentCtxImp._sampled : true;
-            var spanImp = new _span_imp2.default(this, name, new _span_context_imp2.default(this._platform.generateUUID(), traceGUID, sampled));
+            var spanCtx = new _span_context_imp2.default(this._platform.generateUUID(), traceGUID, sampled);
+            var spanImp = new _span_imp2.default(this, name, spanCtx);
             spanImp.addTags(this._options.default_span_tags);
 
             (0, _each3.default)(fields, function (value, key) {
@@ -20209,6 +20220,11 @@ var Tracer = function (_opentracing$Tracer) {
 
             if (parentCtxImp !== null) {
                 spanImp.setParentGUID(parentCtxImp._guid);
+
+                // Copy baggage items from parent to child
+                parentCtxImp.forEachBaggageItem(function (k, v) {
+                    return spanCtx.setBaggageItem(k, v);
+                });
             }
 
             this.emit('start_span', spanImp);

@@ -301,7 +301,8 @@ export default class Tracer extends opentracing.Tracer {
 
         let traceGUID = parentCtxImp ? parentCtxImp.traceGUID() : this.generateTraceGUIDForRootSpan();
         let sampled = parentCtxImp ? parentCtxImp._sampled : true;
-        let spanImp = new SpanImp(this, name, new SpanContextImp(this._platform.generateUUID(), traceGUID, sampled));
+        let spanCtx = new SpanContextImp(this._platform.generateUUID(), traceGUID, sampled);
+        let spanImp = new SpanImp(this, name, spanCtx);
         spanImp.addTags(this._options.default_span_tags);
 
         _each(fields, (value, key) => {
@@ -324,6 +325,9 @@ export default class Tracer extends opentracing.Tracer {
 
         if (parentCtxImp !== null) {
             spanImp.setParentGUID(parentCtxImp._guid);
+
+            // Copy baggage items from parent to child
+            parentCtxImp.forEachBaggageItem((k, v) => spanCtx.setBaggageItem(k, v));
         }
 
         this.emit('start_span', spanImp);
