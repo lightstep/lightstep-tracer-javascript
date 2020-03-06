@@ -6,7 +6,12 @@
 
 ## 0.27.0
 
-* Equivalent to 0.26.0
+* Bug fix for propagating baggage from parent span to child span
+* SpanContext is now exported to facilitate creating custom propagators
+
+## 0.27.0
+
+* No changes
 
 ## 0.26.0
 
