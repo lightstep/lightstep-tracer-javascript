@@ -4,7 +4,7 @@
 
 ## vNext
 
-## 0.27.0
+## 0.28.0
 
 * Bug fix for propagating baggage from parent span to child span
 * SpanContext is now exported to facilitate creating custom propagators
