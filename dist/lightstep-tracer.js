@@ -18109,6 +18109,9 @@ var hostScriptElement = function () {
     if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
         return null;
     }
+    if (typeof document === 'undefined') {
+        return null;
+    }
     var scripts = document.getElementsByTagName('SCRIPT');
     if (!(scripts.length > 0)) {
         return null;
@@ -18118,6 +18121,9 @@ var hostScriptElement = function () {
 
 function urlQueryParameters(defaults) {
     var vars = {};
+    if (typeof window.location === 'undefined') {
+        return vars;
+    }
     var qi = window.location.href.indexOf('?');
     if (qi < 0) {
         return vars;
@@ -18221,10 +18227,6 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
 // require any code or configuration changes.
 //
 module.exports.parseURLQueryOptions = function (opts) {
-    if (!window) {
-        return;
-    }
-
     var params = urlQueryParameters();
     if (params.lightstep_verbosity) {
         try {
@@ -18327,7 +18329,7 @@ var PlatformBrowser = function () {
     }, {
         key: 'onBeforeExit',
         value: function onBeforeExit() {
-            if (window) {
+            if (typeof window.addEventListener !== 'undefined') {
                 var _window;
 
                 for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
@@ -18636,6 +18638,7 @@ var TransportBrowser = function () {
             var protocol = this._encryption === 'none' ? 'http' : 'https';
             var url = protocol + '://' + this._host + ':' + this._port + this._path + '/_rpc/v1/reports/uri_encoded' + ('?auth=' + encodeURIComponent(authJSON)) + ('&report=' + encodeURIComponent(reportJSON));
 
+            // TODO: Fix for React Native
             var elem = document.createElement('script');
             elem.async = true;
             elem.defer = true;
@@ -18673,6 +18676,9 @@ module.exports = exports.default;
 // This function is copied directly from https://github.com/litejs/browser-cookie-lite.
 // It is licensed under the MIT License and authored by Lauri Rooden.
 function cookie(name, value, ttl, path, domain, secure) {
+    if (typeof document === 'undefined') {
+        return null;
+    }
     if (arguments.length > 1) {
         var newCookie = name + '=' + encodeURIComponent(value) + (ttl ? "; expires=" + new Date(+new Date() + ttl * 1000).toUTCString() : '') + (path ? "; path=" + path : '') + (domain ? "; domain=" + domain : '') + (secure ? "; secure" : '');
         document.cookie = newCookie;

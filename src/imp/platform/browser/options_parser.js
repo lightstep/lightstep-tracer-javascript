@@ -9,6 +9,9 @@ let hostScriptElement = (function () {
     if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
         return null;
     }
+    if (typeof document === 'undefined') {
+        return null;
+    }
     let scripts = document.getElementsByTagName('SCRIPT');
     if (!(scripts.length > 0)) {
         return null;
@@ -18,6 +21,9 @@ let hostScriptElement = (function () {
 
 function urlQueryParameters(defaults) {
     let vars = {};
+    if (typeof window.location === 'undefined') {
+        return vars;
+    }
     let qi = window.location.href.indexOf('?');
     if (qi < 0) {
         return vars;
@@ -118,10 +124,6 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
 // require any code or configuration changes.
 //
 module.exports.parseURLQueryOptions = function (opts) {
-    if (!window) {
-        return;
-    }
-
     let params = urlQueryParameters();
     if (params.lightstep_verbosity) {
         try {

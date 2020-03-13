@@ -63,7 +63,7 @@ class PlatformBrowser {
     }
 
     onBeforeExit(...args) {
-        if (window) {
+        if (typeof window.addEventListener !== 'undefined') {
             window.addEventListener('beforeunload', ...args);
         }
     }
