@@ -1,7 +1,6 @@
 import _each from '../_each';
 
 export default class SpanContextImp {
-
     // ---------------------------------------------------------------------- //
     // OpenTracing Implementation
     // ---------------------------------------------------------------------- //

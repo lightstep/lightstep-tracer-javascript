@@ -4,6 +4,21 @@
 
 ## vNext
 
+## 0.28.0
+
+* Bug fix for propagating baggage from parent span to child span
+* SpanContext is now exported to facilitate creating custom propagators
+
+## 0.27.0
+
+* No changes
+
+## 0.26.0
+
+* Require node >= v8
+* New option to empty span buffer on max error streak `clear_span_buffer_consecutive_errors`
+* Upgrade eslint
+
 ## 0.25.2
 
 * fix for fetch plugin: 'method' was always GET

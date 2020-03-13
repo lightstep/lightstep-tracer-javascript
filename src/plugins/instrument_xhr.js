@@ -1,4 +1,3 @@
-import _each from '../_each';
 import * as opentracing from 'opentracing';
 
 // Capture the proxied values on script load (i.e. ASAP) in case there are
@@ -58,10 +57,6 @@ class InstrumentXHR {
         this._internalExclusions = [];
         this._tracer = null;
         this._handleOptions = this._handleOptions.bind(this);
-
-        if (!this._enabled) {
-            return;
-        }
     }
 
     name() {
@@ -132,7 +127,7 @@ class InstrumentXHR {
 
         // http://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
         function escapeRegExp(str) {
-            return (`${str}`).replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
+            return (`${str}`).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
 
         // Check against the hostname without the port as well as the canonicalized
@@ -195,13 +190,11 @@ class InstrumentXHR {
                 user   : user,
             };
             if (url) {
+                // eslint-disable-next-line prefer-destructuring
                 tags.url_pathname = url.split('?')[0];
             }
 
-            let openPayload = {};
-            _each(tags, (val, key) => {
-                openPayload[key] = val;
-            });
+            let openPayload = { ...tags };
             if (opts.include_cookies) {
                 openPayload.cookies = getCookies();
             }
@@ -236,7 +229,7 @@ class InstrumentXHR {
                             event      : 'loading',
                         });
                     } else if (this.readyState === 4) {
-                        let responseType = this.responseType;
+                        let { responseType } = this;
                         span.log({
                             readyState   : 4,
                             url          : url,
@@ -279,7 +272,7 @@ class InstrumentXHR {
             }
 
             let data = Array.prototype.slice.call(arguments);
-            let len = undefined;
+            let len;
             if (data.length === 1) {
                 if (data[0] && data[0].length) {
                     len = data[0].length;
@@ -310,7 +303,7 @@ class InstrumentXHR {
 
     _shouldTrace(tracer, xhr, url) {
         // This shouldn't be possible, but let's be paranoid
-        if (!tracer) {
+        if (!tracer || !url) {
             return false;
         }
 
@@ -318,42 +311,19 @@ class InstrumentXHR {
         if (opts.disabled) {
             return false;
         }
-        if (!url) {
+
+        if (this._internalExclusions.some((ex) => ex.test(url))) {
             return false;
         }
-        for (let key in this._internalExclusions) {
-            if (!this._internalExclusions.hasOwnProperty(key)) {
-                continue;
-            }
-            const ex = this._internalExclusions[key];
-            if (ex.test(url)) {
-                return false;
-            }
-        }
+
         let include = false;
-        for (let key in opts.xhr_url_inclusion_patterns) {
-            if (!opts.xhr_url_inclusion_patterns.hasOwnProperty(key)) {
-                continue;
-            }
-            const inc = opts.xhr_url_inclusion_patterns[key];
-            if (inc.test(url)) {
-                include = true;
-                break;
-            }
+        if (opts.xhr_url_inclusion_patterns.some((inc) => inc.test(url))) {
+            include = true;
         }
-        if (!include) {
-            return false;
+        if (opts.xhr_url_exclusion_patterns.some((ex) => ex.test(url))) {
+            include = false;
         }
-        for (let key in opts.xhr_url_exclusion_patterns) {
-            if (!opts.xhr_url_exclusion_patterns.hasOwnProperty(key)) {
-                continue;
-            }
-            const ex = opts.xhr_url_exclusion_patterns[key];
-            if (ex.test(url)) {
-                return false;
-            }
-        }
-        return true;
+        return include;
     }
 }
 

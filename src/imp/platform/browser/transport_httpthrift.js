@@ -1,5 +1,4 @@
 export default class TransportBrowser {
-
     constructor() {
         this._host = '';
         this._port = 0;
@@ -65,9 +64,9 @@ export default class TransportBrowser {
         let authJSON   = JSON.stringify(auth.toThrift());
         let reportJSON = JSON.stringify(report.toThrift());
         let protocol = (this._encryption === 'none') ? 'http' : 'https';
-        let url = `${protocol}://${this._host}:${this._port}${this._path}/_rpc/v1/reports/uri_encoded` +
-            `?auth=${encodeURIComponent(authJSON)}` +
-            `&report=${encodeURIComponent(reportJSON)}`;
+        let url = `${protocol}://${this._host}:${this._port}${this._path}/_rpc/v1/reports/uri_encoded`
+            + `?auth=${encodeURIComponent(authJSON)}`
+            + `&report=${encodeURIComponent(reportJSON)}`;
 
         let elem = document.createElement('script');
         elem.async = true;

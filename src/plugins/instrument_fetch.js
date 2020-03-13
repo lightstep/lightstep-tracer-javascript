@@ -37,7 +37,8 @@ function getResponseHeaders(response) {
     const entries = response.headers.entries();
     for (let i = 0; i < entries.length; i++) {
         const pair = entries[i];
-        result[pair[0]] = pair[1];
+        const [key, val] = pair;
+        result[key] = val;
     }
     return result;
 }
@@ -53,10 +54,6 @@ class InstrumentFetch {
         this._internalExclusions = [];
         this._tracer = null;
         this._handleOptions = this._handleOptions.bind(this);
-
-        if (!this._enabled) {
-            return;
-        }
     }
 
     name() {
@@ -122,7 +119,7 @@ class InstrumentFetch {
 
         // http://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
         function escapeRegExp(str) {
-            return (`${str}`).replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
+            return (`${str}`).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
 
         // Check against the hostname without the port as well as the canonicalized
@@ -156,12 +153,13 @@ class InstrumentFetch {
         let self = this;
         let tracer = this._tracer;
 
-        return function (request, options = {}) {
-            request = new Request(request, options);
+        return function (input, init) {
+            const request = new Request(input, init);
             const opts = tracer.options();
 
             if (!self._shouldTrace(tracer, request.url)) {
-                return proxiedFetch.apply(null, arguments);
+                // eslint-disable-next-line prefer-spread
+                return proxiedFetch(request);
             }
 
             let span = tracer.startSpan('fetch');
@@ -241,15 +239,15 @@ class InstrumentFetch {
             return false;
         }
 
-        if (this._internalExclusions.some(ex => ex.test(url))) {
+        if (this._internalExclusions.some((ex) => ex.test(url))) {
             return false;
         }
 
         let include = false;
-        if (opts.fetch_url_inclusion_patterns.some(inc => inc.test(url))) {
+        if (opts.fetch_url_inclusion_patterns.some((inc) => inc.test(url))) {
             include = true;
         }
-        if (opts.fetch_url_exclusion_patterns.some(ex => ex.test(url))) {
+        if (opts.fetch_url_exclusion_patterns.some((ex) => ex.test(url))) {
             include = false;
         }
         return include;
