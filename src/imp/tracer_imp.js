@@ -36,7 +36,6 @@ const MAX_INTERNAL_LOGS = 20;
 let _singleton = null;
 
 export default class Tracer extends opentracing.Tracer {
-
     constructor(opts) {
         super();
 
@@ -51,7 +50,7 @@ export default class Tracer extends opentracing.Tracer {
 
         // Platform abstraction layer
         this._platform = new Platform(this);
-        this._runtimeGUID = opts.guid || this.override_runtime_guid || null;  // Set once the group name is set
+        this._runtimeGUID = opts.guid || this.override_runtime_guid || null; // Set once the group name is set
         this._plugins = {};
         this._options = {};
         this._optionDescs = [];
@@ -86,7 +85,7 @@ export default class Tracer extends opentracing.Tracer {
             this._opentracing.FORMAT_BINARY);
 
         if (opts && opts.propagators) {
-            this._propagators = Object.assign({}, this._propagators, opts.propagators);
+            this._propagators = { ...this._propagators, ...opts.propagators };
         }
 
 
@@ -94,7 +93,7 @@ export default class Tracer extends opentracing.Tracer {
         this._first_report_has_run = false;
         this._reportYoungestMicros = now;
         this._reportTimer = null;
-        this._reportErrorStreak = 0;    // Number of consecutive errors
+        this._reportErrorStreak = 0; // Number of consecutive errors
         this._lastVisibleErrorMillis = 0;
         this._skippedVisibleErrors = 0;
 
@@ -172,9 +171,10 @@ export default class Tracer extends opentracing.Tracer {
 
         if (this._options.access_token.length === 0) {
             this._warn(
-            `Access token not set -
+                `Access token not set -
             this requires a satellite with access token checking disabled,
-            such as a developer satellite.`);
+            such as a developer satellite.`,
+            );
         }
 
         this.startPlugins();
@@ -205,6 +205,7 @@ export default class Tracer extends opentracing.Tracer {
         ], (methodName) => {
             self[methodName] = function () {
                 if (self._ee[methodName]) {
+                    // eslint-disable-next-line prefer-spread
                     self._ee[methodName].apply(self._ee, arguments);
                 }
             };
@@ -216,7 +217,9 @@ export default class Tracer extends opentracing.Tracer {
 
         // NOTE: make 'verbosity' the first option so it is processed first on
         // options changes and takes effect as soon as possible.
-        this.addOption('verbosity',             { type : 'int', min: 0, max: 9, defaultValue: 1 });
+        this.addOption('verbosity',             {
+            type : 'int', min: 0, max: 9, defaultValue: 1,
+        });
 
         // Core options
         this.addOption('access_token',          { type: 'string',  defaultValue: '' });
@@ -241,6 +244,8 @@ export default class Tracer extends opentracing.Tracer {
         this.addOption('delay_initial_report_millis', { type: 'int', defaultValue: 1000 });
         this.addOption('error_throttle_millis', { type: 'int',     defaultValue: 60000 });
         this.addOption('logger',                { type: 'function', defaultValue: this._printToConsole.bind(this) });
+        this.addOption('clear_span_buffer_consecutive_errors',
+            { type: 'int', defaultValue: null });
 
         // Debugging options
         //
@@ -276,11 +281,12 @@ export default class Tracer extends opentracing.Tracer {
             for (let i = 0; i < fields.references.length; i++) {
                 let ref = fields.references[i];
                 let type = ref.type();
-                if (type === this._opentracing.REFERENCE_CHILD_OF ||
-                    type === this._opentracing.REFERENCE_FOLLOWS_FROM) {
+                if (type === this._opentracing.REFERENCE_CHILD_OF
+                    || type === this._opentracing.REFERENCE_FOLLOWS_FROM) {
                     let context = ref.referencedContext();
                     if (!context) {
                         this._error('Span reference has an invalid context', context);
+                        // eslint-disable-next-line no-continue
                         continue;
                     }
                     parentCtxImp = context;
@@ -291,7 +297,8 @@ export default class Tracer extends opentracing.Tracer {
 
         let traceGUID = parentCtxImp ? parentCtxImp.traceGUID() : this.generateTraceGUIDForRootSpan();
         let sampled = parentCtxImp ? parentCtxImp._sampled : true;
-        let spanImp = new SpanImp(this, name, new SpanContextImp(this._platform.generateUUID(), traceGUID, sampled));
+        let spanCtx = new SpanContextImp(this._platform.generateUUID(), traceGUID, sampled);
+        let spanImp = new SpanImp(this, name, spanCtx);
         spanImp.addTags(this._options.default_span_tags);
 
         _each(fields, (value, key) => {
@@ -314,6 +321,9 @@ export default class Tracer extends opentracing.Tracer {
 
         if (parentCtxImp !== null) {
             spanImp.setParentGUID(parentCtxImp._guid);
+
+            // Copy baggage items from parent to child
+            parentCtxImp.forEachBaggageItem((k, v) => spanCtx.setBaggageItem(k, v));
         }
 
         this.emit('start_span', spanImp);
@@ -387,7 +397,7 @@ export default class Tracer extends opentracing.Tracer {
                         [constants.LS_META_PROPAGATION_KEY]: format,
                     },
                 })
-            .finish();
+                .finish();
         }
         return sc;
     }
@@ -469,9 +479,9 @@ export default class Tracer extends opentracing.Tracer {
 
         // "collector_encryption" acts an alias for the common cases of 'collector_port'
         if (opts.collector_encryption !== undefined && opts.collector_port === undefined) {
-            opts.collector_port = opts.collector_encryption !== 'none' ?
-                DEFAULT_COLLECTOR_PORT_TLS :
-                DEFAULT_COLLECTOR_PORT_PLAIN;
+            opts.collector_port = opts.collector_encryption !== 'none'
+                ? DEFAULT_COLLECTOR_PORT_TLS
+                : DEFAULT_COLLECTOR_PORT_PLAIN;
         }
         // set meta event reporting to false by default, it will be enabled by the satellite
         this.meta_event_reporting = false;
@@ -485,11 +495,11 @@ export default class Tracer extends opentracing.Tracer {
 
         // Check for any invalid options: is there a key in the specified operation
         // that didn't result either in a change or a reset to the existing value?
-        for (let key in opts) {
+        Object.keys(opts).forEach((key) => {
             if (modified[key] === undefined && unchanged[key] === undefined) {
                 this._warn(`Invalid option ${key} with value ${opts[key]}`);
             }
-        }
+        });
 
         //
         // Update the state information based on the changes
@@ -515,7 +525,7 @@ export default class Tracer extends opentracing.Tracer {
     }
 
     _setOptionInternal(modified, unchanged, opts, desc) {
-        let name = desc.name;
+        let { name } = desc;
         let value = opts[name];
         let valueType = typeof value;
         if (value === undefined) {
@@ -524,7 +534,6 @@ export default class Tracer extends opentracing.Tracer {
 
         // Parse the option (and check constraints)
         switch (desc.type) {
-
         case 'any':
             break;
 
@@ -736,8 +745,8 @@ export default class Tracer extends opentracing.Tracer {
         // multiple.
         this._activeRootSpan = null;
         _each(this._activeRootSpanSet, (span) => {
-            if (!this._activeRootSpan ||
-                span._beginMicros > this._activeRootSpan._beginMicros) {
+            if (!this._activeRootSpan
+                || span._beginMicros > this._activeRootSpan._beginMicros) {
                 this._activeRootSpan = span;
             }
         });
@@ -878,6 +887,33 @@ export default class Tracer extends opentracing.Tracer {
         });
     }
 
+    /**
+     * clearSpanRecordsIfMaxErrors checks to see if the tracer was configured to
+     * empty the span buffer after a fixed amount of errors. If it is configured,
+     * and there has been an error streak equal to the configured value,
+     * it will empty spanRecords and record that the spans were dropped.
+     *
+     * @private
+     */
+    _clearSpanRecordsIfMaxErrors() {
+        const maxErrorsToEmpty = this.options().clear_span_buffer_consecutive_errors;
+        if (maxErrorsToEmpty === null || this._reportErrorStreak < maxErrorsToEmpty) {
+            return;
+        }
+
+        // spanRecords is configured to be emptied
+        // the number of dropped spans and reporting errors should still be maintained since
+        // the loop may still in the process of a report.
+        const numSpansToDrop = this._spanRecords.length;
+        this._counters['spans.dropped'] += numSpansToDrop;
+        this._spanRecords = [];
+
+        this._warn('Span buffer flushed, max consecutive errors reached', {
+            max_consecutive_errors: maxErrorsToEmpty,
+            spans_dropped: numSpansToDrop,
+        });
+    }
+
     //-----------------------------------------------------------------------//
     // Reporting loop
     //-----------------------------------------------------------------------//
@@ -975,9 +1011,9 @@ export default class Tracer extends opentracing.Tracer {
         // However, do not use the shorter interval in the case of an error.
         // That does not provide sufficient backoff.
         let reportInterval = this._options.max_reporting_interval_millis;
-        if (this._reportErrorStreak === 0 &&
-            this._useClockState &&
-            !this._clockState.isReady()) {
+        if (this._reportErrorStreak === 0
+            && this._useClockState
+            && !this._clockState.isReady()) {
             reportInterval = Math.min(constants.CLOCK_STATE_REFRESH_INTERVAL_MS, reportInterval);
         }
 
@@ -1095,10 +1131,13 @@ export default class Tracer extends opentracing.Tracer {
                 this._restoreRecords(
                     report.getSpanRecords(),
                     report.getInternalLogs(),
-                    report.getCounters());
+                    report.getCounters(),
+                );
 
                 // Increment the counter *after* the counters are restored
                 this._counters['reports.errors.send']++;
+
+                this._clearSpanRecordsIfMaxErrors();
 
                 this.emit('report_error', err, {
                     error    : err,
@@ -1124,14 +1163,16 @@ export default class Tracer extends opentracing.Tracer {
                             originMicros,
                             res.timing.receive_micros,
                             res.timing.transmit_micros,
-                            destinationMicros);
+                            destinationMicros,
+                        );
                     } else if (res.receiveTimestamp && res.transmitTimestamp) {
                         // Handle protobuf transport timing response.
                         this._clockState.addSample(
                             originMicros,
                             res.receiveTimestamp.seconds * 1e6 + res.receiveTimestamp.nanos / 1e3,
                             res.transmitTimestamp.seconds * 1e6 + res.transmitTimestamp.nanos / 1e3,
-                            destinationMicros);
+                            destinationMicros,
+                        );
                     } else {
                         // The response does not have timing information. Disable
                         // the clock state assuming there'll never be timing data

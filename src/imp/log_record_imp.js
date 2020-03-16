@@ -1,6 +1,7 @@
 import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
 import _each from '../_each';
-import * as coerce from './coerce'; // eslint-disable-line camelcase
+import * as coerce from './coerce';
+// eslint-disable-line camelcase
 export default class LogRecordImp {
     constructor(logFieldKeyHardLimit, logFieldValueHardLimit, timestampMicros, fields) {
         if (fields instanceof Error) {

@@ -32,7 +32,12 @@ describe("Tracer", function() {
             var span = Tracer.startSpan('test2', { followsFrom : parentContext });
             span.finish();
         });
-
+        it('propagates baggage items from parent to children', function() {
+            var parent = Tracer.startSpan('test1');
+            parent.setBaggageItem('test1', 'value1');
+            var span = Tracer.startSpan('test2', { childOf : parent });
+            expect(span.getBaggageItem('test1')).to.equal('value1');
+        });
         it('propagates sampled flag correctly', function() {
             var parent = Tracer.startSpan('test1');
             var parentContext = parent.context();

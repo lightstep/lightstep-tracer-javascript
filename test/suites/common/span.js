@@ -36,6 +36,26 @@ describe("Span", function() {
         });
     });
 
+    describe("Span#setBaggageItem", function() {
+        it("sets the baggage item in the context", function() {
+            var span = Tracer.startSpan('test');
+            span.setBaggageItem('my_baggage', 'my_value');
+            span.finish();
+
+            expect(span.context().getBaggageItem('my_baggage')).to.equal('my_value');
+        });
+    });
+
+    describe("Span#getBaggageItem", function() {
+        it("gets the baggage item from the context", function() {
+            var span = Tracer.startSpan('test');
+            span.context().setBaggageItem('my_baggage', 'my_value');
+            span.finish();
+
+            expect(span.getBaggageItem('my_baggage')).to.equal('my_value');
+        });
+    });
+
     describe("Span#addTags", function() {
         it("supports addTags", function() {
             var span = Tracer.startSpan('test');
