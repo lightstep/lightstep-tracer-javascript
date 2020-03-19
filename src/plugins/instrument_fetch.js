@@ -64,6 +64,8 @@ class InstrumentFetch {
         tracerImp.addOption('fetch_instrumentation', { type : 'bool', defaultValue : false });
         tracerImp.addOption('fetch_url_inclusion_patterns', { type : 'array', defaultValue : [/.*/] });
         tracerImp.addOption('fetch_url_exclusion_patterns', { type : 'array', defaultValue : [] });
+        tracerImp.addOption('fetch_url_header_inclusion_patterns', { type : 'array', defaultValue : [/.*/] });
+        tracerImp.addOption('fetch_url_header_exclusion_patterns', { type : 'array', defaultValue : [] });
         tracerImp.addOption('include_cookies', { type : 'bool', defaultValue : true });
     }
 
@@ -187,11 +189,13 @@ class InstrumentFetch {
             }
 
             // Add Open-Tracing headers
-            const headersCarrier = {};
-            tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
-            Object.keys(headersCarrier).forEach((key) => {
-                if (!request.headers.get(key)) request.headers.set(key, headersCarrier[key]);
-            });
+            if (self._shouldAddHeadersToRequest(tracer, request.url)) {
+                const headersCarrier = {};
+                tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
+                Object.keys(headersCarrier).forEach((key) => {
+                    if (!request.headers.get(key)) request.headers.set(key, headersCarrier[key]);
+                });
+            }
             span.log({
                 event       : 'sending',
                 method      : request.method,
@@ -251,6 +255,26 @@ class InstrumentFetch {
             include = false;
         }
         return include;
+    }
+
+    _shouldAddHeadersToRequest(tracer, url) {
+        // This shouldn't be possible, but let's be paranoid
+        if (!tracer || !url) {
+            return false;
+        }
+
+        let opts = tracer.options();
+        if (opts.disabled) {
+            return false;
+        }
+
+        if (opts.fetch_url_header_exclusion_patterns.some((ex) => ex.test(url))) {
+            return false;
+        }
+        if (opts.fetch_url_header_inclusion_patterns.some((inc) => inc.test(url))) {
+            return true;
+        }
+        return false;
     }
 }
 
