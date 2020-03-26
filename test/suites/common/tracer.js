@@ -157,40 +157,40 @@ describe("Tracer", function() {
 
             var span2 = Tracer.startSpan('my_child', { childOf: extractedContext});
             expect(span2.context()._sampled).to.equal(false);
-		});
-
-		it("should propagate B3 format (64 bit traceid)", function() {
-			Tracer._propagators[Tracer._opentracing.FORMAT_HTTP_HEADERS] = new lightstep.B3Propagator(Tracer);
-
-			headers = {
-				'x-b3-spanid': '5e7c1e9617cdd152',
-				'x-b3-traceid': '0a0f6c981e2430cb',
-				'x-b3-sampled': '1'
-			};
-
-			var context = Tracer.extract(opentracing.FORMAT_HTTP_HEADERS, headers);
-			expect(context.traceGUID()).to.equal('00000000000000000a0f6c981e2430cb');
-
-			carrier = {};
-			Tracer.inject(context, opentracing.FORMAT_HTTP_HEADERS, carrier);
-			expect(headers['x-b3-traceid']).to.equal('0a0f6c981e2430cb');
         });
 
-		it("should propagate B3 format (128 bit traceid)", function() {
-			Tracer._propagators[Tracer._opentracing.FORMAT_HTTP_HEADERS] = new lightstep.B3Propagator(Tracer);
+        it("should propagate B3 format (64 bit traceid)", function() {
+            Tracer._propagators[Tracer._opentracing.FORMAT_HTTP_HEADERS] = new lightstep.B3Propagator(Tracer);
 
-			headers = {
-				'x-b3-spanid': '5e7c1e9617cdd152',
-				'x-b3-traceid': '10000000000000000a0f6c981e2430cb',
-				'x-b3-sampled': '1'
-			};
+            headers = {
+                'x-b3-spanid': '5e7c1e9617cdd152',
+                'x-b3-traceid': '0a0f6c981e2430cb',
+                'x-b3-sampled': '1'
+            };
 
-			var context = Tracer.extract(opentracing.FORMAT_HTTP_HEADERS, headers);
-			expect(context.traceGUID()).to.equal('10000000000000000a0f6c981e2430cb');
+            var context = Tracer.extract(opentracing.FORMAT_HTTP_HEADERS, headers);
+            expect(context.traceGUID()).to.equal('00000000000000000a0f6c981e2430cb');
 
-			carrier = {};
-			Tracer.inject(context, opentracing.FORMAT_HTTP_HEADERS, carrier);
-			expect(headers['x-b3-traceid']).to.equal('10000000000000000a0f6c981e2430cb');
+            carrier = {};
+            Tracer.inject(context, opentracing.FORMAT_HTTP_HEADERS, carrier);
+            expect(headers['x-b3-traceid']).to.equal('0a0f6c981e2430cb');
+        });
+
+        it("should propagate B3 format (128 bit traceid)", function() {
+            Tracer._propagators[Tracer._opentracing.FORMAT_HTTP_HEADERS] = new lightstep.B3Propagator(Tracer);
+
+            headers = {
+                'x-b3-spanid': '5e7c1e9617cdd152',
+                'x-b3-traceid': '10000000000000000a0f6c981e2430cb',
+                'x-b3-sampled': '1'
+            };
+
+            var context = Tracer.extract(opentracing.FORMAT_HTTP_HEADERS, headers);
+            expect(context.traceGUID()).to.equal('10000000000000000a0f6c981e2430cb');
+
+            carrier = {};
+            Tracer.inject(context, opentracing.FORMAT_HTTP_HEADERS, carrier);
+            expect(headers['x-b3-traceid']).to.equal('10000000000000000a0f6c981e2430cb');
         });
 
         it("should propagate binary carriers");
