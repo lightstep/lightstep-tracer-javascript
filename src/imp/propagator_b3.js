@@ -19,7 +19,7 @@ export default class B3Propagator extends LightStepPropagator {
         }
 
         let traceId = spanContext.traceGUID();
-		if (traceId.length === 32 && traceId.substr(0, 16) === '0000000000000000') {
+        if (traceId.length === 32 && traceId.substr(0, 16) === '0000000000000000') {
             traceId = traceId.substr(16); // take least significant 8 bytes (16 chars)
         }
 
