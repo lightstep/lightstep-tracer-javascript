@@ -1,3 +1,5 @@
+const util = require('./util');
+
 /* global WorkerGlobalScope */
 // Find the HTML element that included the tracing library (if there is one).
 // This relies on the fact that scripts are executed as soon as they are
@@ -9,7 +11,7 @@ let hostScriptElement = (function () {
     if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
         return null;
     }
-    if (typeof document === 'undefined') {
+    if (!util.isBrowser()) {
         return null;
     }
     let scripts = document.getElementsByTagName('SCRIPT');
@@ -21,7 +23,7 @@ let hostScriptElement = (function () {
 
 function urlQueryParameters(defaults) {
     let vars = {};
-    if (typeof window.location === 'undefined') {
+    if (!util.isBrowser()) {
         return vars;
     }
     let qi = window.location.href.indexOf('?');

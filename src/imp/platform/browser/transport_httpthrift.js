@@ -68,7 +68,6 @@ export default class TransportBrowser {
             + `?auth=${encodeURIComponent(authJSON)}`
             + `&report=${encodeURIComponent(reportJSON)}`;
 
-        // TODO: Fix for React Native
         let elem = document.createElement('script');
         elem.async = true;
         elem.defer = true;
