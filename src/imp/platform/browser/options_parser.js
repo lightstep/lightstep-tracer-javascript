@@ -5,13 +5,10 @@ const util = require('./util');
 // This relies on the fact that scripts are executed as soon as they are
 // included -- thus 'this' script is the last one in the array at the time
 // this is run.
-let hostScriptElement = (function () {
+function hostScriptElement() {
     // check to see if we're in a webworker
     // eslint-disable-next-line no-restricted-globals
     if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
-        return null;
-    }
-    if (!util.isBrowser()) {
         return null;
     }
     let scripts = document.getElementsByTagName('SCRIPT');
@@ -19,13 +16,10 @@ let hostScriptElement = (function () {
         return null;
     }
     return scripts[scripts.length - 1];
-}());
+}
 
 function urlQueryParameters(defaults) {
     let vars = {};
-    if (!util.isBrowser()) {
-        return vars;
-    }
     let qi = window.location.href.indexOf('?');
     if (qi < 0) {
         return vars;
@@ -51,12 +45,13 @@ function urlQueryParameters(defaults) {
 //
 // Note: relies on the global hostScriptElement variable defined above.
 //
-module.exports.parseScriptElementOptions = function (opts, browserOpts) {
-    if (!hostScriptElement) {
+function parseScriptElementOptions(opts, browserOpts) {
+    let hostScriptEl = hostScriptElement();
+    if (!hostScriptEl) {
         return;
     }
 
-    let { dataset } = hostScriptElement;
+    let { dataset } = hostScriptEl;
 
     let accessToken = dataset.access_token;
     if (typeof accessToken === 'string' && accessToken.length > 0) {
@@ -116,7 +111,11 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
     if (typeof dataset.instrument_page_load === 'string' && dataset.instrument_page_load === 'true') {
         opts.instrument_page_load = true;
     }
-};
+}
+
+function parseScriptElementOptionsNoop(opts, browserOpts) {
+
+}
 
 // Parses options out of the current URL query string. The query parameters use
 // the 'lightstep_' prefix to reduce the chance of collision with
@@ -125,7 +124,7 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
 // This mechanism is particularly useful for debugging purposes as it does not
 // require any code or configuration changes.
 //
-module.exports.parseURLQueryOptions = function (opts) {
+function parseURLQueryOptions(opts) {
     let params = urlQueryParameters();
     if (params.lightstep_verbosity) {
         try {
@@ -135,4 +134,13 @@ module.exports.parseURLQueryOptions = function (opts) {
     if (params.lightstep_log_to_console) {
         opts.log_to_console = true;
     }
+}
+
+function parseURLQueryOptionsNoop(opts) {
+    return {};
+}
+
+module.exports = {
+    parseScriptElementOptions : util.isBrowser() ? parseScriptElementOptions : parseScriptElementOptionsNoop,
+    parseURLQueryOptions      : util.isBrowser() ? parseURLQueryOptions : parseURLQueryOptionsNoop,
 };
