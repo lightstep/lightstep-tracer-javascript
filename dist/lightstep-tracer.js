@@ -18098,6 +18098,8 @@ module.exports = __webpack_require__(/*! ./generated/thrift_all.js */ "./src/imp
 "use strict";
 
 
+var util = __webpack_require__(/*! ./util */ "./src/imp/platform/browser/util.js");
+
 /* global WorkerGlobalScope */
 // Find the HTML element that included the tracing library (if there is one).
 // This relies on the fact that scripts are executed as soon as they are
@@ -18107,6 +18109,9 @@ var hostScriptElement = function () {
     // check to see if we're in a webworker
     // eslint-disable-next-line no-restricted-globals
     if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
+        return null;
+    }
+    if (!util.isBrowser()) {
         return null;
     }
     var scripts = document.getElementsByTagName('SCRIPT');
@@ -18143,7 +18148,7 @@ function urlQueryParameters(defaults) {
 //
 // Note: relies on the global hostScriptElement variable defined above.
 //
-module.exports.parseScriptElementOptions = function (opts, browserOpts) {
+function parseScriptElementOptions(opts, browserOpts) {
     if (!hostScriptElement) {
         return;
     }
@@ -18211,7 +18216,9 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
     if (typeof dataset.instrument_page_load === 'string' && dataset.instrument_page_load === 'true') {
         opts.instrument_page_load = true;
     }
-};
+}
+
+function parseScriptElementOptionsNoop(opts, browserOpts) {}
 
 // Parses options out of the current URL query string. The query parameters use
 // the 'lightstep_' prefix to reduce the chance of collision with
@@ -18220,11 +18227,7 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
 // This mechanism is particularly useful for debugging purposes as it does not
 // require any code or configuration changes.
 //
-module.exports.parseURLQueryOptions = function (opts) {
-    if (!window) {
-        return;
-    }
-
+function parseURLQueryOptions(opts) {
     var params = urlQueryParameters();
     if (params.lightstep_verbosity) {
         try {
@@ -18234,6 +18237,15 @@ module.exports.parseURLQueryOptions = function (opts) {
     if (params.lightstep_log_to_console) {
         opts.log_to_console = true;
     }
+}
+
+function parseURLQueryOptionsNoop(opts) {
+    return {};
+}
+
+module.exports = {
+    parseScriptElementOptions: util.isBrowser() ? parseScriptElementOptions : parseScriptElementOptionsNoop,
+    parseURLQueryOptions: util.isBrowser() ? parseURLQueryOptions : parseURLQueryOptionsNoop
 };
 
 /***/ }),
@@ -18327,7 +18339,10 @@ var PlatformBrowser = function () {
     }, {
         key: 'onBeforeExit',
         value: function onBeforeExit() {
-            if (window) {
+            // This will result in the final report not being made in non-browser
+            // environments like React Native. Flush should be called explicitly in
+            // those environments
+            if (util.isBrowser()) {
                 var _window;
 
                 for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
@@ -18670,6 +18685,10 @@ module.exports = exports.default;
 
 /* eslint-disable */
 
+function isBrowser() {
+    return typeof document !== "undefined";
+}
+
 // This function is copied directly from https://github.com/litejs/browser-cookie-lite.
 // It is licensed under the MIT License and authored by Lauri Rooden.
 function cookie(name, value, ttl, path, domain, secure) {
@@ -18681,10 +18700,15 @@ function cookie(name, value, ttl, path, domain, secure) {
     return decodeURIComponent((("; " + document.cookie).split("; " + name + "=")[1] || "").split(";")[0]);
 }
 
+function cookieNoop() {
+    return null;
+}
+
 /* eslint-enable */
 
 module.exports = {
-    cookie: cookie
+    cookie: isBrowser() ? cookie : cookieNoop,
+    isBrowser: isBrowser
 };
 
 /***/ }),
