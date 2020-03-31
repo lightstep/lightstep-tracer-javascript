@@ -5,10 +5,13 @@ const util = require('./util');
 // This relies on the fact that scripts are executed as soon as they are
 // included -- thus 'this' script is the last one in the array at the time
 // this is run.
-function hostScriptElement() {
+let hostScriptElement = (function() {
     // check to see if we're in a webworker
     // eslint-disable-next-line no-restricted-globals
     if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
+        return null;
+    }
+    if (!util.isBrowser()) {
         return null;
     }
     let scripts = document.getElementsByTagName('SCRIPT');
@@ -16,7 +19,7 @@ function hostScriptElement() {
         return null;
     }
     return scripts[scripts.length - 1];
-}
+}());
 
 function urlQueryParameters(defaults) {
     let vars = {};
@@ -46,12 +49,11 @@ function urlQueryParameters(defaults) {
 // Note: relies on the global hostScriptElement variable defined above.
 //
 function parseScriptElementOptions(opts, browserOpts) {
-    let hostScriptEl = hostScriptElement();
-    if (!hostScriptEl) {
+    if (!hostScriptElement) {
         return;
     }
 
-    let { dataset } = hostScriptEl;
+    let { dataset } = hostScriptElement;
 
     let accessToken = dataset.access_token;
     if (typeof accessToken === 'string' && accessToken.length > 0) {
