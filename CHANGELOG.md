@@ -4,6 +4,10 @@
 
 ## vNext
 
+## 0.29.0
+
+* Truncate most significant 64 bits when all 0's in B3 propagator.Inject (#238)
+
 ## 0.28.0
 
 * Bug fix for propagating baggage from parent span to child span
