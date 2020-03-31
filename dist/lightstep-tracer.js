@@ -18816,8 +18816,13 @@ var B3Propagator = function (_LightStepPropagator) {
                 return;
             }
 
+            var traceId = spanContext.traceGUID();
+            if (traceId.length === 32 && traceId.substr(0, 16) === '0000000000000000') {
+                traceId = traceId.substr(16); // take least significant 8 bytes (16 chars)
+            }
+
             carrier[this._carrierPrefix + 'spanid'] = spanContext._guid;
-            carrier[this._carrierPrefix + 'traceid'] = spanContext.traceGUID();
+            carrier[this._carrierPrefix + 'traceid'] = traceId;
             if (spanContext._sampled) {
                 carrier[this._carrierPrefix + 'sampled'] = '1';
             } else {
