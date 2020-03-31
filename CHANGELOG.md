@@ -7,6 +7,7 @@
 ## 0.29.0
 
 * Truncate most significant 64 bits when all 0's in B3 propagator.Inject (#238)
+* Support React Native with the browser tracer (#235)
 
 ## 0.28.0
 
