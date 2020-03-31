@@ -18105,10 +18105,13 @@ var util = __webpack_require__(/*! ./util */ "./src/imp/platform/browser/util.js
 // This relies on the fact that scripts are executed as soon as they are
 // included -- thus 'this' script is the last one in the array at the time
 // this is run.
-function hostScriptElement() {
+var hostScriptElement = function () {
     // check to see if we're in a webworker
     // eslint-disable-next-line no-restricted-globals
     if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
+        return null;
+    }
+    if (!util.isBrowser()) {
         return null;
     }
     var scripts = document.getElementsByTagName('SCRIPT');
@@ -18116,7 +18119,7 @@ function hostScriptElement() {
         return null;
     }
     return scripts[scripts.length - 1];
-};
+}();
 
 function urlQueryParameters(defaults) {
     var vars = {};
@@ -18146,12 +18149,11 @@ function urlQueryParameters(defaults) {
 // Note: relies on the global hostScriptElement variable defined above.
 //
 function parseScriptElementOptions(opts, browserOpts) {
-    var hostScriptEl = hostScriptElement();
-    if (!hostScriptEl) {
+    if (!hostScriptElement) {
         return;
     }
 
-    var dataset = hostScriptEl.dataset;
+    var dataset = hostScriptElement.dataset;
 
 
     var accessToken = dataset.access_token;
@@ -18216,9 +18218,7 @@ function parseScriptElementOptions(opts, browserOpts) {
     }
 }
 
-function parseScriptElementOptionsNoop(opts, browserOpts) {
-    return;
-}
+function parseScriptElementOptionsNoop(opts, browserOpts) {}
 
 // Parses options out of the current URL query string. The query parameters use
 // the 'lightstep_' prefix to reduce the chance of collision with
