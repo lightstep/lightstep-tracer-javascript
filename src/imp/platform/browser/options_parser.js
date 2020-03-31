@@ -5,7 +5,7 @@ const util = require('./util');
 // This relies on the fact that scripts are executed as soon as they are
 // included -- thus 'this' script is the last one in the array at the time
 // this is run.
-let hostScriptElement = (function() {
+let hostScriptElement = (function () {
     // check to see if we're in a webworker
     // eslint-disable-next-line no-restricted-globals
     if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
