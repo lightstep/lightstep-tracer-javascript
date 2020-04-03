@@ -74,6 +74,7 @@ module.exports = {
                             'babel-plugin-check-es2015-constants',
                             'babel-plugin-transform-es2015-spread',
                             'babel-plugin-syntax-object-rest-spread',
+                            'babel-plugin-transform-object-rest-spread',
                             'babel-plugin-transform-es2015-parameters',
                             'babel-plugin-transform-es2015-destructuring',
                             'babel-plugin-transform-es2015-block-scoping',
