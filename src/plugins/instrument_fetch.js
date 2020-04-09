@@ -247,14 +247,13 @@ class InstrumentFetch {
             return false;
         }
 
-        let include = false;
-        if (opts.fetch_url_inclusion_patterns.some((inc) => inc.test(url))) {
-            include = true;
-        }
         if (opts.fetch_url_exclusion_patterns.some((ex) => ex.test(url))) {
-            include = false;
+            return false;
         }
-        return include;
+        if (opts.fetch_url_inclusion_patterns.some((inc) => inc.test(url))) {
+            return true;
+        }
+        return false;
     }
 
     _shouldAddHeadersToRequest(tracer, url) {

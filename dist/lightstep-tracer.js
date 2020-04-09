@@ -22111,18 +22111,17 @@ var InstrumentFetch = function () {
                 return false;
             }
 
-            var include = false;
-            if (opts.fetch_url_inclusion_patterns.some(function (inc) {
-                return inc.test(url);
-            })) {
-                include = true;
-            }
             if (opts.fetch_url_exclusion_patterns.some(function (ex) {
                 return ex.test(url);
             })) {
-                include = false;
+                return false;
             }
-            return include;
+            if (opts.fetch_url_inclusion_patterns.some(function (inc) {
+                return inc.test(url);
+            })) {
+                return true;
+            }
+            return false;
         }
     }, {
         key: '_shouldAddHeadersToRequest',
@@ -22524,18 +22523,17 @@ var InstrumentXHR = function () {
                 return false;
             }
 
-            var include = false;
-            if (opts.xhr_url_inclusion_patterns.some(function (inc) {
-                return inc.test(url);
-            })) {
-                include = true;
-            }
             if (opts.xhr_url_exclusion_patterns.some(function (ex) {
                 return ex.test(url);
             })) {
-                include = false;
+                return false;
             }
-            return include;
+            if (opts.xhr_url_inclusion_patterns.some(function (inc) {
+                return inc.test(url);
+            })) {
+                return true;
+            }
+            return false;
         }
     }, {
         key: '_shouldAddHeadersToRequest',
