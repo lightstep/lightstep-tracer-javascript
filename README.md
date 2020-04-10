@@ -81,11 +81,19 @@ The OpenTracing standard JavaScript API is [documented here](https://doc.esdoc.o
 
 * `xhr_url_exclusion_patterns` `RegExp[]` - an array of regular expressions used to exclude URLs from `XMLHttpRequest` auto-instrumentation. The default value is an empty array. For a given URL to be instrumented, it must match at least one regular expression in `xhr_url_inclusion_patterns` and not match any regular expressions in `xhr_url_exclusion_patterns`.
 
+* `xhr_url_header_inclusion_patterns` `RegExp[]` - an array of regular expressions used to include URLs which auto-instrumented `XMLHttpRequest`s add tracing headers to. The default value is wildcard matching all strings. For a given URL to have tracing headers added, it must match at least one regular expression in `xhr_url_header_inclusion_patterns` and not match any regular expressions in `xhr_url_header_exclusion_patterns`.
+
+* `xhr_url_header_exclusion_patterns` `RegExp[]` - an array of regular expressions used to exclude URLs that auto-instrumented `XMLHttpRequest`s add tracing headers to. The default value is an empty array. For a given URL to have tracing headers added, it must match at least one regular expression in `xhr_url_header_inclusion_patterns` and not match any regular expressions in `xhr_url_header_exclusion_patterns`.
+
 * `fetch_instrumentation` `bool` - if false, disables automatic instrumentation of `window.fetch`. This must be set at initialization; changes after initialization will have no effect. Defaults to false.
 
 * `fetch_url_inclusion_patterns` `RegExp[]` - an array of regular expressions used to whitelist URLs for `window.fetch` auto-instrumentation. The default value is wildcard matching all strings. For a given URL to be instrumented, it must match at least one regular expression in `fetch_url_inclusion_patterns` and not match any regular expressions in `fetch_url_exclusion_patterns`.
 
 * `fetch_url_exclusion_patterns` `RegExp[]` - an array of regular expressions used to exclude URLs from `window.fetch` auto-instrumentation. The default value is an empty array. For a given URL to be instrumented, it must match at least one regular expression in `fetch_url_inclusion_patterns` and not match any regular expressions in `fetch_url_exclusion_patterns`.
+
+* `fetch_url_header_inclusion_patterns` `RegExp[]` - an array of regular expressions used to include URLs for `window.fetch` tracer header inclusion. The default value is wildcard matching all strings. For a given URL to be have tracing headers added, it must match at least one regular expression in `fetch_url_header_inclusion_patterns` and not match any regular expressions in `fetch_url_header_exclusion_patterns`.
+
+* `fetch_url_header_exclusion_patterns` `RegExp[]` - an array of regular expressions used to exclude header insertion onto URLs from `window.fetch` auto-instrumentation. The default value is an empty array. For a given URL to have tracing headers added, it must match at least one regular expression in `fetch_url_header_inclusion_patterns` and not match any regular expressions in `fetch_url_header_exclusion_patterns`.
 
 * `include_cookies` `bool` - if true, includes cookies in the span logs for both `window.fetch` and `XMLHttpRequest`. Defaults to true.
 

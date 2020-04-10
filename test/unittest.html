@@ -10,6 +10,22 @@
         <div id="messages"></div>
         <div id="fixtures"></div>
 
+        <script src="../node_modules/sinon/pkg/sinon.js"></script>
+        <script src="../node_modules/fetch-mock/es5/client-bundle.js"></script>
+        <script>
+            /* 
+             * In order to mock requests they must be setup here before the tracer
+             * is loaded. This is because the request plugins grab fetch/xhr immediately 
+             * so the mocks must be initialized before that happens. xhr requests are
+             * mocked by sinion which allows for custom responses inline. Fetch
+             * requests are mocked by fetchMock which requires initialization
+             * here.
+             */
+            fetchMock
+              .get(/include-me-header-test/, 200)
+              .get(/exclude-me-header-test/, 200);
+            sinon.useFakeXMLHttpRequest();
+        </script>
         <script src="dist/opentracing-browser.min.js"></script>
         <script src="dist/lightstep-tracer.js"></script>
         <script src="browser/underscore-min.js"></script>

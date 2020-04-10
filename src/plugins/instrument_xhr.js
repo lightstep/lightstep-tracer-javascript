@@ -67,6 +67,8 @@ class InstrumentXHR {
         tracerImp.addOption('xhr_instrumentation', { type : 'bool', defaultValue : false });
         tracerImp.addOption('xhr_url_inclusion_patterns', { type : 'array', defaultValue : [/.*/] });
         tracerImp.addOption('xhr_url_exclusion_patterns', { type : 'array', defaultValue : [] });
+        tracerImp.addOption('xhr_url_header_inclusion_patterns', { type : 'array', defaultValue : [/.*/] });
+        tracerImp.addOption('xhr_url_header_exclusion_patterns', { type : 'array', defaultValue : [] });
         tracerImp.addOption('include_cookies', { type : 'bool', defaultValue : true });
     }
 
@@ -290,12 +292,14 @@ class InstrumentXHR {
             });
 
             // Add Open-Tracing headers
-            const headersCarrier = {};
-            tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
-            const keys = Object.keys(headersCarrier);
-            keys.forEach((key) => {
-                proxied.setRequestHeader.call(this, key, headersCarrier[key]);
-            });
+            if (self._shouldAddHeadersToRequest(tracer, this.__tracer_url)) {
+                const headersCarrier = {};
+                tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
+                const keys = Object.keys(headersCarrier);
+                keys.forEach((key) => {
+                    proxied.setRequestHeader.call(this, key, headersCarrier[key]);
+                });
+            }
 
             return proxied.send.apply(this, arguments);
         };
@@ -316,14 +320,33 @@ class InstrumentXHR {
             return false;
         }
 
-        let include = false;
-        if (opts.xhr_url_inclusion_patterns.some((inc) => inc.test(url))) {
-            include = true;
-        }
         if (opts.xhr_url_exclusion_patterns.some((ex) => ex.test(url))) {
-            include = false;
+            return false;
         }
-        return include;
+        if (opts.xhr_url_inclusion_patterns.some((inc) => inc.test(url))) {
+            return true;
+        }
+        return false;
+    }
+
+    _shouldAddHeadersToRequest(tracer, url) {
+        // This shouldn't be possible, but let's be paranoid
+        if (!tracer || !url) {
+            return false;
+        }
+
+        let opts = tracer.options();
+        if (opts.disabled) {
+            return false;
+        }
+
+        if (opts.xhr_url_header_exclusion_patterns.some((ex) => ex.test(url))) {
+            return false;
+        }
+        if (opts.xhr_url_header_inclusion_patterns.some((inc) => inc.test(url))) {
+            return true;
+        }
+        return false;
     }
 }
 
