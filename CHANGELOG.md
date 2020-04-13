@@ -4,6 +4,11 @@
 
 ## vNext
 
+## 0.30.0
+
+* Bug fix for eslint for Microsoft Edge (#241)
+* Add options for auto-instrumented urls and tracing headers (#237) 
+
 ## 0.29.0
 
 * Truncate most significant 64 bits when all 0's in B3 propagator.Inject (#238)
