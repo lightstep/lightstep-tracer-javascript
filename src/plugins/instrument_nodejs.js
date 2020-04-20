@@ -63,8 +63,8 @@ class InstrumentNodejs {
 
     addOptions(tracerImp) {
         tracerImp.addOption('nodejs_instrumentation', { type : 'bool', defaultValue : false });
-        tracerImp.addOption('nodejs_inclusion_patterns', { type : 'array', defaultValue : [/.*/] });
-        tracerImp.addOption('nodejs_exclusion_patterns', { type : 'array', defaultValue : [] });
+        tracerImp.addOption('nodejs_url_inclusion_patterns', { type : 'array', defaultValue : [/.*/] });
+        tracerImp.addOption('nodejs_url_exclusion_patterns', { type : 'array', defaultValue : [] });
         tracerImp.addOption('include_cookies', { type : 'bool', defaultValue : true });
     }
 
