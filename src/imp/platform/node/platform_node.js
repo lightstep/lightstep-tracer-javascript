@@ -16,7 +16,6 @@ let startTimeMicros = computeStartMicros();
 let gLocalStorage = {};
 
 export default class PlatformNode {
-
     constructor(imp) {
         this._mustMatchVersion();
     }
@@ -55,11 +54,11 @@ export default class PlatformNode {
                 parseInt(requiredMatch[2], 10),
             ];
             if (actual[0] > required[0]) {
-                return;
+                // eslint-disable-next-line no-empty
             } else if (actual[0] < required[0]) {
                 this.fatal(err);
             } else if (actual[1] > required[1]) {
-                return;
+                // eslint-disable-next-line no-empty
             } else if (actual[1] < required[1]) {
                 this.fatal(err);
             } else if (actual[2] < required[2]) {
@@ -75,8 +74,9 @@ export default class PlatformNode {
         return 'node';
     }
 
-    static initLibrary(lib) {
-    }
+    /* eslint-disable no-empty */
+    static initLibrary(lib) {}
+    /* eslint-enable no-empty */
 
     nowMicros() {
         let hrTime = process.hrtime();
@@ -88,9 +88,11 @@ export default class PlatformNode {
     }
 
     generateUUID() {
+        /* eslint-disable no-bitwise */
         let p0 = `00000000${Math.abs((Math.random() * 0xFFFFFFFF) | 0).toString(16)}`.substr(-8);
         let p1 = `00000000${Math.abs((Math.random() * 0xFFFFFFFF) | 0).toString(16)}`.substr(-8);
         return `${p0}${p1}`;
+        /* eslint-enable no-bitwise */
     }
 
     onBeforeExit(...args) {
@@ -159,7 +161,7 @@ export default class PlatformNode {
     }
 
     fatal(message) {
-        console.error(message);     // eslint-disable-line no-console
+        console.error(message); // eslint-disable-line no-console
         process.exit(1);
     }
 

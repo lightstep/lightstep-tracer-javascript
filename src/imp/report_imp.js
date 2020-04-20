@@ -1,7 +1,8 @@
 import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
 import _each from '../_each'; // eslint-disable-line camelcase
-import * as coerce from './coerce.js';
-let proto = require('./generated_proto/collector_pb.js');
+import * as coerce from './coerce';
+
+let proto = require('./generated_proto/collector_pb');
 
 export default class ReportImp {
     constructor(runtime, oldestMicros, youngestMicros, spanRecords, internalLogs, counters, timestampOffsetMicros) {
@@ -82,7 +83,7 @@ export default class ReportImp {
         reportProto.setAuth(auth.toProto());
         reportProto.setReporter(this._runtime.toProto());
         reportProto.setSpansList(spansList);
-        reportProto.setTimestampOffsetMicros(this._timestampOffsetMicros);
+        reportProto.setTimestampOffsetMicros(this._timestampOffsetMicros.toString(10));
         reportProto.setInternalMetrics(internalMetrics);
         return reportProto;
     }

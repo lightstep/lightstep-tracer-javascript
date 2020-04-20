@@ -1,7 +1,6 @@
 let proto = require('../../generated_proto/collector_pb.js');
 
 export default class TransportBrowser {
-
     constructor() {
         this._host = '';
         this._port = 0;

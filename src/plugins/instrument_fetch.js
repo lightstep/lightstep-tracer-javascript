@@ -37,7 +37,8 @@ function getResponseHeaders(response) {
     const entries = response.headers.entries();
     for (let i = 0; i < entries.length; i++) {
         const pair = entries[i];
-        result[pair[0]] = pair[1];
+        const [key, val] = pair;
+        result[key] = val;
     }
     return result;
 }
@@ -53,10 +54,6 @@ class InstrumentFetch {
         this._internalExclusions = [];
         this._tracer = null;
         this._handleOptions = this._handleOptions.bind(this);
-
-        if (!this._enabled) {
-            return;
-        }
     }
 
     name() {
@@ -67,6 +64,8 @@ class InstrumentFetch {
         tracerImp.addOption('fetch_instrumentation', { type : 'bool', defaultValue : false });
         tracerImp.addOption('fetch_url_inclusion_patterns', { type : 'array', defaultValue : [/.*/] });
         tracerImp.addOption('fetch_url_exclusion_patterns', { type : 'array', defaultValue : [] });
+        tracerImp.addOption('fetch_url_header_inclusion_patterns', { type : 'array', defaultValue : [/.*/] });
+        tracerImp.addOption('fetch_url_header_exclusion_patterns', { type : 'array', defaultValue : [] });
         tracerImp.addOption('include_cookies', { type : 'bool', defaultValue : true });
     }
 
@@ -122,7 +121,7 @@ class InstrumentFetch {
 
         // http://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
         function escapeRegExp(str) {
-            return (`${str}`).replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
+            return (`${str}`).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
 
         // Check against the hostname without the port as well as the canonicalized
@@ -156,59 +155,52 @@ class InstrumentFetch {
         let self = this;
         let tracer = this._tracer;
 
-        return function (request, options = {}) {
-            request = typeof request !== 'string' ? request : new Request(request);
-            const url = request.url;
+        return function (input, init) {
+            const request = new Request(input, init);
             const opts = tracer.options();
 
-            if (!self._shouldTrace(tracer, url)) {
-                return proxiedFetch.apply(null, arguments);
+            if (!self._shouldTrace(tracer, request.url)) {
+                // eslint-disable-next-line prefer-spread
+                return proxiedFetch(request);
             }
 
             let span = tracer.startSpan('fetch');
             tracer.addActiveRootSpan(span);
 
+            const parsed = new URL(request.url);
             let tags = {
-                method : options && options.method ? options.method : 'GET',
-                url    : url,
+                method : request.method,
+                url    : request.url,
+
+                // NOTE: Purposefully excluding username:password from tags.
+                // TODO: consider sanitizing URL to mask / remove that information from the trace in general
+                hash     : parsed.hash,
+                href     : parsed.href,
+                protocol : parsed.protocol,
+                origin   : parsed.origin,
+                host     : parsed.host,
+                hostname : parsed.hostname,
+                port     : parsed.port,
+                pathname : parsed.pathname,
+                search   : parsed.search,
             };
-            if (url) {
-                tags.url_pathname = url.split('?')[0];
-            }
-
-            const fetchPayload = Object.assign({}, tags);
-
             if (opts.include_cookies) {
-                fetchPayload.cookies = getCookies();
+                tags.cookies = getCookies();
             }
-
-            if (options.headers instanceof Headers) {
-                options.headers.forEach((value, key) => {
-                    request.headers.set(key, value);
-                });
-            } else if (options.headers) {
-                for (let [key, value] of Object.entries(options.headers)) {
-                    request.headers.set(key, value);
-                }
-            }
-
-            // Combine request and options into one Request object to send to fetch
-            // And delete headers from options object so they don't override headers in Request object
-            delete options.headers;
-            request = new Request(request, options);
 
             // Add Open-Tracing headers
-            const headersCarrier = {};
-            tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
-            const keys = Object.keys(headersCarrier);
-            keys.forEach((key) => {
-                request.headers.set(key, headersCarrier[key]);
-            });
+            if (self._shouldAddHeadersToRequest(tracer, request.url)) {
+                const headersCarrier = {};
+                tracer.inject(span.context(), opentracing.FORMAT_HTTP_HEADERS, headersCarrier);
+                Object.keys(headersCarrier).forEach((key) => {
+                    if (!request.headers.get(key)) request.headers.set(key, headersCarrier[key]);
+                });
+            }
             span.log({
                 event       : 'sending',
-                method      : options.method || 'GET',
-                url         : url,
-                openPayload : fetchPayload,
+                method      : request.method,
+                url         : request.url,
+                openPayload : tags,
             });
             span.addTags(tags);
 
@@ -217,7 +209,7 @@ class InstrumentFetch {
                     span.addTags({ error : true });
                 }
                 span.log({
-                    method       : options.method || 'GET',
+                    method       : request.method,
                     headers      : getResponseHeaders(response),
                     status       : response.status,
                     statusText   : response.statusText,
@@ -242,7 +234,7 @@ class InstrumentFetch {
 
     _shouldTrace(tracer, url) {
         // This shouldn't be possible, but let's be paranoid
-        if (!tracer) {
+        if (!tracer || !url) {
             return false;
         }
 
@@ -250,42 +242,38 @@ class InstrumentFetch {
         if (opts.disabled) {
             return false;
         }
-        if (!url) {
+
+        if (this._internalExclusions.some((ex) => ex.test(url))) {
             return false;
         }
-        for (let key in this._internalExclusions) {
-            if (!this._internalExclusions.hasOwnProperty(key)) {
-                continue;
-            }
-            const ex = this._internalExclusions[key];
-            if (ex.test(url)) {
-                return false;
-            }
-        }
-        let include = false;
-        for (let key in opts.fetch_url_inclusion_patterns) {
-            if (!opts.fetch_url_inclusion_patterns.hasOwnProperty(key)) {
-                continue;
-            }
-            const inc = opts.fetch_url_inclusion_patterns[key];
-            if (inc.test(url)) {
-                include = true;
-                break;
-            }
-        }
-        if (!include) {
+
+        if (opts.fetch_url_exclusion_patterns.some((ex) => ex.test(url))) {
             return false;
         }
-        for (let key in opts.fetch_url_exclusion_patterns) {
-            if (!opts.fetch_url_exclusion_patterns.hasOwnProperty(key)) {
-                continue;
-            }
-            const ex = opts.fetch_url_exclusion_patterns[key];
-            if (ex.test(url)) {
-                return false;
-            }
+        if (opts.fetch_url_inclusion_patterns.some((inc) => inc.test(url))) {
+            return true;
         }
-        return true;
+        return false;
+    }
+
+    _shouldAddHeadersToRequest(tracer, url) {
+        // This shouldn't be possible, but let's be paranoid
+        if (!tracer || !url) {
+            return false;
+        }
+
+        let opts = tracer.options();
+        if (opts.disabled) {
+            return false;
+        }
+
+        if (opts.fetch_url_header_exclusion_patterns.some((ex) => ex.test(url))) {
+            return false;
+        }
+        if (opts.fetch_url_header_inclusion_patterns.some((inc) => inc.test(url))) {
+            return true;
+        }
+        return false;
     }
 }
 

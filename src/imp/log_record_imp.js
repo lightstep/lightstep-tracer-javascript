@@ -1,8 +1,9 @@
 import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
 import _each from '../_each';
-import * as coerce from './coerce'; // eslint-disable-line camelcase
-let proto = require('./generated_proto/collector_pb.js');
+import * as coerce from './coerce';
+// eslint-disable-line camelcase
 let googleProtobufTimestampPB = require('google-protobuf/google/protobuf/timestamp_pb.js');
+let proto = require('./generated_proto/collector_pb.js');
 
 export default class LogRecordImp {
     constructor(logFieldKeyHardLimit, logFieldValueHardLimit, timestampMicros, fields) {
@@ -93,9 +94,8 @@ export default class LogRecordImp {
         this._clearOverLimits();
         let log = new proto.Log();
         let ts = new googleProtobufTimestampPB.Timestamp();
-        let millis = Math.floor(this._timestampMicros / 1000);
-        let secs = Math.floor(millis / 1000);
-        let nanos = (millis % 1000) * 1000000;
+        let secs = Math.floor(this._timestampMicros / 1000000);
+        let nanos = (this._timestampMicros % 1000000) * 1000;
         ts.setSeconds(secs);
         ts.setNanos(nanos);
         log.setTimestamp(ts);

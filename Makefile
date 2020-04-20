@@ -27,7 +27,7 @@ $(BUNDLE_JS): $(SOURCES_JS) webpack.config.js package.json
 build-node: $(COMPILED_JS)
 lib/%.js: src/%.js
 	@mkdir -p $(@D)
-	$(CMD_BABEL) --presets es2015 --plugins add-module-exports $< -o $@ --source-maps
+	$(CMD_BABEL) --presets es2015 --plugins add-module-exports,syntax-object-rest-spread,transform-es2015-spread,transform-object-rest-spread $< -o $@ --source-maps
 
 .PHONY: clean
 clean:
@@ -46,7 +46,6 @@ publish: test test-all coverage
 	echo "Current git branch does not appear to be 'master'. Refusing to publish."; exit 1; \
 	fi
 	npm version $(RELEASE_TYPE)
-	make build # need to rebuild with the new version number
 	git push
 	git push --tags
 	npm whoami
@@ -100,7 +99,6 @@ test-all: build
 	scripts/docker_test.sh latest
 	scripts/docker_test.sh 10
 	scripts/docker_test.sh 8
-	scripts/docker_test.sh 6
 
 #
 # lint

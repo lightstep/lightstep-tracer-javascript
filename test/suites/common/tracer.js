@@ -32,7 +32,12 @@ describe("Tracer", function() {
             var span = Tracer.startSpan('test2', { followsFrom : parentContext });
             span.finish();
         });
-
+        it('propagates baggage items from parent to children', function() {
+            var parent = Tracer.startSpan('test1');
+            parent.setBaggageItem('test1', 'value1');
+            var span = Tracer.startSpan('test2', { childOf : parent });
+            expect(span.getBaggageItem('test1')).to.equal('value1');
+        });
         it('propagates sampled flag correctly', function() {
             var parent = Tracer.startSpan('test1');
             var parentContext = parent.context();
@@ -135,8 +140,8 @@ describe("Tracer", function() {
 
             var carrier = {};
             Tracer.inject(spanContext, opentracing.FORMAT_HTTP_HEADERS, carrier);
-            expect(carrier['x-b3-traceid'].length).to.equal(32)
-            expect(carrier['x-b3-traceid'].substr(16)).to.equal(spanContext._traceGUID);
+            expect(carrier['x-b3-traceid'].length).to.equal(16)
+            expect(carrier['x-b3-traceid']).to.equal(spanContext._traceGUID);
             expect(carrier['x-b3-spanid']).to.equal(spanContext._guid);
             expect(carrier['x-b3-sampled']).to.equal('0');
 
@@ -152,7 +157,40 @@ describe("Tracer", function() {
 
             var span2 = Tracer.startSpan('my_child', { childOf: extractedContext});
             expect(span2.context()._sampled).to.equal(false);
+        });
 
+        it("should propagate B3 format (64 bit traceid)", function() {
+            Tracer._propagators[Tracer._opentracing.FORMAT_HTTP_HEADERS] = new lightstep.B3Propagator(Tracer);
+
+            headers = {
+                'x-b3-spanid': '5e7c1e9617cdd152',
+                'x-b3-traceid': '0a0f6c981e2430cb',
+                'x-b3-sampled': '1'
+            };
+
+            var context = Tracer.extract(opentracing.FORMAT_HTTP_HEADERS, headers);
+            expect(context.traceGUID()).to.equal('00000000000000000a0f6c981e2430cb');
+
+            carrier = {};
+            Tracer.inject(context, opentracing.FORMAT_HTTP_HEADERS, carrier);
+            expect(headers['x-b3-traceid']).to.equal('0a0f6c981e2430cb');
+        });
+
+        it("should propagate B3 format (128 bit traceid)", function() {
+            Tracer._propagators[Tracer._opentracing.FORMAT_HTTP_HEADERS] = new lightstep.B3Propagator(Tracer);
+
+            headers = {
+                'x-b3-spanid': '5e7c1e9617cdd152',
+                'x-b3-traceid': '10000000000000000a0f6c981e2430cb',
+                'x-b3-sampled': '1'
+            };
+
+            var context = Tracer.extract(opentracing.FORMAT_HTTP_HEADERS, headers);
+            expect(context.traceGUID()).to.equal('10000000000000000a0f6c981e2430cb');
+
+            carrier = {};
+            Tracer.inject(context, opentracing.FORMAT_HTTP_HEADERS, carrier);
+            expect(headers['x-b3-traceid']).to.equal('10000000000000000a0f6c981e2430cb');
         });
 
         it("should propagate binary carriers");

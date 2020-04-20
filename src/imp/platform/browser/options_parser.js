@@ -1,3 +1,5 @@
+const util = require('./util');
+
 /* global WorkerGlobalScope */
 // Find the HTML element that included the tracing library (if there is one).
 // This relies on the fact that scripts are executed as soon as they are
@@ -5,7 +7,11 @@
 // this is run.
 let hostScriptElement = (function () {
     // check to see if we're in a webworker
+    // eslint-disable-next-line no-restricted-globals
     if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
+        return null;
+    }
+    if (!util.isBrowser()) {
         return null;
     }
     let scripts = document.getElementsByTagName('SCRIPT');
@@ -42,12 +48,12 @@ function urlQueryParameters(defaults) {
 //
 // Note: relies on the global hostScriptElement variable defined above.
 //
-module.exports.parseScriptElementOptions = function (opts, browserOpts) {
+function parseScriptElementOptions(opts, browserOpts) {
     if (!hostScriptElement) {
         return;
     }
 
-    let dataset = hostScriptElement.dataset;
+    let { dataset } = hostScriptElement;
 
     let accessToken = dataset.access_token;
     if (typeof accessToken === 'string' && accessToken.length > 0) {
@@ -76,7 +82,7 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
         opts.collector_encryption = collectorEncryption;
     }
 
-    let enable = dataset.enable;
+    let { enable } = dataset;
     if (typeof enable === 'string') {
         if (enable === 'true') {
             opts.enable = true;
@@ -84,7 +90,7 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
             opts.enable = false;
         }
     }
-    let verbosity = dataset.verbosity;
+    let { verbosity } = dataset;
     if (typeof verbosity === 'string') {
         opts.verbosity = parseInt(verbosity, 10);
     }
@@ -107,7 +113,11 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
     if (typeof dataset.instrument_page_load === 'string' && dataset.instrument_page_load === 'true') {
         opts.instrument_page_load = true;
     }
-};
+}
+
+function parseScriptElementOptionsNoop(opts, browserOpts) {
+
+}
 
 // Parses options out of the current URL query string. The query parameters use
 // the 'lightstep_' prefix to reduce the chance of collision with
@@ -116,11 +126,7 @@ module.exports.parseScriptElementOptions = function (opts, browserOpts) {
 // This mechanism is particularly useful for debugging purposes as it does not
 // require any code or configuration changes.
 //
-module.exports.parseURLQueryOptions = function (opts) {
-    if (!window) {
-        return;
-    }
-
+function parseURLQueryOptions(opts) {
     let params = urlQueryParameters();
     if (params.lightstep_verbosity) {
         try {
@@ -130,4 +136,13 @@ module.exports.parseURLQueryOptions = function (opts) {
     if (params.lightstep_log_to_console) {
         opts.log_to_console = true;
     }
+}
+
+function parseURLQueryOptionsNoop(opts) {
+    return {};
+}
+
+module.exports = {
+    parseScriptElementOptions : util.isBrowser() ? parseScriptElementOptions : parseScriptElementOptionsNoop,
+    parseURLQueryOptions      : util.isBrowser() ? parseURLQueryOptions : parseURLQueryOptionsNoop,
 };

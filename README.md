@@ -12,7 +12,7 @@ LightStep distributed tracing library for Node.js and the browser.
 npm install --save lightstep-tracer opentracing
 ```
 
-All modern browsers and Node versions >= 0.12 are supported.
+All modern browsers and Node versions >= 8 are supported.
 
 ## Getting started
 
@@ -81,11 +81,19 @@ The OpenTracing standard JavaScript API is [documented here](https://doc.esdoc.o
 
 * `xhr_url_exclusion_patterns` `RegExp[]` - an array of regular expressions used to exclude URLs from `XMLHttpRequest` auto-instrumentation. The default value is an empty array. For a given URL to be instrumented, it must match at least one regular expression in `xhr_url_inclusion_patterns` and not match any regular expressions in `xhr_url_exclusion_patterns`.
 
+* `xhr_url_header_inclusion_patterns` `RegExp[]` - an array of regular expressions used to include URLs which auto-instrumented `XMLHttpRequest`s add tracing headers to. The default value is wildcard matching all strings. For a given URL to have tracing headers added, it must match at least one regular expression in `xhr_url_header_inclusion_patterns` and not match any regular expressions in `xhr_url_header_exclusion_patterns`.
+
+* `xhr_url_header_exclusion_patterns` `RegExp[]` - an array of regular expressions used to exclude URLs that auto-instrumented `XMLHttpRequest`s add tracing headers to. The default value is an empty array. For a given URL to have tracing headers added, it must match at least one regular expression in `xhr_url_header_inclusion_patterns` and not match any regular expressions in `xhr_url_header_exclusion_patterns`.
+
 * `fetch_instrumentation` `bool` - if false, disables automatic instrumentation of `window.fetch`. This must be set at initialization; changes after initialization will have no effect. Defaults to false.
 
 * `fetch_url_inclusion_patterns` `RegExp[]` - an array of regular expressions used to whitelist URLs for `window.fetch` auto-instrumentation. The default value is wildcard matching all strings. For a given URL to be instrumented, it must match at least one regular expression in `fetch_url_inclusion_patterns` and not match any regular expressions in `fetch_url_exclusion_patterns`.
 
 * `fetch_url_exclusion_patterns` `RegExp[]` - an array of regular expressions used to exclude URLs from `window.fetch` auto-instrumentation. The default value is an empty array. For a given URL to be instrumented, it must match at least one regular expression in `fetch_url_inclusion_patterns` and not match any regular expressions in `fetch_url_exclusion_patterns`.
+
+* `fetch_url_header_inclusion_patterns` `RegExp[]` - an array of regular expressions used to include URLs for `window.fetch` tracer header inclusion. The default value is wildcard matching all strings. For a given URL to be have tracing headers added, it must match at least one regular expression in `fetch_url_header_inclusion_patterns` and not match any regular expressions in `fetch_url_header_exclusion_patterns`.
+
+* `fetch_url_header_exclusion_patterns` `RegExp[]` - an array of regular expressions used to exclude header insertion onto URLs from `window.fetch` auto-instrumentation. The default value is an empty array. For a given URL to have tracing headers added, it must match at least one regular expression in `fetch_url_header_inclusion_patterns` and not match any regular expressions in `fetch_url_header_exclusion_patterns`.
 
 * `include_cookies` `bool` - if true, includes cookies in the span logs for both `window.fetch` and `XMLHttpRequest`. Defaults to true.
 
@@ -118,10 +126,11 @@ and not match any regular expressions in `nodejs_url_exclusion_patterns`.
 * `default_span_tags` `string` *optional* - an associative array of tags to add to every span started by the tracer (e.g., the active user id in a browser client)
 * `delay_initial_report_millis` `int` *optional*, *default=1000* - maximum additional delay of the initial report in addition to the normal reporting interval. A value between zero and this maximum will be selected as the actual delay. This can be useful when concurrently launching a large number of new processes and there is a desire to distribute the initial reports over a window of time.
 * `error_throttle_millis` `int` *optional*, *default=60000* - when `verbosity` is set to `1`, this the minimum time between logged errors.
-* `transport` `string` *optional*, *default=proto* - when `transport` is set to `thrift`, the Tracer will use Thrift as its transport instead of Proto over HTTP.
+* `transport` `string` *optional*, *default=proto* - when `transport` is set to `thrift`, the Tracer will use Thrift as its transport instead of Proto over HTTP. (Not supported in React-Native)
 * `logger` `function(level: string, message: string, payload: any): void` *optional* - specify a custom logger function. Possible `level` values are `debug`, `info`, `warn` and `error`. By default messages will be logged to the console.
 * `disable_meta_event_reporting` `bool` *optional*, *default=false* - when `disable_meta_event_reporting` is set to `true`, the tracer will disable meta event reporting even if requested by the Satellite.
 * `propagators` `dictionary` *optional*, *defaults=*`{ [opentracing.FORMAT_HTTP_HEADERS]: new lightstep.LightStepPropagator(), [opentracing.FORMAT_TEXT_MAP]: new lightstep.LightStepPropagator(), [opentracing.FORMAT_BINARY]: new lightstep.UnsupportedPropagator() }`: Allows inject/extract to use custom propagators for different formats. This package includes `B3Propagator` that supports B3 headers on text maps and http headers. `DDPropagator` supports DataDog trace headers.
+* `clear_span_buffer_consecutive_errors` `number` *optional*, *default=null* - each consecutive buffer flush error will check to see if `clear_span_buffer_consecutive_errors` has been reached.  If reached, the span buffer will be emptied.  This is useful for auto-recovering from errors based on request size constraints, particularly max payload size on intermediate load balancers. 
 
 An example configuration using custom propagators might look like:
 ```js

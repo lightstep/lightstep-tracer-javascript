@@ -4,6 +4,44 @@
 
 ## vNext
 
+## 0.30.0
+
+* Bug fix for eslint for Microsoft Edge (#241)
+* Add options for auto-instrumented urls and tracing headers (#237) 
+
+## 0.29.0
+
+* Truncate most significant 64 bits when all 0's in B3 propagator.Inject (#238)
+* Support React Native with the browser tracer (#235)
+
+## 0.28.0
+
+* Bug fix for propagating baggage from parent span to child span
+* SpanContext is now exported to facilitate creating custom propagators
+
+## 0.27.0
+
+* No changes
+
+## 0.26.0
+
+* Require node >= v8
+* New option to empty span buffer on max error streak `clear_span_buffer_consecutive_errors`
+* Upgrade eslint
+
+## 0.25.2
+
+* fix for fetch plugin: 'method' was always GET
+* Fix missing clock offsets over proto transport
+* Fix timestamp conversion for protobuf transport
+
+## 0.25.1
+* No changes (minor bump to align with 0.25.1-no-protobuf release)
+
+## 0.25.0
+* Bug fix on `fetch` instrumentation options headers being overwritten in some cases.
+* Re-build dist to fix failed page load on IE11 (#207)
+
 ## 0.24.3
 * Fix how the `fetch` shim so that it does not overwrite user-provided `Response.headers`
 * Add clock correction and error handling for the protobuf transport's responses
