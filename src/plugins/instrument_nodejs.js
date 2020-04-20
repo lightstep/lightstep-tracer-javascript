@@ -283,10 +283,10 @@ class InstrumentNodejs {
         }
 
         let include = false;
-        if (opts.nodejs_url_inclusion_patterns.some((inc) => inc.test(url))) {
+        if (opts.nodejs_inclusion_patterns.some((inc) => inc.test(url))) {
             include = true;
         }
-        if (opts.nodejs_url_exclusion_patterns.some((ex) => ex.test(url))) {
+        if (opts.nodejs_exclusion_patterns.some((ex) => ex.test(url))) {
             include = false;
         }
         return include;
