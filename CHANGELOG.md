@@ -4,10 +4,13 @@
 
 ## vNext
 
+## 0.30.1
+* Fix misnamed configuration options. `nodejs_inclusion_patterns` was renamed to `nodejs_url_inclusion_patterns` and `nodejs_exclusion_patterns` was renamed to `nodejs_url_exclusion_patterns`. Because of this bug, the inclusion and exclusion patterns were not being recognized by instrumentation.
+
 ## 0.30.0
 
 * Bug fix for eslint for Microsoft Edge (#241)
-* Add options for auto-instrumented urls and tracing headers (#237) 
+* Add options for auto-instrumented urls and tracing headers (#237)
 
 ## 0.29.0
 
