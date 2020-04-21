@@ -186,14 +186,14 @@ declare module 'lightstep-tracer' {
      * node's native http, https modules.
      * default value is all urls.
      */
-    nodejs_inclusion_patterns?: RegExp[]
+    nodejs_url_inclusion_patterns?: RegExp[]
 
     /**
      * optional. node-only. a regex to indicate which URLs should not be automatically instrumented
      * for node's native http, https modules.
      * default value is no urls.
      */
-    nodejs_exclusion_patterns?: RegExp[]
+    nodejs_url_exclusion_patterns?: RegExp[]
 
     /**
      * optional. browser-only. if true, includes cookies in the span logs for both `window.fetch` and `XMLHttpRequest`.
