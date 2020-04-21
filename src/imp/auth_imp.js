@@ -1,4 +1,5 @@
-import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
+// eslint-disable-next-line camelcase
+import { crouton_thrift } from '../platform_abstraction_layer';
 
 export default class AuthImp {
     constructor(accessToken) {
