@@ -63,7 +63,10 @@ class PlatformBrowser {
     }
 
     onBeforeExit(...args) {
-        if (window) {
+        // This will result in the final report not being made in non-browser
+        // environments like React Native. Flush should be called explicitly in
+        // those environments
+        if (util.isBrowser()) {
             window.addEventListener('beforeunload', ...args);
         }
     }

@@ -133,6 +133,18 @@ declare module 'lightstep-tracer' {
     xhr_url_exclusion_patterns?: RegExp[]
 
     /**
+     * optional. browser-only. a regex to indicate which automatically instrumented XHR URLs should include headers for continuing the trace on the server.
+     * default value is all urls.
+     */
+    xhr_url_header_inclusion_patterns?: RegExp[]
+
+    /**
+     * optional. browser-only. a regex to indicate which automatically instrumented XHR URLs should not include headers for continuing the trace on the server.
+     * default value is no urls.
+     */
+    xhr_url_header_exclusion_patterns?: RegExp[]
+
+    /**
      * optional. browser-only. if enabled, automatically instrument all window.fetch requests with context.headers.
      * see `fetch_url_inclusion_patterns` and `fetch_url_exclusion_patterns`.
      */
@@ -149,6 +161,18 @@ declare module 'lightstep-tracer' {
      * default value is no urls.
      */
     fetch_url_exclusion_patterns?: RegExp[]
+
+    /**
+     * optional. browser-only. a regex to indicate which automatically instrumented URLs should include headers for continuing the trace on the server.
+     * default value is all urls.
+     */
+    fetch_url_header_inclusion_patterns?: RegExp[]
+
+    /**
+     * optional. browser-only. a regex to indicate which automatically instrumented URLs should not include headers for continuing the trace on the server.
+     * default value is no urls.
+     */
+    fetch_url_header_exclusion_patterns?: RegExp[]
 
     /**
      * optional. node-only. if enabled, automatically instrument all node requests with
