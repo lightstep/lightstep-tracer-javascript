@@ -227,10 +227,6 @@ class InstrumentNodejs {
                 });
                 span.addTags(tags);
 
-                request.on('error', (e) => {
-                    throw e;
-                });
-
                 request.on('response', (res) => {
                     if (res.statusCode >= 500 && res.statusCode <= 599) {
                         span.addTags({ error : true });
