@@ -48,10 +48,8 @@ publish: test test-all coverage
 	npm version $(RELEASE_TYPE)
 	git push
 	git push --tags
-	npm whoami
-	npm publish
 	@echo
-	@echo "Publish complete. Don't forget to update CHANGELOG.md if not done already."
+	@echo "Version and tag created. The publish will be done automatically from circleCI."
 	@echo
 
 # NOTE: the benchmark package is *not* part of package.json as it relies on a
