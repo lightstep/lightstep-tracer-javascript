@@ -53,6 +53,7 @@ jobs:
       - run: make lint
       - run: make build test-node
   "node-latest":
+    working_directory: ~/repo
     docker:
       - image: circleci/node:latest
     steps:
@@ -74,6 +75,7 @@ jobs:
           paths: .
 
   deploy:
+    working_directory: ~/repo
     docker:
       - image: circleci/node:latest
     steps:
