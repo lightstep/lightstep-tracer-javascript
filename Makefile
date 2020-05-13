@@ -27,7 +27,8 @@ $(BUNDLE_JS): $(SOURCES_JS) webpack.config.js package.json
 build-node: $(COMPILED_JS)
 lib/%.js: src/%.js
 	@mkdir -p $(@D)
-	$(CMD_BABEL) --presets es2015 --plugins add-module-exports,syntax-object-rest-spread,transform-es2015-spread,transform-object-rest-spread $< -o $@ --source-maps
+	$(CMD_BABEL) --presets=@babel/env --plugins=add-module-exports,@babel/plugin-syntax-object-rest-spread,@babel/plugin-transform-spread,@babel/plugin-proposal-object-rest-spread $< -o $@ --source-maps
+	$(CMD_BABEL) --presets=@babel/env --plugins=add-module-exports,@babel/plugin-syntax-object-rest-spread,@babel/plugin-transform-spread,@babel/plugin-proposal-object-rest-spread $< -o $@ --source-maps
 
 .PHONY: clean
 clean:
