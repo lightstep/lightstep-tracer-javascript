@@ -12,7 +12,7 @@ echo  "Fetching tags ..."
 git fetch --tags
 
 if [ -z "$1" ]; then
-  lastTag=`git tag | grep -E '^v\d+.+-no-protobuf$' | tail -1`
+  lastTag=`git tag | grep -E '^v\d+.+-no-protobuf$' | sort -t . -k 2 -g | tail -1`
   if [ -z "$lastTag" ]; then
     newTag="v0.1"
     echo "No previous tag found, using default: $newTag"
