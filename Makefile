@@ -48,8 +48,6 @@ publish: test test-all coverage
 	npm version $(RELEASE_TYPE)
 	git push
 	git push --tags
-	npm whoami
-	npm publish
 	@echo
 	@echo "Publish complete. Don't forget to update CHANGELOG.md if not done already."
 	@echo
