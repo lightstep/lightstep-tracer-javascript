@@ -8,6 +8,8 @@
     "node": ">=8.0.0"
   },
   "scripts": {
+    "release": "./scripts/release.sh",
+    "tag": "./scripts/prepare_tag.sh",
     "test": "rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js",
     "version": "make build && git add -A dist"
   },

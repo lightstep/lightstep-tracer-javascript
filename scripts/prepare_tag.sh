@@ -55,7 +55,7 @@ else
   exit
 fi
 
-echo "Do you want to create and push the \"$newTag tag to trigger automatic release now?"
+echo "Do you want to create and push the \"$newTag\" tag to trigger automatic release now?"
 echo "Please choose \"1\" to proceed"
 choices=("Yes" "No")
 select choiceRelease in ${choices[@]}
