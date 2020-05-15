@@ -158,29 +158,13 @@ var url = span.generateTraceURL())
 console.log('View the trace for this span at:', url);
 ```
 
-### Release process
-1. Create a new tag in format `v*` for example `v0.2`
-```commandline
-git tag v0.2
-```
-2. Push tag to repo 
-```commandline
-git push origin v0.2
-```
 
-### Release process using auto script and auto detecting for next tag 
+### Release process using circleCI 
 1. Run command
 ```commandline
-npm run tag
+make release RELEASE_TYPE=patch
 ```
-2. Follow the instructions
 
-### Release process using auto script and providing custom tag 
-1. Run command
-```commandline
-npm run tag v0.2
-```
-2. Follow the instructions
 
 ## License
 
