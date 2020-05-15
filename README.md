@@ -158,6 +158,13 @@ var url = span.generateTraceURL())
 console.log('View the trace for this span at:', url);
 ```
 
+### Release process using circleCI 
+1. Run command
+```commandline
+make release RELEASE_TYPE=patch
+```
+
+
 ## License
 
 [The MIT License](LICENSE).

@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 
 jobs:
   "node-8":
@@ -53,6 +53,7 @@ jobs:
       - run: make lint
       - run: make build test-node
   "node-latest":
+    working_directory: ~/repo
     docker:
       - image: circleci/node:latest
     steps:
@@ -69,12 +70,57 @@ jobs:
           key: node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
       - run: make lint
       - run: make build test-node
+      - persist_to_workspace:
+          root: ~/repo
+          paths: .
+
+  deploy:
+    working_directory: ~/repo
+    docker:
+      - image: circleci/node:latest
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - run:
+          name: Authenticate with registry
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/repo/.npmrc
+      - run:
+          name: Publish package
+          command: npm run release
 
 workflows:
   version: 2
   test:
     jobs:
-      - "node-8"
-      - "node-10"
-      - "node-12"
-      - "node-latest"
+      - "node-8":
+          filters:
+            branches:
+              only: /.*/
+      - "node-10":
+          filters:
+            branches:
+              only: /.*/
+      - "node-12":
+          filters:
+            branches:
+              only: /.*/
+      - "node-latest":
+          filters:
+            branches:
+              only: /.*/
+  release:
+    jobs:
+      - "node-latest":
+          filters:
+            tags:
+              only: /^v.*-no-protobuf$/
+            branches:
+              ignore: /.*/
+      - deploy:
+          requires:
+            - "node-latest"
+          filters:
+            tags:
+              only: /^v.*-no-protobuf$/
+            branches:
+              ignore: /.*/
