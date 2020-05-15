@@ -36,12 +36,12 @@ clean:
 	rm -rf coverage
 
 #
-# publish
+# release
 #
 # NOTE: `npm version` automatically creates a git commit and git tag for the
 # incremented version
-.PHONY: publish
-publish: test test-all coverage
+.PHONY: release
+release: test test-all coverage
 	@if [ $(shell git symbolic-ref --short -q HEAD) = "master" ]; then exit 0; else \
 	echo "Current git branch does not appear to be 'master'. Refusing to publish."; exit 1; \
 	fi
