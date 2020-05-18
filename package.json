@@ -9,6 +9,7 @@
   },
   "scripts": {
     "release": "./scripts/release.sh",
+    "release:prepare": "./scripts/release-prepare.sh",
     "test": "rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js",
     "version": "make build && git add -A dist"
   },
@@ -62,7 +63,6 @@
     "fetch-mock": "^9.2.1",
     "istanbul": "^0.4.5",
     "mocha": "^7.1.2",
-    "package-json": "^6.5.0",
     "shelljs": "0.5.3",
     "sinon": "^9.0.1",
     "sprintf-js": "1.0.3",
