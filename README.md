@@ -159,10 +159,17 @@ console.log('View the trace for this span at:', url);
 ```
 
 ### Release process using circleCI 
-1. Run command
+1. Run command (patch, minor, major)
 ```commandline
 make release RELEASE_TYPE=patch
 ```
+
+### Release process using circleCI with custom version 
+1. Run command 
+```commandline
+make release RELEASE_TYPE=v3.2.1-no-protobuf
+```
+2. It will create a tag "v3.2.1-no-protobuf" for version "3.2.1"
 
 
 ## License
