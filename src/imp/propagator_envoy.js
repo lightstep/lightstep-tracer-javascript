@@ -5,8 +5,6 @@ import _leftpad from '../_leftpad';
 import SpanContextImp from './span_context_imp';
 import LightStepPropagator from './propagator_ls';
 
-// const jsonDescriptor = require('./util/BinaryCarrier.json');
-
 const CARRIER_ENVOY_HEADER_KEY = 'x-ot-span-context';
 
 const BINARY_PROTO = {
@@ -48,18 +46,10 @@ export default class EnvoyPropagator extends LightStepPropagator {
 
     inject(spanContext, carrier) {
         if (!carrier) {
-            console.log(
-                'VGZSHOP: ',
-                'Unexpected null carrier in call to inject',
-            );
             this._tracer._error('Unexpected null carrier in call to inject');
             return;
         }
         if (typeof carrier !== 'object') {
-            console.log(
-                'VGZSHOP: ',
-                `Unexpected '${typeof carrier}' FORMAT_BINARY carrier in call to inject`,
-            );
             this._tracer._error(
                 `Unexpected '${typeof carrier}' FORMAT_BINARY carrier in call to inject`,
             );
@@ -85,17 +75,12 @@ export default class EnvoyPropagator extends LightStepPropagator {
         let err = binaryCarrier.verify(payload);
         if (err) {
             this._tracer._error(`Invalid Span Context: ${err}`);
-            console.log(
-                'VGZSHOP: ',
-                err,
-            );
             return null;
         }
         let msg = binaryCarrier.create(payload);
         let buffer = binaryCarrier.encode(msg).finish();
         let bufferString = pb.util.base64.encode(buffer, 0, buffer.length);
         carrier[this._envoyHeaderKey] = bufferString;
-        console.log('VGZSHOP: ', carrier);
 
         return carrier;
     }
@@ -138,6 +123,7 @@ export default class EnvoyPropagator extends LightStepPropagator {
             case 'trace_id':
                 foundFields++;
                 // left pad to length of 16
+                // long is used because JS only supports up to 53 bit integers
                 traceGUID = _leftpad(
                     long.fromValue(value).toString(16),
                     16,
@@ -147,6 +133,7 @@ export default class EnvoyPropagator extends LightStepPropagator {
             case 'span_id':
                 foundFields++;
                 // left pad to length of 16
+                // long is used because JS only supports up to 53 bit integers
                 spanGUID = _leftpad(
                     long.fromValue(value).toString(16),
                     16,

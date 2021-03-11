@@ -24150,10 +24150,7 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 exports.default = _leftpad;
-// Underscore.js-like wrapper to iterate object key-values. Note that even for completely
-// internal objects, packages may modify default Object prototypes and properties
-// (e.g. Ember.js) so it's almost never safe to assume a particular object can
-// iterated with for-in.
+// Underscore.js-like wrapper to left pad a string to a certain length with a character
 function _leftpad(str, len, ch) {
     str = String(str);
     var i = -1;
@@ -29690,8 +29687,6 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-// const jsonDescriptor = require('./util/BinaryCarrier.json');
-
 var CARRIER_ENVOY_HEADER_KEY = 'x-ot-span-context';
 
 var BINARY_PROTO = {
@@ -29740,12 +29735,10 @@ var EnvoyPropagator = function (_LightStepPropagator) {
         key: 'inject',
         value: function inject(spanContext, carrier) {
             if (!carrier) {
-                console.log('VGZSHOP: ', 'Unexpected null carrier in call to inject');
                 this._tracer._error('Unexpected null carrier in call to inject');
                 return;
             }
             if (typeof carrier !== 'object') {
-                console.log('VGZSHOP: ', 'Unexpected \'' + typeof carrier + '\' FORMAT_BINARY carrier in call to inject');
                 this._tracer._error('Unexpected \'' + typeof carrier + '\' FORMAT_BINARY carrier in call to inject');
                 return;
             }
@@ -29769,14 +29762,12 @@ var EnvoyPropagator = function (_LightStepPropagator) {
             var err = binaryCarrier.verify(payload);
             if (err) {
                 this._tracer._error('Invalid Span Context: ' + err);
-                console.log('VGZSHOP: ', err);
                 return null;
             }
             var msg = binaryCarrier.create(payload);
             var buffer = binaryCarrier.encode(msg).finish();
             var bufferString = _protobufjs2.default.util.base64.encode(buffer, 0, buffer.length);
             carrier[this._envoyHeaderKey] = bufferString;
-            console.log('VGZSHOP: ', carrier);
 
             return carrier;
         }
@@ -29822,11 +29813,13 @@ var EnvoyPropagator = function (_LightStepPropagator) {
                     case 'trace_id':
                         foundFields++;
                         // left pad to length of 16
+                        // long is used because JS only supports up to 53 bit integers
                         traceGUID = (0, _leftpad3.default)(_long2.default.fromValue(value).toString(16), 16, '0');
                         break;
                     case 'span_id':
                         foundFields++;
                         // left pad to length of 16
+                        // long is used because JS only supports up to 53 bit integers
                         spanGUID = (0, _leftpad3.default)(_long2.default.fromValue(value).toString(16), 16, '0');
                         // left pad
 
