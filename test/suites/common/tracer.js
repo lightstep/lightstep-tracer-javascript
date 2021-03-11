@@ -196,8 +196,9 @@ describe('Tracer', () => {
         it('should propagate binary carriers', () => {
             Tracer._propagators[Tracer._opentracing.FORMAT_BINARY] = new lightstep.EnvoyPropagator(Tracer);
 
+            let carrier = {};
             let span = Tracer.startSpan('test');
-            let carrier = propagator.inject(span.context(), {});
+            Tracer.inject(span.context(), opentracing.FORMAT_BINARY, carrier);
             expect(carrier).to.have.property('x-ot-span-context');
             span.finish();
         });
