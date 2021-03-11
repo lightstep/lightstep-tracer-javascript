@@ -12,7 +12,6 @@ import { Platform, ProtoTransport, ThriftTransport } from '../platform_abstracti
 import AuthImp from './auth_imp';
 import RuntimeImp from './runtime_imp';
 import ReportImp from './report_imp';
-import UnsupportedPropagator from './propagator';
 import LightStepPropagator from './propagator_ls';
 
 const ClockState    = require('./util/clock_state');
@@ -81,7 +80,7 @@ export default class Tracer extends opentracing.Tracer {
         this._propagators = {};
         this._propagators[this._opentracing.FORMAT_HTTP_HEADERS] = new LightStepPropagator(this);
         this._propagators[this._opentracing.FORMAT_TEXT_MAP] = new LightStepPropagator(this);
-        this._propagators[this._opentracing.FORMAT_BINARY] = new UnsupportedPropagator(this,
+        this._propagators[this._opentracing.FORMAT_BINARY] = new LightStepPropagator(this,
             this._opentracing.FORMAT_BINARY);
 
         if (opts && opts.propagators) {
