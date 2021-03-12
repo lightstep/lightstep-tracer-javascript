@@ -19,11 +19,12 @@ class Util {
     // Use native BigInt if available. Native BigInt has a significant
     // performance improvement over hex2dec
     hexToDec(hexString) {
-        if (typeof BigInt !== 'function') {
+        if (typeof global.BigInt !== 'function') {
             return converter.hexToDec(hexString);
         }
 
-        return BigInt(`0x${hexString}`).toString(10);
+        // eslint-ignore-line
+        return global.BigInt(`0x${hexString}`).toString(10);
     }
 }
 
