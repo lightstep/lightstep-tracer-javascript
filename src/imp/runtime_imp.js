@@ -1,8 +1,8 @@
 import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disable-line camelcase
 import _each from '../_each'; // eslint-disable-line camelcase
 import * as coerce from './coerce';
+import util from './util/util';
 
-let converter = require('hex2dec');
 let proto = require('./generated_proto/collector_pb');
 const packageObject = require('../../package.json');
 
@@ -58,7 +58,7 @@ export default class RuntimeImp {
         hostname.setKey('lightstep.hostname');
         hostname.setStringValue(this._attributes['lightstep.hostname']);
 
-        let reporterId = converter.hexToDec(this._runtimeGUID);
+        let reporterId = util.hexToDec(this._runtimeGUID);
 
         let tracerTags = [];
         _each(this._attributes, (val, key) => {
