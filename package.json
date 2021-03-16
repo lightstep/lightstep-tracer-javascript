@@ -23,7 +23,9 @@
     "eventemitter3": "1.1.1",
     "google-protobuf": "3.6.1",
     "hex2dec": "1.0.1",
+    "long": "^4.0.0",
     "opentracing": "^0.14.4",
+    "protobufjs": "^6.10.2",
     "source-map-support": "0.3.3",
     "thrift": "0.13.0"
   },
