@@ -6,7 +6,6 @@ import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disabl
 import LogRecordImp from './log_record_imp'; // eslint-disable-line camelcase
 import util from './util/util';
 
-let converter = require('hex2dec');
 let googleProtobufTimestampPB = require('google-protobuf/google/protobuf/timestamp_pb');
 let proto = require('./generated_proto/collector_pb');
 
@@ -231,8 +230,8 @@ export default class SpanImp extends opentracing.Span {
     _toProto() {
         let spanContextProto = new proto.SpanContext();
 
-        spanContextProto.setTraceId(converter.hexToDec(this.traceGUID()));
-        spanContextProto.setSpanId(converter.hexToDec(this.guid()));
+        spanContextProto.setTraceId(util.hexToDec(this.traceGUID()));
+        spanContextProto.setSpanId(util.hexToDec(this.guid()));
 
         let spanProto = new proto.Span();
         spanProto.setSpanContext(spanContextProto);
@@ -274,7 +273,7 @@ export default class SpanImp extends opentracing.Span {
             let ref = new proto.Reference();
             ref.setRelationship(proto.Reference.Relationship.CHILD_OF);
             let parentSpanContext = new proto.SpanContext();
-            parentSpanContext.setSpanId(converter.hexToDec(parentSpanGUID));
+            parentSpanContext.setSpanId(util.hexToDec(parentSpanGUID));
             ref.setSpanContext(parentSpanContext);
             spanProto.setReferencesList([ref]);
         }
