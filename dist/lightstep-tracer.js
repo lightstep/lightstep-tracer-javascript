@@ -13432,7 +13432,7 @@ module.exports = g;
 /*! exports provided: name, version, main, types, browser, engines, scripts, license, repository, dependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = {"name":"lightstep-tracer","version":"0.30.2","main":"index.js","types":"index.d.ts","browser":"browser.js","engines":{"node":">=8.0.0"},"scripts":{"test":"rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js","version":"make build && git add -A dist"},"license":"MIT","repository":{"type":"git","url":"http://github.com/lightstep/lightstep-tracer-javascript.git"},"dependencies":{"async":"1.5.0","eventemitter3":"1.1.1","google-protobuf":"3.6.1","hex2dec":"1.0.1","opentracing":"^0.14.4","source-map-support":"0.3.3","thrift":"0.13.0"},"devDependencies":{"babel-cli":"6.14.0","babel-core":"^6.26.3","babel-loader":"7","babel-plugin-add-module-exports":"^1.0.0","babel-plugin-check-es2015-constants":"6.7.2","babel-plugin-syntax-object-rest-spread":"^6.13.0","babel-plugin-transform-es2015-arrow-functions":"6.5.2","babel-plugin-transform-es2015-block-scoped-functions":"6.6.5","babel-plugin-transform-es2015-block-scoping":"^6.26.0","babel-plugin-transform-es2015-classes":"6.6.5","babel-plugin-transform-es2015-computed-properties":"6.6.5","babel-plugin-transform-es2015-destructuring":"6.6.5","babel-plugin-transform-es2015-duplicate-keys":"6.6.4","babel-plugin-transform-es2015-literals":"6.5.0","babel-plugin-transform-es2015-modules-commonjs":"6.7.4","babel-plugin-transform-es2015-object-super":"6.6.5","babel-plugin-transform-es2015-parameters":"6.7.0","babel-plugin-transform-es2015-spread":"^6.6.5","babel-plugin-transform-es2015-sticky-regex":"6.5.0","babel-plugin-transform-es2015-template-literals":"6.6.5","babel-plugin-transform-es2015-unicode-regex":"6.5.0","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"6.3.14","babel-preset-es2015":"6.3.13","chai":"3.4.1","clone":"1.0.2","colors":"1.1.2","eslint":"^6.8.0","eslint-config-airbnb":"^18.0.1","eslint-plugin-import":"^2.20.0","eslint-plugin-jsx-a11y":"^6.2.3","eslint-plugin-react":"^7.18.0","express":"^4.16.3","fetch-mock":"^9.2.1","istanbul":"^0.4.5","mocha":"^7.1.2","shelljs":"0.5.3","sinon":"^9.0.1","sprintf-js":"1.0.3","underscore":"1.8.3","watch-trigger":"0.0.5","webpack":"^4.25.1","webpack-cli":"^3.1.2"}};
+module.exports = {"name":"lightstep-tracer","version":"0.30.2","main":"index.js","types":"index.d.ts","browser":"browser.js","engines":{"node":">=8.0.0"},"scripts":{"release":"./scripts/release.sh","release:prepare":"./scripts/release-prepare.sh","test":"rm -f test/results/*.json && node node_modules/mocha/bin/mocha -c test/unittest_node.js","version":"make build && git add -A dist"},"license":"MIT","repository":{"type":"git","url":"http://github.com/lightstep/lightstep-tracer-javascript.git"},"dependencies":{"async":"1.5.0","eventemitter3":"1.1.1","google-protobuf":"3.6.1","hex2dec":"1.0.1","opentracing":"^0.14.4","source-map-support":"0.3.3","thrift":"0.13.0"},"devDependencies":{"babel-cli":"6.14.0","babel-core":"^6.26.3","babel-loader":"7","babel-plugin-add-module-exports":"^1.0.0","babel-plugin-check-es2015-constants":"6.7.2","babel-plugin-syntax-object-rest-spread":"^6.13.0","babel-plugin-transform-es2015-arrow-functions":"6.5.2","babel-plugin-transform-es2015-block-scoped-functions":"6.6.5","babel-plugin-transform-es2015-block-scoping":"^6.26.0","babel-plugin-transform-es2015-classes":"6.6.5","babel-plugin-transform-es2015-computed-properties":"6.6.5","babel-plugin-transform-es2015-destructuring":"6.6.5","babel-plugin-transform-es2015-duplicate-keys":"6.6.4","babel-plugin-transform-es2015-literals":"6.5.0","babel-plugin-transform-es2015-modules-commonjs":"6.7.4","babel-plugin-transform-es2015-object-super":"6.6.5","babel-plugin-transform-es2015-parameters":"6.7.0","babel-plugin-transform-es2015-spread":"^6.6.5","babel-plugin-transform-es2015-sticky-regex":"6.5.0","babel-plugin-transform-es2015-template-literals":"6.6.5","babel-plugin-transform-es2015-unicode-regex":"6.5.0","babel-plugin-transform-object-rest-spread":"^6.26.0","babel-polyfill":"6.3.14","babel-preset-es2015":"6.3.13","chai":"3.4.1","clone":"1.0.2","colors":"1.1.2","eslint":"^6.8.0","eslint-config-airbnb":"^18.0.1","eslint-plugin-import":"^2.20.0","eslint-plugin-jsx-a11y":"^6.2.3","eslint-plugin-react":"^7.18.0","express":"^4.16.3","fetch-mock":"^9.2.1","istanbul":"^0.4.5","mocha":"^7.1.2","package-json":"^6.5.0","shelljs":"0.5.3","sinon":"^9.0.1","sprintf-js":"1.0.3","underscore":"1.8.3","watch-trigger":"0.0.5","webpack":"^4.25.1","webpack-cli":"^3.1.2"}};
 
 /***/ }),
 
@@ -19300,13 +19300,16 @@ var _coerce = __webpack_require__(/*! ./coerce */ "./src/imp/coerce.js");
 
 var coerce = _interopRequireWildcard(_coerce);
 
+var _util = __webpack_require__(/*! ./util/util */ "./src/imp/util/util.js");
+
+var _util2 = _interopRequireDefault(_util);
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var converter = __webpack_require__(/*! hex2dec */ "./node_modules/hex2dec/index.js");
 var proto = __webpack_require__(/*! ./generated_proto/collector_pb */ "./src/imp/generated_proto/collector_pb.js");
 var packageObject = __webpack_require__(/*! ../../package.json */ "./package.json");
 
@@ -19367,7 +19370,7 @@ var RuntimeImp = function () {
             hostname.setKey('lightstep.hostname');
             hostname.setStringValue(this._attributes['lightstep.hostname']);
 
-            var reporterId = converter.hexToDec(this._runtimeGUID);
+            var reporterId = _util2.default.hexToDec(this._runtimeGUID);
 
             var tracerTags = [];
             (0, _each3.default)(this._attributes, function (val, key) {
@@ -19552,7 +19555,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 // eslint-disable-line camelcase
 
 
-var converter = __webpack_require__(/*! hex2dec */ "./node_modules/hex2dec/index.js");
 var googleProtobufTimestampPB = __webpack_require__(/*! google-protobuf/google/protobuf/timestamp_pb */ "./node_modules/google-protobuf/google/protobuf/timestamp_pb.js");
 var proto = __webpack_require__(/*! ./generated_proto/collector_pb */ "./src/imp/generated_proto/collector_pb.js");
 
@@ -19810,8 +19812,8 @@ var SpanImp = function (_opentracing$Span) {
 
             var spanContextProto = new proto.SpanContext();
 
-            spanContextProto.setTraceId(converter.hexToDec(this.traceGUID()));
-            spanContextProto.setSpanId(converter.hexToDec(this.guid()));
+            spanContextProto.setTraceId(_util2.default.hexToDec(this.traceGUID()));
+            spanContextProto.setSpanId(_util2.default.hexToDec(this.guid()));
 
             var spanProto = new proto.Span();
             spanProto.setSpanContext(spanContextProto);
@@ -19853,7 +19855,7 @@ var SpanImp = function (_opentracing$Span) {
                 var ref = new proto.Reference();
                 ref.setRelationship(proto.Reference.Relationship.CHILD_OF);
                 var parentSpanContext = new proto.SpanContext();
-                parentSpanContext.setSpanId(converter.hexToDec(parentSpanGUID));
+                parentSpanContext.setSpanId(_util2.default.hexToDec(parentSpanGUID));
                 ref.setSpanContext(parentSpanContext);
                 spanProto.setReferencesList([ref]);
             }
@@ -21511,7 +21513,7 @@ module.exports = ClockState;
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-
+/* WEBPACK VAR INJECTION */(function(global) {
 
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -21520,6 +21522,8 @@ Object.defineProperty(exports, "__esModule", {
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var converter = __webpack_require__(/*! hex2dec */ "./node_modules/hex2dec/index.js");
 
 var Util = function () {
     function Util() {
@@ -21544,6 +21548,20 @@ var Util = function () {
             var shouldSendSpan = opts.meta_event_reporting === true && tags['lightstep.meta_event'] !== true;
             return shouldSendSpan;
         }
+
+        // Use native BigInt if available. Native BigInt has a significant
+        // performance improvement over hex2dec
+
+    }, {
+        key: 'hexToDec',
+        value: function hexToDec(hexString) {
+            if (typeof global.BigInt !== 'function') {
+                return converter.hexToDec(hexString);
+            }
+
+            // eslint-ignore-line
+            return global.BigInt('0x' + hexString).toString(10);
+        }
     }]);
 
     return Util;
@@ -21551,6 +21569,7 @@ var Util = function () {
 
 exports.default = new Util();
 module.exports = exports.default;
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../../node_modules/webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
 
 /***/ }),
 
