@@ -4,6 +4,12 @@
 
 ## vNext
 
+## 0.32.0
+* Update versions of underscore, lodash, handlebars, and y18n.
+
+## 0.31.0
+* Improve performance of hexToDec by using native BigInt when available.
+
 ## 0.30.2
 * Bugfix for nodejs: remove throw in fetch onError handler (#246)
 

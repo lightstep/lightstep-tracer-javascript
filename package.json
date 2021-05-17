@@ -63,10 +63,11 @@
     "fetch-mock": "^9.2.1",
     "istanbul": "^0.4.5",
     "mocha": "^7.1.2",
+    "package-json": "^6.5.0",
     "shelljs": "0.5.3",
     "sinon": "^9.0.1",
     "sprintf-js": "1.0.3",
-    "underscore": "1.8.3",
+    "underscore": "1.12.1",
     "watch-trigger": "0.0.5",
     "webpack": "^4.25.1",
     "webpack-cli": "^3.1.2"
