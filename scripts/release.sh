@@ -1,1 +1,2 @@
-echo "Will publish to remote"
+echo "Will publish to npm"
+npm publish
