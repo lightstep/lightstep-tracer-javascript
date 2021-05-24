@@ -20,8 +20,8 @@ node_modules:
 .PHONY: build-browser
 build-browser: $(BUNDLE_JS)
 $(BUNDLE_JS): $(SOURCES_JS) webpack.config.js package.json
-	NODE_ENV=development $(CMD_WEBPACK) --display-error-details
-	NODE_ENV=production $(CMD_WEBPACK) --display-error-details
+	NODE_ENV=development $(CMD_WEBPACK)
+	NODE_ENV=production $(CMD_WEBPACK)
 
 .PHONY: build-node
 build-node: $(COMPILED_JS)
