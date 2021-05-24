@@ -10,7 +10,7 @@ const _ = require('underscore');
 const sprintf = require('sprintf-js').sprintf;
 
 let webpack = `node_modules/webpack/bin/webpack.js`;
-let cmd = `BUILD_PLATFORM=browser BUILD_CONFIG=prod ${webpack} --display-error-details --json`;
+let cmd = `BUILD_PLATFORM=browser BUILD_CONFIG=prod ${webpack}`;
 let jsonString = require('child_process').execSync(cmd).toString('utf8');
 
 let json = JSON.parse(jsonString);
@@ -28,6 +28,6 @@ _.each(modules, (val) => {
     console.log(sprintf('  %4.1f%% %6d bytes   %s', (100 * val.size/total), val.size, val.name));
 });
 
-cmd = `BUILD_PLATFORM=browser BUILD_CONFIG=prod ${webpack} --display-error-details`;
+cmd = `BUILD_PLATFORM=browser BUILD_CONFIG=prod ${webpack}`;
 require('child_process').execSync(cmd);
 console.log('\nMinified size: ' + fs.statSync('dist/lightstep-tracer.min.js').size);
