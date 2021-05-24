@@ -4,7 +4,10 @@
 
 ## vNext
 
-## 0.32.0
+## 0.31.2
+* Update to thrift v0.14.1
+
+## 0.31.1
 * Update versions of underscore, lodash, handlebars, and y18n.
 
 ## 0.31.0
