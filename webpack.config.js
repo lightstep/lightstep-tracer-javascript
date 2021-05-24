@@ -24,6 +24,9 @@ if (DEBUG) {
 const bundleName = `lightstep-tracer${bundleSuffix}`;
 
 module.exports = {
+    stats: {
+        errorDetails: true
+    },
     mode    : DEBUG ? 'development' : 'production',
     entry   : './src/lib.js',
     target  : 'web',

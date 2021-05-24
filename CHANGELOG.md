@@ -4,8 +4,13 @@
 
 ## vNext
 
+## 0.31.2
+* Update to thrift v0.14.1
+
 ## 0.31.1
 * Update versions of underscore, lodash, handlebars, and y18n.
+
+## 0.31.0
 * Improve performance of hexToDec by using native BigInt when available.
 
 ## 0.30.2
