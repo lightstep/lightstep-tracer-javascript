@@ -20,8 +20,8 @@ node_modules:
 .PHONY: build-browser
 build-browser: $(BUNDLE_JS)
 $(BUNDLE_JS): $(SOURCES_JS) webpack.config.js package.json
-	NODE_ENV=development $(CMD_WEBPACK) --display-error-details
-	NODE_ENV=production $(CMD_WEBPACK) --display-error-details
+	NODE_ENV=development $(CMD_WEBPACK)
+	NODE_ENV=production $(CMD_WEBPACK)
 
 .PHONY: build-node
 build-node: $(COMPILED_JS)
@@ -85,7 +85,7 @@ test-node:
 .PHONY: test-browser
 test-browser:
 	cp dist/lightstep-tracer.js test/dist
-	cd test && node ../node_modules/webpack/bin/webpack.js unittest_browser.js -o dist/unittest_browser.bundle.js
+	cd test && node ../node_modules/webpack/bin/webpack.js ./unittest_browser.js -o dist/unittest_browser.bundle.js
 	cd test && open unittest.html
 
 # Note: versions < 6.2 are *not* supported.  The 'beforeExit' event has

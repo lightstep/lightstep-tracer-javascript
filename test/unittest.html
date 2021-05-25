@@ -15,7 +15,7 @@
         <script>
             /* 
              * In order to mock requests they must be setup here before the tracer
-             * is loaded. This is because the request plugins grab fetch/xhr immediately 
+             * is loaded. This is because the request plugins grab fetch/xhr immediately
              * so the mocks must be initialized before that happens. xhr requests are
              * mocked by sinion which allows for custom responses inline. Fetch
              * requests are mocked by fetchMock which requires initialization
@@ -37,7 +37,7 @@
             window.expect = chai.expect;
         -->
         </script>
-        <script src="dist/unittest_browser.bundle.js"></script>
+        <script src="dist/unittest_browser.bundle.js/main.js"></script>
         <script>mocha.run();</script>
     </body>
 </html>
