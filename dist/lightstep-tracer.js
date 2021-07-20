@@ -19439,6 +19439,16 @@ var SpanContextImp = function () {
         value: function getBaggageItem(key) {
             return this._baggage[key];
         }
+    }, {
+        key: 'toTraceId',
+        value: function toTraceId() {
+            return this._traceGUID;
+        }
+    }, {
+        key: 'toSpanId',
+        value: function toSpanId() {
+            return this._guid;
+        }
 
         // ---------------------------------------------------------------------- //
         // LightStep Extensions

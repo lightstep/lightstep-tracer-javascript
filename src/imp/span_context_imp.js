@@ -13,12 +13,12 @@ export default class SpanContextImp {
         return this._baggage[key];
     }
 
-    toTraceId(){
+    toTraceId() {
         return this._traceGUID;
     }
 
-    toSpanId(){
-        return this._guid
+    toSpanId() {
+        return this._guid;
     }
 
     // ---------------------------------------------------------------------- //
