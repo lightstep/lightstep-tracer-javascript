@@ -13,6 +13,14 @@ export default class SpanContextImp {
         return this._baggage[key];
     }
 
+    toTraceId() {
+        return this._traceGUID;
+    }
+
+    toSpanId() {
+        return this._guid;
+    }
+
     // ---------------------------------------------------------------------- //
     // LightStep Extensions
     // ---------------------------------------------------------------------- //

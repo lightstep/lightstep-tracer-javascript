@@ -4,6 +4,10 @@
 
 ## vNext
 
+## 0.32.0
+* Add missing OpenTracing spancontext methods (#279)
+* Update ws and normalize-url dependencies.
+
 ## 0.31.2
 * Update to thrift v0.14.1
 
