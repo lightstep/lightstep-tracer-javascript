@@ -65,7 +65,7 @@
     "istanbul": "^0.4.5",
     "mocha": "^7.1.2",
     "package-json": "^6.5.0",
-    "shelljs": "0.5.3",
+    "shelljs": "0.8.5",
     "sinon": "^9.0.1",
     "sprintf-js": "1.0.3",
     "underscore": "1.12.1",
