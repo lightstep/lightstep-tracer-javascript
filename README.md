@@ -123,7 +123,7 @@ and not match any regular expressions in `nodejs_url_exclusion_patterns`.
 * `disable_report_on_exit` `bool` *optional*, *default=false* - if true, the final report that is automatically sent at process exit in Node or page unload in the browser will not be sent.
 * `report_timeout_millis` `number` *optional*, *default=30000* - the default timeout value, in milliseconds, for reports to the LightStep collector
 * `gzip_json_requests` `bool` *optional*, *default=true* - if true, the reports will be gzipped before sent to the collector.
-* `default_span_tags` `string` *optional* - an associative array of tags to add to every span started by the tracer (e.g., the active user id in a browser client)
+* `default_span_tags` `object` *optional* - an associative array of tags to add to every span started by the tracer (e.g., the active user id in a browser client)
 * `delay_initial_report_millis` `int` *optional*, *default=1000* - maximum additional delay of the initial report in addition to the normal reporting interval. A value between zero and this maximum will be selected as the actual delay. This can be useful when concurrently launching a large number of new processes and there is a desire to distribute the initial reports over a window of time.
 * `error_throttle_millis` `int` *optional*, *default=60000* - when `verbosity` is set to `1`, this the minimum time between logged errors.
 * `transport` `string` *optional*, *default=proto* - when `transport` is set to `thrift`, the Tracer will use Thrift as its transport instead of Proto over HTTP. (Not supported in React-Native)
