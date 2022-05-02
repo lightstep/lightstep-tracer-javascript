@@ -30,7 +30,7 @@ describe('Node-specific', function() {
 
 // Dynamically transform a ES6 file
 function requireES6(filename) {
-    var loaded = require('babel-core').transformFileSync(filename, { presets : ['es2015'] });
+    var loaded = require('@babel/core').transformFileSync(filename, { presets : ['@babel/env'] });
     var exports = {};
     var module = { exports : exports };
     var f = new Function('module', 'exports', loaded.code);

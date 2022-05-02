@@ -27,7 +27,7 @@ $(BUNDLE_JS): $(SOURCES_JS) webpack.config.js package.json
 build-node: $(COMPILED_JS)
 lib/%.js: src/%.js
 	@mkdir -p $(@D)
-	$(CMD_BABEL) --presets es2015 --plugins add-module-exports,syntax-object-rest-spread,transform-es2015-spread,transform-object-rest-spread $< -o $@ --source-maps
+	$(CMD_BABEL) --presets=@babel/preset-env --plugins add-module-exports,@babel/proposal-object-rest-spread,@babel/transform-spread,@babel/syntax-object-rest-spread $< -o $@ --source-maps
 
 .PHONY: clean
 clean:
@@ -74,7 +74,7 @@ test: build test-node test-browser lint
 .PHONY: coverage
 coverage: build
 	rm -f test/results/*.json
-	node node_modules/.bin/istanbul cover node_modules/mocha/bin/_mocha -- -c test/unittest_node.js
+	node node_modules/nyc/bin/nyc --reporter=lcov --reporter=html node_modules/mocha/bin/_mocha -- -c test/unittest_node.js
 	@echo
 	@echo "Coverage is currently run against the compiled code. Numbers are not fully accurate."
 	@echo "Open coverage/lcov-report/index.html for details."

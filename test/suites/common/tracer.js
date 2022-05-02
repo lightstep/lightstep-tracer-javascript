@@ -75,7 +75,7 @@ describe("Tracer", function() {
                 span.finish();
             }
             Tracer.flush();
-        });
+        }).timeout(10000);
     });
 
     describe("Tracer#finish", function() {

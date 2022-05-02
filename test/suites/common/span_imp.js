@@ -90,7 +90,7 @@ describe("SpanImp", function() {
             parent.finish();
 
             expect(parent.guid()).not.to.be.undefined;
-            expect(parent.parentGUID()).to.be.falsey;
+            expect(parent.parentGUID()).to.be.undefined;
 
             expect(child.guid()).not.to.be.undefined;
             expect(child.parentGUID()).to.equal(parent.guid());
