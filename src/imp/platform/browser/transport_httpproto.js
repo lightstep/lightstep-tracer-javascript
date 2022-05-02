@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/extensions
 let proto = require('../../generated_proto/collector_pb.js');
 
 export default class TransportBrowser {

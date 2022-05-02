@@ -1,3 +1,4 @@
+/* eslint-disable import/no-import-module-exports */
 import Tracer from './imp/tracer_imp';
 import LightStepPropagator from './imp/propagator_ls';
 import B3Propagator from './imp/propagator_b3';

@@ -1,6 +1,7 @@
 // eslint-disable-next-line camelcase
 import { crouton_thrift } from '../platform_abstraction_layer';
 
+// eslint-disable-next-line import/extensions
 let proto = require('./generated_proto/collector_pb.js');
 
 export default class AuthImp {
@@ -17,6 +18,7 @@ export default class AuthImp {
     }
 
     toThrift() {
+        // eslint-disable-next-line camelcase
         return new crouton_thrift.Auth({
             access_token : this._accessToken,
         });
