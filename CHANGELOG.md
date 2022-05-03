@@ -5,11 +5,12 @@
 ## vNext
 
 ## 0.33.0
-* Upgrade async (#285)
-* Upgrade to Babel 7 (#287)
-* Upgrade various dependecies (#287)
-* Substitute deprecated packages (#287)
-* add Node 14 and Node 16 jobs on CI
+* Upgrade async (#288)
+* Upgrade to Babel 7 (#288)
+* Upgrade various dependecies (#288)
+* Substitute deprecated packages (#288)
+* add Node 14 and Node 16 jobs on CI (#288)
+* Drop support for Node 8 and 10 (#288)
 
 ## 0.32.0
 * Add missing OpenTracing spancontext methods (#279)

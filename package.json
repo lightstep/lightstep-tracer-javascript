@@ -1,11 +1,11 @@
 {
   "name": "lightstep-tracer",
-  "version": "0.33.0",
+  "version": "0.32.0",
   "main": "index.js",
   "types": "index.d.ts",
   "browser": "browser.js",
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=12.0.0"
   },
   "scripts": {
     "release": "./scripts/release.sh",
