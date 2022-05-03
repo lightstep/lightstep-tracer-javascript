@@ -15,6 +15,7 @@ export default class AuthImp {
     }
 
     toThrift() {
+        // eslint-disable-next-line camelcase
         return new crouton_thrift.Auth({
             access_token : this._accessToken,
         });

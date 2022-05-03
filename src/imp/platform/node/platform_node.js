@@ -1,4 +1,5 @@
 const os = require('os');
+// eslint-disable-next-line import/extensions
 const _each = require('../../../_each.js');
 
 function computeStartMicros() {

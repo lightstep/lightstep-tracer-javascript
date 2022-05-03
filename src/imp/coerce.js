@@ -1,4 +1,3 @@
-
 export function toString(value) {
     return '' + value; // eslint-disable-line prefer-template
 }

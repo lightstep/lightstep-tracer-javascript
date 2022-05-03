@@ -13,6 +13,7 @@ export default class RuntimeImp {
     toThrift() {
         let thriftAttrs = [];
         _each(this._attributes, (val, key) => {
+            // eslint-disable-next-line camelcase
             thriftAttrs.push(new crouton_thrift.KeyValue({
                 Key   : coerce.toString(key),
                 Value : coerce.toString(val),
@@ -21,6 +22,7 @@ export default class RuntimeImp {
 
         // NOTE: for legacy reasons, the Thrift field is called "group_name"
         // but is semantically equivalent to the "component_name"
+        // eslint-disable-next-line camelcase
         return new crouton_thrift.Runtime({
             guid         : this._runtimeGUID,
             start_micros : this._startMicros,

@@ -12,7 +12,7 @@ LightStep distributed tracing library for Node.js and the browser.
 npm install --save lightstep-tracer opentracing
 ```
 
-All modern browsers and Node versions >= 8 are supported.
+All modern browsers and Node versions >= 12 are supported. Users who need support for Node 8 and 10 can use v0.32.0 and prior.
 
 ## Getting started
 

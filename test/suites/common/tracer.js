@@ -68,7 +68,8 @@ describe("Tracer", function() {
             span.finish();
         });
 
-        it('should handle a large number of spans gracefully', function() {
+        it('should handle a large number of spans gracefully', function () {
+            this.timeout(20000);
             Tracer.flush();
             for (var i = 0; i < 10000; i++) {
                 var span = Tracer.startSpan('microspan');

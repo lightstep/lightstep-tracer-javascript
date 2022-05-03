@@ -81,13 +81,14 @@ export default class Tracer extends opentracing.Tracer {
         this._propagators = {};
         this._propagators[this._opentracing.FORMAT_HTTP_HEADERS] = new LightStepPropagator(this);
         this._propagators[this._opentracing.FORMAT_TEXT_MAP] = new LightStepPropagator(this);
-        this._propagators[this._opentracing.FORMAT_BINARY] = new UnsupportedPropagator(this,
-            this._opentracing.FORMAT_BINARY);
+        this._propagators[this._opentracing.FORMAT_BINARY] = new UnsupportedPropagator(
+            this,
+            this._opentracing.FORMAT_BINARY,
+        );
 
         if (opts && opts.propagators) {
             this._propagators = { ...this._propagators, ...opts.propagators };
         }
-
 
         this._reportingLoopActive = false;
         this._first_report_has_run = false;
@@ -96,7 +97,6 @@ export default class Tracer extends opentracing.Tracer {
         this._reportErrorStreak = 0; // Number of consecutive errors
         this._lastVisibleErrorMillis = 0;
         this._skippedVisibleErrors = 0;
-
 
         // Set addActiveRootSpan() for detail
         this._activeRootSpanSet = {};
@@ -244,8 +244,10 @@ export default class Tracer extends opentracing.Tracer {
         this.addOption('delay_initial_report_millis', { type: 'int', defaultValue: 1000 });
         this.addOption('error_throttle_millis', { type: 'int',     defaultValue: 60000 });
         this.addOption('logger',                { type: 'function', defaultValue: this._printToConsole.bind(this) });
-        this.addOption('clear_span_buffer_consecutive_errors',
-            { type: 'int', defaultValue: null });
+        this.addOption(
+            'clear_span_buffer_consecutive_errors',
+            { type: 'int', defaultValue: null },
+        );
 
         // Debugging options
         //
@@ -329,14 +331,16 @@ export default class Tracer extends opentracing.Tracer {
         this.emit('start_span', spanImp);
 
         if (util.shouldSendMetaSpan(this.options(), spanImp.getTags())) {
-            this.startSpan(constants.LS_META_SP_START,
+            this.startSpan(
+                constants.LS_META_SP_START,
                 {
                     tags : {
                         [constants.LS_META_EVENT_KEY]: true,
                         [constants.LS_META_TRACE_KEY]: spanImp.traceGUID(),
                         [constants.LS_META_SPAN_KEY]: spanImp.guid(),
                     },
-                })
+                },
+            )
                 .finish();
         }
         return spanImp;
@@ -344,7 +348,8 @@ export default class Tracer extends opentracing.Tracer {
 
     _inject(spanContext, format, carrier) {
         if (this.options().meta_event_reporting === true) {
-            this.startSpan(constants.LS_META_INJECT,
+            this.startSpan(
+                constants.LS_META_INJECT,
                 {
                     tags: {
                         [constants.LS_META_EVENT_KEY]: true,
@@ -352,7 +357,8 @@ export default class Tracer extends opentracing.Tracer {
                         [constants.LS_META_SPAN_KEY]: spanContext._guid,
                         [constants.LS_META_PROPAGATION_KEY]: format,
                     },
-                })
+                },
+            )
                 .finish();
         }
         switch (format) {
@@ -388,7 +394,8 @@ export default class Tracer extends opentracing.Tracer {
             return null;
         }
         if (this.options().meta_event_reporting === true && sc) {
-            this.startSpan(constants.LS_META_EXTRACT,
+            this.startSpan(
+                constants.LS_META_EXTRACT,
                 {
                     tags: {
                         [constants.LS_META_EVENT_KEY]: true,
@@ -396,7 +403,8 @@ export default class Tracer extends opentracing.Tracer {
                         [constants.LS_META_SPAN_KEY]: sc._guid,
                         [constants.LS_META_PROPAGATION_KEY]: format,
                     },
-                })
+                },
+            )
                 .finish();
         }
         return sc;
@@ -465,7 +473,8 @@ export default class Tracer extends opentracing.Tracer {
     options(opts) {
         if (arguments.length === 0) {
             console.assert(typeof this._options === 'object',   // eslint-disable-line
-                'Internal error: _options field incorrect');
+                'Internal error: _options field incorrect',
+            );
             return this._options;
         }
         if (typeof opts !== 'object') {
@@ -1092,8 +1101,15 @@ export default class Tracer extends opentracing.Tracer {
 
         let timestampOffset = this._useClockState ? clockOffsetMicros : 0;
         let now = this._platform.nowMicros();
-        let report = new ReportImp(this._runtime, this._reportYoungestMicros, now,
-            spanRecords, internalLogs, counters, timestampOffset);
+        let report = new ReportImp(
+            this._runtime,
+            this._reportYoungestMicros,
+            now,
+            spanRecords,
+            internalLogs,
+            counters,
+            timestampOffset,
+        );
 
         this.emit('prereport', report);
         let originMicros = this._platform.nowMicros();

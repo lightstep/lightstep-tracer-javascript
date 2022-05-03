@@ -88,7 +88,7 @@ describe("Span", function() {
         });
 
         it("should not throw an exception on lots of logs and spans", function () {
-            this.timeout(5000);
+            this.timeout(20000);
             for (var i = 0; i < 10000; i++) {
                 var span = Tracer.startSpan("test_operation");
                     var subspan = Tracer.startSpan("test_subspan", { childOf : span });

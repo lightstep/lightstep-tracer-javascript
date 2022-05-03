@@ -41,12 +41,14 @@ export default class LogRecordImp {
             }
             let keyStr = this.getFieldKey(key);
             let valStr = this.getFieldValue(value);
+            // eslint-disable-next-line camelcase
             thriftFields.push(new crouton_thrift.KeyValue({
                 Key   : keyStr,
                 Value : valStr,
             }));
         });
 
+        // eslint-disable-next-line camelcase
         return new crouton_thrift.LogRecord({
             timestamp_micros : this._timestampMicros,
             fields           : thriftFields,

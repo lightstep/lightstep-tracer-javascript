@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-import-module-exports
 import * as opentracing from 'opentracing';
 
 // Capture the proxied values on script load (i.e. ASAP) in case there are

@@ -1,3 +1,4 @@
+/* eslint-disable import/extensions */
 /* global PLATFORM_BROWSER */
 
 // Hide the differences in how the Thrift compiler generates code for the

@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-import-module-exports
 import _each from '../_each';
 
 class PackageGlobals {

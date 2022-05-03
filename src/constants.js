@@ -1,4 +1,3 @@
-
 export const LOG_INFO = 0;
 export const LOG_WARN = 1;
 export const LOG_ERROR = 2;
