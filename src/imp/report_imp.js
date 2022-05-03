@@ -37,6 +37,7 @@ export default class ReportImp {
             if (value === 0) {
                 return;
             }
+            // eslint-disable-next-line camelcase
             thriftCounters.push(new crouton_thrift.MetricsSample({
                 name         : coerce.toString(key),
                 double_value : coerce.toNumber(value),
@@ -48,12 +49,14 @@ export default class ReportImp {
             thriftSpanRecords.push(spanRecord._toThrift());
         });
 
+        // eslint-disable-next-line camelcase
         return new crouton_thrift.ReportRequest({
             runtime          : this._runtime.toThrift(),
             oldest_micros    : this._oldestMicros,
             youngest_micros  : this._youngestMicros,
             span_records     : thriftSpanRecords,
             internal_logs    : this._internalLogs,
+            // eslint-disable-next-line camelcase
             internal_metrics : new crouton_thrift.Metrics({
                 counts : thriftCounters,
             }),

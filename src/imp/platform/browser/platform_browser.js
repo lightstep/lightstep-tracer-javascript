@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/extensions
 const optionsParser = require('./options_parser.js');
 const util = require('./util');
 

@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-import-module-exports
 import _each from '../../_each';
 
 // How many updates before a sample is considered old. This happens to
@@ -35,10 +36,12 @@ class ClockState {
     }
 
     // Add a new timing sample and update the offset.
-    addSample(originMicros,
+    addSample(
+        originMicros,
         receiveMicros,
         transmitMicros,
-        destinationMicros) {
+        destinationMicros,
+    ) {
         let latestDelayMicros = Number.MAX_VALUE;
         let latestOffsetMicros = 0;
         // Ensure that all of the data are valid before using them. If
@@ -111,7 +114,7 @@ class ClockState {
         let jitter = 0;
         _each(this._samples, (sample) => {
             // eslint-disable-next-line no-restricted-properties
-            jitter += Math.pow(bestOffsetMicros - sample.offsetMicros, 2);
+            jitter += (bestOffsetMicros - sample.offsetMicros) ** 2;
         });
         jitter = Math.sqrt(jitter / this._samples.length);
 

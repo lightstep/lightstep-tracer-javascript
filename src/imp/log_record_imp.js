@@ -2,7 +2,9 @@ import { crouton_thrift } from '../platform_abstraction_layer'; // eslint-disabl
 import _each from '../_each';
 import * as coerce from './coerce';
 // eslint-disable-line camelcase
+// eslint-disable-next-line import/extensions
 let googleProtobufTimestampPB = require('google-protobuf/google/protobuf/timestamp_pb.js');
+// eslint-disable-next-line import/extensions
 let proto = require('./generated_proto/collector_pb.js');
 
 export default class LogRecordImp {
@@ -44,12 +46,14 @@ export default class LogRecordImp {
             }
             let keyStr = this.getFieldKey(key);
             let valStr = this.getFieldValue(value);
+            // eslint-disable-next-line camelcase
             thriftFields.push(new crouton_thrift.KeyValue({
                 Key   : keyStr,
                 Value : valStr,
             }));
         });
 
+        // eslint-disable-next-line camelcase
         return new crouton_thrift.LogRecord({
             timestamp_micros : this._timestampMicros,
             fields           : thriftFields,

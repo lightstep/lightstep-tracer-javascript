@@ -200,6 +200,7 @@ export default class SpanImp extends opentracing.Span {
     _toThrift() {
         let attributes = [];
         _each(this._tags, (value, key) => {
+            // eslint-disable-next-line camelcase
             attributes.push(new crouton_thrift.KeyValue({
                 Key   : coerce.toString(key),
                 Value : coerce.toString(value),
@@ -214,6 +215,7 @@ export default class SpanImp extends opentracing.Span {
             logs.push(logThrift);
         });
 
+        // eslint-disable-next-line camelcase
         return new crouton_thrift.SpanRecord({
             span_guid       : this.guid(),
             trace_guid      : this.traceGUID(),

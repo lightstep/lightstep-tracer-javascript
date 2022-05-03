@@ -1,6 +1,10 @@
+// eslint-disable-next-line import/no-import-module-exports
 import * as opentracing from 'opentracing';
+// eslint-disable-next-line import/no-import-module-exports
 import http from 'http';
+// eslint-disable-next-line import/no-import-module-exports
 import https from 'https';
+// eslint-disable-next-line import/no-import-module-exports
 import urlCreator, { URL } from 'url';
 // Capture the proxied values on script load (i.e. ASAP) in case there are
 // multiple layers of instrumentation.
@@ -15,7 +19,6 @@ if (typeof window === 'undefined') {
     proxiedHttpsRequest = https.request;
     proxiedHttpsGet = https.get;
 }
-
 
 // taken from following
 // https://github.com/nodejs/node/blob/8507485fb242dfcaf07092414871aa9c185a28e4/lib/internal/url.js#L1254-L1276
@@ -203,7 +206,6 @@ class InstrumentNodejs {
                 // eslint-disable-next-line prefer-destructuring
                 tags.url_pathname = url.split('?')[0];
             }
-
 
             try {
                 const headersCarrier = {};

@@ -1,6 +1,7 @@
 import * as https from 'https';
 import * as http from 'http';
 
+// eslint-disable-next-line import/extensions
 let proto = require('../../generated_proto/collector_pb.js');
 
 const kMaxDetailedErrorFrequencyMs = 30000;

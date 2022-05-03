@@ -1,3 +1,4 @@
+/* eslint-disable import/no-import-module-exports */
 // eslint-disable-next-line camelcase
 import { crouton_thrift } from '../platform_abstraction_layer';
 
@@ -9,6 +10,7 @@ const coerce    = require('./coerce');
 class LogBuilder {
     constructor(runtime) {
         this._runtime = runtime;
+        // eslint-disable-next-line camelcase
         this._record = new crouton_thrift.LogRecord({
             timestamp_micros : runtime._platform.nowMicros(),
             runtime_guid     : null,
