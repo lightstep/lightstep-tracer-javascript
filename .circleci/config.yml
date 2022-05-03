@@ -85,8 +85,7 @@ jobs:
             - ~/project/node_modules
           key: node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
       - run: make lint
-      - run: make build test-node    
-      
+      - run: make build test-node          
   "node-latest":
     working_directory: ~/repo
     docker:
