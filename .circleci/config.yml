@@ -146,10 +146,6 @@ workflows:
           filters:
             branches:
               only: /.*/
-      - "node-18":
-          filters:
-            branches:
-              only: /.*/
       - "node-latest":
           filters:
             branches:
