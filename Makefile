@@ -94,8 +94,9 @@ test-browser:
 .PHONY: test-all
 test-all: build
 	scripts/docker_test.sh latest
-	scripts/docker_test.sh 10
-	scripts/docker_test.sh 8
+	scripts/docker_test.sh 16
+	scripts/docker_test.sh 14
+	scripts/docker_test.sh 12
 
 #
 # lint
