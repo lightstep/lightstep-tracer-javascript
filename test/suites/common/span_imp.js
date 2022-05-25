@@ -120,4 +120,38 @@ describe("SpanImp", function() {
             span.finish();
         });
     });
+
+    describe("SpanImp#end", function() {
+        it("is a method", function() {
+            let span = Tracer.startSpan('test');
+            expect(span.end).to.be.a("function");
+            span.finish();
+        });
+
+        it("should record the span if sampled", function() {
+            let numRecords = Tracer._spanRecords.length;
+
+            let span = Tracer.startSpan('test');
+            span.finish();
+
+            expect(Tracer._spanRecords.length).to.equal(numRecords + 1);
+        });
+
+        it("should not record the span if not sampled", function() {
+            let numRecords = Tracer._spanRecords.length;
+
+            // Create a span context that is not sampled by simulating extraction from rpc metadata
+            let rootSpanCtx = Tracer.extract(opentracing.FORMAT_TEXT_MAP, {
+                'ot-tracer-traceid': Tracer._platform.generateUUID(),
+                'ot-tracer-spanid': Tracer._platform.generateUUID(),
+                'ot-tracer-sampled': 'false'
+            });
+
+            let span = Tracer.startSpan('test', { childOf: rootSpanCtx });
+            expect(span.isSampled()).to.equal(false);
+            span.finish();
+
+            expect(Tracer._spanRecords.length).to.equal(numRecords);
+        });
+    });
 });

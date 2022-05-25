@@ -3,6 +3,7 @@
 *Log of significant changes, especially those affecting the supported API.*
 
 ## vNext
+* Omit non-sampled spans from report (#290)
 
 ## 0.33.0
 * Upgrade async (#288)
