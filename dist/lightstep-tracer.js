@@ -7190,6 +7190,11 @@ var SpanImp = /*#__PURE__*/function (_opentracing$Span) {
       this._endMicros = micros;
       return this;
     }
+  }, {
+    key: "isSampled",
+    value: function isSampled() {
+      return this._ctx._sampled;
+    }
     /**
      * Returns a URL to the trace containing this span.
      *
@@ -7255,9 +7260,12 @@ var SpanImp = /*#__PURE__*/function (_opentracing$Span) {
         this._tracerImp.startSpan(constants.LS_META_SP_FINISH, {
           tags: (_tags = {}, _defineProperty(_tags, constants.LS_META_EVENT_KEY, true), _defineProperty(_tags, constants.LS_META_TRACE_KEY, this.traceGUID()), _defineProperty(_tags, constants.LS_META_SPAN_KEY, this.guid()), _tags)
         }).finish();
-      }
+      } // Only record span if sampled
 
-      this._tracerImp._addSpanRecord(this);
+
+      if (this.isSampled()) {
+        this._tracerImp._addSpanRecord(this);
+      }
     }
   }, {
     key: "_toThrift",

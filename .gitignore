@@ -7,3 +7,5 @@ npm-debug.log.*
 /coverage
 .idea
 *.iml
+.nyc_output
+.vscode
