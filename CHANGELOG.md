@@ -4,6 +4,9 @@
 
 ## vNext
 
+## 0.34.0
+* Omit non-sampled spans from report (#290)
+
 ## 0.33.0
 * Upgrade async (#288)
 * Upgrade to Babel 7 (#288)

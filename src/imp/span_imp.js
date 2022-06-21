@@ -130,6 +130,10 @@ export default class SpanImp extends opentracing.Span {
         return this;
     }
 
+    isSampled() {
+        return this._ctx._sampled;
+    }
+
     /**
      * Returns a URL to the trace containing this span.
      *
@@ -191,7 +195,10 @@ export default class SpanImp extends opentracing.Span {
             }).finish();
         }
 
-        this._tracerImp._addSpanRecord(this);
+        // Only record span if sampled
+        if (this.isSampled()) {
+            this._tracerImp._addSpanRecord(this);
+        }
     }
 
     _toThrift() {
