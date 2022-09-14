@@ -1,6 +1,6 @@
 # lightstep-tracer
 
-> ❗ **This instrumentation is no longer recommended**. Please review [documentation on setting up and configuring the OpenTelemetry Node.js Launcher](https://github.com/lightstep/otel-launcher-node) for more information on migrating to OpenTelemetry.
+> ❗ **This instrumentation is no longer recommended**. Please review [documentation on setting up and configuring the OpenTelemetry Node.js Launcher](https://github.com/lightstep/otel-launcher-node) or [OpenTelemetry JS (Browser)](https://github.com/open-telemetry/opentelemetry-js) for more information on migrating to OpenTelemetry.
 
 [![npm version](https://badge.fury.io/js/lightstep-tracer.svg)](https://badge.fury.io/js/lightstep-tracer)
 [![Circle CI](https://circleci.com/gh/lightstep/lightstep-tracer-javascript.svg?style=shield)](https://circleci.com/gh/lightstep/lightstep-tracer-javascript)
