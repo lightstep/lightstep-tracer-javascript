@@ -19,7 +19,7 @@
     "url": "http://github.com/lightstep/lightstep-tracer-javascript.git"
   },
   "dependencies": {
-    "async": "^3.2.3",
+    "async": "^3.2.4",
     "eventemitter3": "4.0.7",
     "google-protobuf": "3.20.1",
     "hex2dec": "1.1.2",
