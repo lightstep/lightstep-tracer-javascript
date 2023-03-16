@@ -4,6 +4,18 @@
 
 ## vNext
 
+## 0.35.0
+* Upgrade webpack (#304)
+* Upgrade cacheable-request, package-json (#303)
+* Upgrade http-cache-semantics (#302)
+* Upgrade json5 (#301)
+* Upgrade loader-utils (#299)
+* Upgrade opentracing (#298)
+* Upgrade thrift (#297)
+* Upgrade async (#296)
+* Upgrade google-protobuf (#295)
+* Upgrade terser (#293)
+
 ## 0.34.0
 * Omit non-sampled spans from report (#290)
 
