@@ -51,6 +51,27 @@ release: test test-all coverage
 	@echo "Version and tag created. The publish will be done automatically from circleCI."
 	@echo
 
+# Publish a prerelease version
+.PHONY: publish-prerelease
+publish-prerelease: test test-all coverage
+	@if [ $(shell git symbolic-ref --short -q HEAD) = "master" ]; then exit 0; else \
+	echo "Current git branch does not appear to be 'master'. Refusing to publish."; exit 1; \
+	fi
+	npm version prerelease --preid=$(PRERELEASE_TYPE)
+	make build 
+	git push
+	git push --tags
+	npm whoami
+	npm publish
+	@echo
+	@echo "Publish complete. Don't forget to update CHANGELOG.md if not done already and run gh-release."
+	@echo
+
+.PHONY: gh-release
+gh-release:
+	test -n "$(GH_RELEASE_GITHUB_API_TOKEN)" # $$GH_RELEASE_GITHUB_API_TOKEN
+	gh-release --dry-run
+
 # NOTE: the benchmark package is *not* part of package.json as it relies on a
 # native module -- that does not compile on all systems. Until/unless that is
 # resolved, it gets "manually" installed here when the benchmarks are run
